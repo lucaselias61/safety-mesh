@@ -1,0 +1,11 @@
+bin/
+lib/
+.env
+.venv
+.DS_Store
+
+#Visual Studio Project
+.vs/*
+.vscode/*
+
+main.dSYM/*
