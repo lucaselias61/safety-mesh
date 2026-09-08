@@ -12,10 +12,10 @@ skip_ci = "[skip ci]"
 skip_untracked = false
 pre_bump_hooks = [
   "echo 'bumping from {{latest|0.0.0}} to {{version|0.0.1}}'",
-  "perl -pi -e 's/^(project\\(safety_mesh VERSION )[0-9]+\\.[0-9]+\\.[0-9]+/${1}{{version}}/' CMakeLists.txt",
-  "cmake -S . -B build",
-  "cmake --build build",
-  "git add CMakeLists.txt",
+  '''perl -pi -e 'BEGIN { ($major, $minor, $patch) = "{{version}}" =~ /^(\d+)\.(\d+)\.(\d+)/; die "Invalid version" unless defined $patch; } s/^(#define SAFETY_MESH_VERSION_MAJOR )\d+/${1}$major/; s/^(#define SAFETY_MESH_VERSION_MINOR )\d+/${1}$minor/; s/^(#define SAFETY_MESH_VERSION_PATCH )\d+/${1}$patch/;' include/safety_mesh/version.hpp''',
+  "cmake --preset conan-debug",
+  "cmake --build --preset conan-debug",
+  "git add include/safety_mesh/version.hpp",
 ]
 post_bump_hooks = ["git push", "git push origin v{{version}}"]
 
