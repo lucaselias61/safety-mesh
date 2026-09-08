@@ -1,0 +1,12 @@
+bin/
+lib/
+.env
+.DS_Store
+
+#Visual Studio Project
+.vs/*
+.vscode/*
+
+main.dSYM/*
+build/
+compile_commands.json
