@@ -13,4 +13,5 @@ target_include_directories(safety_mesh_version
     INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+add_subdirectory(src/cam_node)
 
