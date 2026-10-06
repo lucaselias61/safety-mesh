@@ -5,7 +5,8 @@ lib/
 
 #Visual Studio Project
 .vs/*
-.vscode/*
+.vscode/
+src/**/.vscode/
 
 main.dSYM/*
 build/
