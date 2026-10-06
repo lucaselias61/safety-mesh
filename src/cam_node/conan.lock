@@ -1,0 +1,13 @@
+{
+    "version": "0.5",
+    "requires": [
+        "nlohmann_json/3.11.3#45828be26eb619a2e04ca517bb7b828d%1701220705.259",
+        "lz4/1.9.4#a2f02ad3908618757c68d3618256a196%1775037236.076",
+        "libusb/1.0.26#460e9b0848bf0a2cf80214116d717dc0%1752159859.765",
+        "librealsense/2.56.5#1df8f659f59fee27550a6c732d806831%1762425361.985",
+        "fmt/11.0.2#d886d768f1a5c52ebc26c6753621dc3e%1785754564.249"
+    ],
+    "build_requires": [],
+    "python_requires": [],
+    "config_requires": []
+}
