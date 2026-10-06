@@ -50,9 +50,8 @@ Intrinsics read_intrinsics(const rs2::device& device) {
 /// @param device
 Camera::Camera(rs2::device device) noexcept {
     device_ = device;
-    Intrinsics intrinsics = read_intrinsics(device);
+    intrinsics_ = read_intrinsics(device);
     serial_ = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-    intrinsics_ = intrinsics;
 }
 
 /// @brief serial getter
