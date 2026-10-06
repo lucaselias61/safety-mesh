@@ -1,6 +1,49 @@
 # Cam Node
 
-Handles the local perception pipeline for one 3D camera.
+Its a wrapper of the RealSense lib that also handles the local perception pipeline for one 3D camera.
+
+## Build
+
+To build independently, run from `cam_node/` with CMake 3.24+, Conan 2,
+and a C++17 compiler installed. If Conan has no default profile yet, run
+`conan profile detect` once.
+
+```sh
+./scripts/build.sh
+```
+
+The script installs dependencies using `conan.lock`, resets the CMake cache,
+and compiles a Release build in parallel.
+
+After source changes, rebuild without reinstalling dependencies:
+
+```sh
+cmake --build build --parallel
+```
+
+List connected RealSense camera serial numbers and names:
+
+```sh
+./scripts/discovery.sh
+```
+
+If no cameras are connected, discovery prints `No RealSense device connected`.
+
+When intentionally changing dependency versions, regenerate and commit the lockfile:
+
+```sh
+conan lock create . -s build_type=Release --lockfile-out=conan.lock
+```
+
+For VS Code opened at `cam_node/`, set `C_Cpp.default.compileCommands` to
+`${workspaceFolder}/build/compile_commands.json`.
+
+The parent project can still build this target through `add_subdirectory(src/cam_node)`.
+To build only this target using the existing parent build, run:
+
+```sh
+cmake --build ../../build/conan-debug --target cam_node
+```
 
 # Specifications
 
