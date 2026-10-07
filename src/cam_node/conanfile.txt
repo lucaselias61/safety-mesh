@@ -1,4 +1,5 @@
 [requires]
+cli11/2.6.2
 fmt/11.0.2
 librealsense/2.56.5
 
