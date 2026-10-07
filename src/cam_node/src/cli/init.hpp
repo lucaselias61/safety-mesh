@@ -1,6 +1,8 @@
 #pragma once
 
 #include <camera.hpp>
+#include <discovery.hpp>
+
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <stdexcept>
@@ -18,9 +20,8 @@ struct InitOptions {
 inline void init(bool all, const std::string& serial) {
     rs2::context context;
     std::vector<Camera> cameras;
-    for (const auto& device : context.query_devices()) {
-        if (all || serial == device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER)) {
-            cameras.emplace_back(device);
+    for (const auto& cam : discover_cameras()) {
+        if (all || serial == cam.serial) {
             if (!all) break;
         }
     }

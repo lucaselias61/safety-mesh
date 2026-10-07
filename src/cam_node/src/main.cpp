@@ -1,7 +1,7 @@
 #include "discovery.hpp"
 #include "camera.hpp"
 #include "cli/init.hpp"
-#include "cli/discovery.hpp"
+#include "cli/list.hpp"
 
 #include <CLI/CLI.hpp>
 
@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     CLI::App app{"RealSense camera node"};
     app.require_subcommand(1);
 
-    discovery_cmd(app);
+    list_cmd(app);
     init_cmd(app);
 
     try {

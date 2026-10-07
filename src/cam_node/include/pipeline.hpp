@@ -20,7 +20,9 @@ private:
     rs2::frameset frames_;
 };
 
-
+/** \brief This class manages one camera's pipeline and configuration.
+ * \note It wraps the RealSense pipeline and provides methods to control and access the necessary streams.
+ */
 class Pipeline {
 public:
     explicit Pipeline(const Camera& camera);

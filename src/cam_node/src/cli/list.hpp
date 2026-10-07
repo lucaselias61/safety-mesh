@@ -1,11 +1,12 @@
 #pragma once
 
 #include <discovery.hpp>
+
 #include <iostream>
 #include <CLI/CLI.hpp>
 
 
-inline void discovery() {
+inline void list() {
     const auto cameras = discover_cameras();
 
     if (cameras.empty()) {
@@ -17,7 +18,7 @@ inline void discovery() {
 }
 
 
-inline void discovery_cmd(CLI::App& app) {
-    app.add_subcommand("discovery", "List connected RealSense cameras")->callback(discovery);
+inline void list_cmd(CLI::App& app) {
+    app.add_subcommand("list", "List connected RealSense cameras")->callback(list);
 }
 
