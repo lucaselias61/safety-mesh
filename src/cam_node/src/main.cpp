@@ -1,4 +1,3 @@
-#include "discovery.hpp"
 #include "camera.hpp"
 #include "cli/init.hpp"
 #include "cli/list.hpp"

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <camera.hpp>
-#include <discovery.hpp>
+#include <pipeline.hpp>
 
 #include <CLI/CLI.hpp>
 #include <iostream>
@@ -19,15 +19,17 @@ struct InitOptions {
 
 inline void init(bool all, const std::string& serial) {
     rs2::context context;
-    std::vector<Camera> cameras;
-    for (const auto& cam : discover_cameras()) {
-        if (all || serial == cam.serial) {
-            if (!all) break;
-        }
-    }
+    const auto& cameras = discover_cameras();
     if (cameras.empty()) {
         throw std::runtime_error(all ? "No RealSense device connected"
                                     : "No RealSense device connected with serial " + serial);
+    }
+    for (const auto& cam : cameras) {
+        if (all || cam.get_serial() == serial) {
+            Pipeline pipeline(cam);
+            pipeline.start();
+            if (!all) break;
+        }
     }
     for (const auto& camera : cameras) {
         std::cout << "Initialized camera " << camera.get_serial() << '\n';

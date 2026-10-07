@@ -1,6 +1,6 @@
 #pragma once
 
-#include <discovery.hpp>
+#include <camera.hpp>
 
 #include <iostream>
 #include <CLI/CLI.hpp>
@@ -13,7 +13,7 @@ inline void list() {
         std::cout << "No RealSense device connected\n";
     }
     for (const auto& camera : cameras) {
-        std::cout << camera.serial << '\t' << camera.name << '\n';
+        std::cout << camera.get_serial() << '\t' << camera.get_name() << '\n';
     }
 }
 

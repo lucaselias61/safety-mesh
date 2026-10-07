@@ -47,16 +47,22 @@ Intrinsics read_intrinsics(const rs2::device& device) {
 } // namespace
 
 /// @brief Constructs a Camera object with the given device.
-/// @param device
+/// @param device The RealSense device used to construct the Camera object.
 Camera::Camera(rs2::device device) {
-    device_ = device;
-    intrinsics_ = read_intrinsics(device);
     serial_ = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+    name_ = device.get_info(RS2_CAMERA_INFO_NAME);
+    intrinsics_ = read_intrinsics(device);
+    device_ = device;
 }
 
 /// @brief serial getter
 const std::string& Camera::get_serial() const noexcept {
     return serial_;
+}
+
+/// @brief name getter
+const std::string& Camera::get_name() const noexcept {
+    return name_;
 }
 
 /// @brief intrinsics getter
@@ -67,4 +73,13 @@ const Intrinsics& Camera::get_intrinsics() const noexcept {
 /// @brief RealsSense device getter
 const rs2::device& Camera::get_device() const noexcept {
     return device_;
+}
+
+std::vector<Camera> discover_cameras() {
+    rs2::context context;
+    std::vector<Camera> cameras;
+    for (const auto& device : context.query_devices()) {
+        cameras.push_back(Camera(device));
+    }
+    return cameras;
 }
