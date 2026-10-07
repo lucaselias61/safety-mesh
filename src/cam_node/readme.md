@@ -24,10 +24,8 @@ cmake --build build --parallel
 List connected RealSense camera serial numbers and names:
 
 ```sh
-./scripts/discovery.sh
+./build/cam_node discovery
 ```
-
-If no cameras are connected, discovery prints `No RealSense device connected`.
 
 When intentionally changing dependency versions, regenerate and commit the lockfile:
 
