@@ -9,6 +9,7 @@ find_package(realsense2 REQUIRED)
 
 add_executable(cam_node
     src/main.cpp
+    src/discovery.cpp
     src/camera.cpp
     src/stream.cpp
 )
@@ -19,8 +20,3 @@ target_include_directories(cam_node PRIVATE include)
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(cam_node PRIVATE fmt::fmt)
 target_link_libraries(cam_node PRIVATE realsense2::realsense2)
-
-add_executable(discovery src/discovery.cpp)
-target_compile_features(discovery PRIVATE cxx_std_17)
-set_target_properties(discovery PROPERTIES CXX_EXTENSIONS OFF)
-target_link_libraries(discovery PRIVATE realsense2::realsense2)
