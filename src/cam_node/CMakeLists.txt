@@ -11,7 +11,7 @@ add_executable(cam_node
     src/main.cpp
     src/discovery.cpp
     src/camera.cpp
-    src/stream.cpp
+    src/pipeline.cpp
 )
 
 target_compile_features(cam_node PRIVATE cxx_std_17)
