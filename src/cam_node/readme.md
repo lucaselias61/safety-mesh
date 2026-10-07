@@ -4,13 +4,14 @@ Its a wrapper of the RealSense lib that also handles the local perception pipeli
 
 ## Build
 
-To build independently, run from `cam_node/` with CMake 3.24+, Conan 2,
-and a C++17 compiler installed. If Conan has no default profile yet, run
-`conan profile detect` once.
+To build an independent and fresh config, run from `cam_node/` with CMake 3.24+, Conan 2,
+and a C++17 compiler installed:
 
 ```sh
 ./scripts/build.sh
 ```
+
+If Conan has no default profile yet, run `conan profile detect` once.
 
 The script installs dependencies using `conan.lock`, resets the CMake cache,
 and compiles a Release build in parallel.
@@ -27,14 +28,22 @@ List connected RealSense camera serial numbers and names:
 ./build/cam_node discovery
 ```
 
+Initialize all connected cameras or one camera by serial number:
+
+```sh
+./build/cam_node init --all
+./build/cam_node init --serial 233322245
+```
+
+Choose exactly one of `--all` or `--serial`. Initialization constructs `Camera`
+objects and reads their intrinsics; it currently exits afterward without streaming.
+Missing cameras or initialization failures return a nonzero exit code.
+
 When intentionally changing dependency versions, regenerate and commit the lockfile:
 
 ```sh
 conan lock create . -s build_type=Release --lockfile-out=conan.lock
 ```
-
-For VS Code opened at `cam_node/`, set `C_Cpp.default.compileCommands` to
-`${workspaceFolder}/build/compile_commands.json`.
 
 The parent project can still build this target through `add_subdirectory(src/cam_node)`.
 To build only this target using the existing parent build, run:

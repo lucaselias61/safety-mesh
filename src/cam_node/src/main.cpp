@@ -1,38 +1,31 @@
 #include "discovery.hpp"
+#include "camera.hpp"
+#include "cli/init.hpp"
+#include "cli/discovery.hpp"
 
 #include <CLI/CLI.hpp>
 
 #include <exception>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
-void discovery() {
-    const auto cameras = discover_cameras();
-
-    if (cameras.empty()) {
-        std::cout << "No RealSense device connected\n";
-    }
-    for (const auto& camera : cameras) {
-        std::cout << camera.serial << '\t' << camera.name << '\n';
-    }
-}
-
-void init() {
-    // Initialization code for the camera node can be added here.
-}
 
 int main(int argc, char* argv[]) {
     CLI::App app{"RealSense camera node"};
     app.require_subcommand(1);
 
-    app.add_subcommand("discovery", "List connected RealSense cameras")->callback(discovery);
-    app.add_subcommand("init", "Initialize the camera node")->callback(init);
+    discovery_cmd(app);
+    init_cmd(app);
 
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& error) {
         return app.exit(error);
     } catch (const std::exception& error) {
-        std::cerr << "Camera discovery failed: " << error.what() << '\n';
+        std::cerr << "Camera Node command failed: " << error.what() << '\n';
         return 1;
     }
     return 0;

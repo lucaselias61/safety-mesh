@@ -1,4 +1,4 @@
-#include "../include/camera.hpp"
+#include "camera.hpp"
 
 #include <librealsense2/rs.hpp>
 
@@ -48,7 +48,7 @@ Intrinsics read_intrinsics(const rs2::device& device) {
 
 /// @brief Constructs a Camera object with the given device.
 /// @param device
-Camera::Camera(rs2::device device) noexcept {
+Camera::Camera(rs2::device device) {
     device_ = device;
     intrinsics_ = read_intrinsics(device);
     serial_ = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
