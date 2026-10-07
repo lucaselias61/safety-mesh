@@ -25,14 +25,14 @@ cmake --build build --parallel
 List connected RealSense camera serial numbers and names:
 
 ```sh
-./build/cam_node discovery
+./bin/cam_node discovery
 ```
 
 Initialize all connected cameras or one camera by serial number:
 
 ```sh
-./build/cam_node init --all
-./build/cam_node init --serial 233322245
+./bin/cam_node init --all
+./bin/cam_node init --serial 233322245
 ```
 
 Choose exactly one of `--all` or `--serial`. Initialization constructs `Camera`

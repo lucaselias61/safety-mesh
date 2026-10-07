@@ -14,6 +14,10 @@ add_executable(cam_node
     src/pipeline.cpp
 )
 
+set_target_properties(cam_node PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
+)
+
 target_compile_features(cam_node PRIVATE cxx_std_17)
 set_target_properties(cam_node PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(cam_node PRIVATE include)
