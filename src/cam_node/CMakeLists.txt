@@ -9,7 +9,7 @@ find_package(realsense2 REQUIRED)
 
 add_executable(cam_node
     src/main.cpp
-    src/discovery.cpp
+    src/worker.cpp
     src/camera.cpp
     src/pipeline.cpp
 )

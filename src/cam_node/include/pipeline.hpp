@@ -1,12 +1,16 @@
 // CameraStream class manages camera streams and configuration.
 #pragma once
 
+#include "camera.hpp"
+
 #include <filesystem>
 #include <string>
 
-#include "camera.hpp"
-
-
+/**
+ * \brief Represents a set of frames captured from the camera streams.
+ * \note This class provides access to the individual frames (color, depth, accelerometer, gyroscope) captured.
+ * All frames are synchronized to the same timestamp.
+ */
 class Frames {
 public:
     explicit Frames(const rs2::frameset& f);

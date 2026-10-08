@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <librealsense2/rs.hpp>
 
 /// Depth and color calibration parameters for a camera.

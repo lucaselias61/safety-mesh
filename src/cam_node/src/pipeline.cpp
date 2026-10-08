@@ -5,14 +5,21 @@
 
 Frames::Frames(const rs2::frameset& f) : frames_(f) {}
 
-rs2::video_frame Frames::get_color_frame() const {return frames_.get_color_frame();}
+rs2::video_frame Frames::get_color_frame() const {
+    return frames_.get_color_frame();
+}
 
-rs2::depth_frame Frames::get_depth_frame() const {return frames_.get_depth_frame();}
+rs2::depth_frame Frames::get_depth_frame() const {
+    return frames_.get_depth_frame();
+}
 
-rs2::motion_frame Frames::get_accel_frame() const {return frames_.first_or_default(RS2_STREAM_ACCEL).as<rs2::motion_frame>();}
+rs2::motion_frame Frames::get_accel_frame() const {
+    return frames_.first_or_default(RS2_STREAM_ACCEL).as<rs2::motion_frame>();
+}
 
-rs2::motion_frame Frames::get_gyro_frame() const {return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();}
-
+rs2::motion_frame Frames::get_gyro_frame() const {
+    return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();
+}
 
 Pipeline::Pipeline(const Camera& camera) : cam_(camera) {
     config_.enable_device(camera.get_serial());
@@ -40,6 +47,8 @@ void Pipeline::stop() {
 }
 
 /// @brief Get the latest frames from the camera streams
+/// @return The latest set of frames from the active camera streams (color | depth | accel | gyro).
+/// @throws std::runtime_error if the camera device is not connected.
 Frames Pipeline::get_frames() {
     rs2::frameset frameset = pipeline_.wait_for_frames();
     Frames frames(frameset);
