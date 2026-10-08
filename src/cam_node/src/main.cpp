@@ -1,6 +1,6 @@
 #include "camera.hpp"
-#include "cli/init.hpp"
-#include "cli/list.hpp"
+#include "cli.hpp"
+#include "shutdown.hpp"
 
 #include <CLI/CLI.hpp>
 
@@ -13,12 +13,14 @@
 
 
 int main(int argc, char* argv[]) {
+    std::signal(SIGINT, handle_shutdown);   // Ctrl+C
+    std::signal(SIGTERM, handle_shutdown);  // Docker stop
+
     CLI::App app{"RealSense camera node"};
     app.require_subcommand(1);
 
     list_cmd(app);
-    init_cmd(app);
-
+    run_cmd(app);
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& error) {

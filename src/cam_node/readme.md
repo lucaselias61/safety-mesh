@@ -1,6 +1,6 @@
 # Cam Node
 
-Its a wrapper of the RealSense lib that also handles the local perception pipeline for one 3D camera.
+Its a human detection pipeline that with the help of a RealSense depth camera, can broadcast the detections in camera frame.
 
 ## Build
 
@@ -28,15 +28,13 @@ List connected RealSense camera serial numbers and names:
 ./bin/cam_node discovery
 ```
 
-Initialize all connected cameras or one camera by serial number:
+Start the cameras streaming and detection by serial number:
 
 ```sh
-./bin/cam_node init --all
-./bin/cam_node init --serial 233322245
+./bin/cam_node run --serial 233322245
 ```
 
-Choose exactly one of `--all` or `--serial`. Initialization constructs `Camera`
-objects and reads their intrinsics; it currently exits afterward without streaming.
+Initialization constructs `Camera`objects and reads their intrinsics. It currently exits afterward without streaming.
 Missing cameras or initialization failures return a nonzero exit code.
 
 When intentionally changing dependency versions, regenerate and commit the lockfile:
@@ -54,7 +52,7 @@ cmake --build ../../build/conan-debug --target cam_node
 
 # Specifications
 
-Written in C++ because the Camera Node depends on low-level camera SDKs, OpenCV, AI inference runtimes, and predictable real-time performance close to the hardware.
+Written in C++ because the Camera Node depends on low-level camera SDKs, AI inference runtimes, and predictable real-time performance close to the hardware.
 
 # Behaviour 
 
@@ -63,12 +61,6 @@ Written in C++ because the Camera Node depends on low-level camera SDKs, OpenCV,
 
 - **AI Pose Detection**  
   Detects human pose keypoints in the camera image.
-
-- **Pose in Camera Frame**  
-  Reconstructs the detected pose in the camera coordinate frame using the camera intrinsics and depth data.
-
-- **World-Frame Transform**  
-  Transforms the camera-frame pose into the shared world frame using the calibrated camera extrinsics.
 
 # Outputs
 
@@ -82,13 +74,13 @@ Written in C++ because the Camera Node depends on low-level camera SDKs, OpenCV,
 		  "detections": [
 			{
 			  "person_id": "person_4",
-			  "keypoints_world": {
+			  "keypoints": {
 				"head": [2.44, 1.79, 1.72],
 				"neck": [2.45, 1.80, 1.52],
 				"torso": [2.46, 1.80, 1.05],
 				"hip": [2.47, 1.81, 0.92]
 			  },
-			  "pose_world": [2.48, 1.80, 0.0],
+			  "pose": [2.48, 1.80, 0.0],
 			  "confidence": 0.87
 			}
 		  ],
