@@ -25,8 +25,12 @@ int main(int argc, char* argv[]) {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& error) {
         return app.exit(error);
+    } catch (const rs2::error& error) {
+        std::cerr << "RealSense error:" << error.get_failed_function()
+                  << "(" << error.get_failed_args() << "): " << error.what() << '\n';
+        return 1;
     } catch (const std::exception& error) {
-        std::cerr << "Camera Node command failed: " << error.what() << '\n';
+        std::cerr << "Camera Node error:: " << error.what() << '\n';
         return 1;
     }
     return 0;

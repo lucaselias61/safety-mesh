@@ -2,6 +2,7 @@
 #include "pipeline.hpp"
 #include "camera.hpp"
 #include "shutdown.hpp"
+#include "vision.hpp"
 
 #include <iostream>
 
@@ -13,7 +14,7 @@ void Worker::run() {
     try {
         while (running_ && !shutdown_requested) {
             auto frames = pipeline_.get_frames();
-            auto detections = detector.infer(frames.get_color_frame());
+            // auto detections = detector_.detect(frames.get_color_frame());
         }
     } catch (const std::exception& e) {
         std::cerr << "(Worker Exception): " << e.what() << '\n';
