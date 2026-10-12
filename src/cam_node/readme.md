@@ -4,28 +4,49 @@ Its a human detection pipeline that with the help of a RealSense depth camera, c
 
 ## Build
 
-To build an independent and fresh config, run from `cam_node/` with CMake 3.24+, Conan 2,
-and a C++17 compiler installed:
+From `cam_node/`, install dependencies for your platform:
+
+```sh
+# macOS:
+./scripts/install-deps-macos.sh
+
+# Ubuntu Linux:
+./scripts/install-deps-linux.sh
+```
+
+Then configure and build on either platform:
 
 ```sh
 ./scripts/build.sh
 ```
 
-If Conan has no default profile yet, run `conan profile detect` once.
+macOS requires Homebrew. Linux supports Ubuntu 22.04, 24.04, and 26.04 LTS,
+using APT and the official RealSense repository. 
 
-The script installs dependencies using `conan.lock`, resets the CMake cache,
-and compiles a Release build in parallel.
+It installs: 
+- USB permission rules
+- kernel driver
 
-After source changes, rebuild without reinstalling dependencies:
+RealSense 2.58 or newer is required.
+
+After source changes, rebuild with:
 
 ```sh
+cmake --build build --parallel
+```
+
+To configure manually on macOS:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix)"
 cmake --build build --parallel
 ```
 
 List connected RealSense camera serial numbers and names:
 
 ```sh
-./bin/cam_node discovery
+./bin/cam_node list
 ```
 
 Start the cameras streaming and detection by serial number:
@@ -34,20 +55,13 @@ Start the cameras streaming and detection by serial number:
 ./bin/cam_node run --serial 233322245
 ```
 
-Initialization constructs `Camera`objects and reads their intrinsics. It currently exits afterward without streaming.
+`list` reads only device names and serial numbers
+`run` constructs `Camera` objects, reads their intrinsics, and starts streaming and detection.
 Missing cameras or initialization failures return a nonzero exit code.
 
-When intentionally changing dependency versions, regenerate and commit the lockfile:
 
 ```sh
-conan lock create . -s build_type=Release --lockfile-out=conan.lock
-```
 
-The parent project can still build this target through `add_subdirectory(src/cam_node)`.
-To build only this target using the existing parent build, run:
-
-```sh
-cmake --build ../../build/conan-debug --target cam_node
 ```
 
 # Specifications

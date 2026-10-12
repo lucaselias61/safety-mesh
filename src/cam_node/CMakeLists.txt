@@ -5,13 +5,17 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
-find_package(realsense2 REQUIRED)
+find_package(CLI11 CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(realsense2 2.58 CONFIG REQUIRED)
+find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc)
 
 add_executable(cam_node
     src/main.cpp
     src/worker.cpp
     src/camera.cpp
     src/pipeline.cpp
+    src/vision.cpp
 )
 
 set_target_properties(cam_node PROPERTIES
@@ -20,9 +24,10 @@ set_target_properties(cam_node PROPERTIES
 
 target_compile_features(cam_node PRIVATE cxx_std_17)
 set_target_properties(cam_node PROPERTIES CXX_EXTENSIONS OFF)
-target_include_directories(cam_node PRIVATE include)
-find_package(fmt CONFIG REQUIRED)
-find_package(CLI11 CONFIG REQUIRED)
-target_link_libraries(cam_node PRIVATE CLI11::CLI11)
-target_link_libraries(cam_node PRIVATE fmt::fmt)
-target_link_libraries(cam_node PRIVATE realsense2::realsense2)
+target_include_directories(cam_node PRIVATE include ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(cam_node PRIVATE
+    CLI11::CLI11
+    fmt::fmt
+    realsense2::realsense2
+    ${OpenCV_LIBS}
+)
