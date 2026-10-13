@@ -9,3 +9,5 @@ const Detection& Inference::detect(const rs2::video_frame& frame) {
     detection.timestamp = std::time(nullptr);
     return detection;
 }
+
+

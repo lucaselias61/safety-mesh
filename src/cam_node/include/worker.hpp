@@ -7,7 +7,7 @@
 
 class Worker {
 public:
-    explicit Worker(const Camera& cam) : cam_(cam), pipeline_(cam) {}
+    explicit Worker(const Camera& cam) : cam_(cam), pipeline_(cam), engine_(pipeline_) {}
 
     void run();
     void stop();
@@ -17,5 +17,5 @@ private:
     Camera cam_;
     bool running_ = false;
     Pipeline pipeline_;
-    Inference detector_;
+    Inference engine_;
 };

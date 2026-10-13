@@ -19,7 +19,8 @@ public:
 
 class Inference {
 public:
-    explicit Inference(const Pipeline& pipeline);
+    explicit Inference(const Pipeline& pipeline) 
+        : pipeline_(pipeline) {};
 
     const Detection& detect(const rs2::video_frame& frame);
 
