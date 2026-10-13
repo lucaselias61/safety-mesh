@@ -16,9 +16,10 @@ void Worker::run() {
             auto frames = pipeline_.get_frames();
             // auto detections = detector_.detect(frames.get_color_frame());
         }
-    } catch (const std::exception& e) {
-        std::cerr << "(Worker Exception): " << e.what() << '\n';
+    } catch (...) {
         std::cerr << "Stopping worker...\n";
+        stop();
+        throw;
     }
     stop();
 }
