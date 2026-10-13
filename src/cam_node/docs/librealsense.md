@@ -1,5 +1,11 @@
 # RealSense devices
-### found at [realsenseai/librealsense](https://github.com/realsenseai/librealsense/blob/master/include/librealsense2/h/rs_sensor.h)
+
+The library contains helper functions to access, get information or configurate RealSense stereo depth products, like for exemple the D435i or D455.
+
+### [realsenseai/librealsense](https://github.com/realsenseai/librealsense) 
+
+ReaslSense also has a ROS wrapper, but for the sake of simplicity we use direct communication between the modules. Each module has a well defined interface and dont need ROS middleware layer. Implementing such framework would add dependencies and deployment complexity.
+
 
 ## Streams provided (not necessarily on every device)
     typedef enum rs2_stream
@@ -21,6 +27,8 @@
         RS2_STREAM_OBJECT_DETECTION                 , /**< object detection stream */
         RS2_STREAM_COUNT
     } rs2_stream;
+
+
 ## Stream's formats
     typedef enum rs2_format
     {
@@ -61,3 +69,5 @@
         RS2_FORMAT_NV12            , /**< Semi-planar YUV 4:2:0: full-resolution Y plane followed by interleaved half-resolution U,V plane. 12 bits per pixel. */
         RS2_FORMAT_COUNT             /**< Number of enumeration values. Not a valid input: intended to be used in for-loops. */
     } rs2_format;
+
+### Camera information, Streams and their formats can be found at [realsenseai/librealsense](https://github.com/realsenseai/librealsense/blob/master/include/librealsense2/h/rs_sensor.h)
