@@ -1,13 +1,14 @@
 #include "camera.hpp"
 
 #include <librealsense2/rs.hpp>
-
 #include <fstream>
 #include <iomanip>
 #include <limits>
 #include <optional>
 #include <stdexcept>
 #include <utility>
+#include <algorithm>
+
 
 namespace {
 
