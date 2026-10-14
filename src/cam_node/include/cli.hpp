@@ -1,47 +1,21 @@
 #pragma once
 
-#include "camera.hpp"
-#include "worker.hpp"
-
 #include <CLI/CLI.hpp>
-#include <iostream>
-#include <stdexcept>
-#include <memory>
-#include <string>
+
+/**
+ * \brief lists the connected RealSense cameras.
+ * \param app The CLI app to which the list command will be added.
+ * \note This command will print the serial number and name of each connected RealSense camera.
+ */
+void list_cmd(CLI::App& app);
+
+/**
+ * \brief Runs the detection pipeline for a connected camera by its serial number.
+ * \param app The CLI app to which the run command will be added.
+ */
+void run_cmd(CLI::App& app);
 
 
-inline void list_cmd(CLI::App& app) {
-    app.add_subcommand("list", "List connected RealSense cameras")->callback([]() {
-        const auto cameras = discover_cameras();
-        if (cameras.empty()) {
-            std::cout << "No RealSense device connected\n";
-        }
-        for (const auto& camera : cameras) {
-            std::cout << camera.get_serial() << '\t' << camera.get_name() << '\n';
-        }
-    });
-}
-
-
-inline void run_cmd(CLI::App& app) {
-    // The callback owns these objects beyond command registration.
-    auto serial = std::make_shared<std::string>();
-    auto* run_command = app.add_subcommand("run", "Run a connected camera");
-    run_command->add_option("--serial", *serial, "Run a camera by serial number")
-    ->required()
-    ->check([](const std::string& value) {return value.empty() ? "Serial number cannot be empty" : "";});
-
-    run_command->callback([serial] {
-        for (const auto& camera : discover_cameras()) {
-            if (camera.get_serial() == *serial) {
-                Worker worker(camera);
-                worker.run();
-                return;
-            }
-        }
-        throw std::runtime_error("No RealSense device connected with serial " + *serial);
-    });
-}
 
 
 

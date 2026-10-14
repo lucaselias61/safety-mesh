@@ -16,6 +16,7 @@ add_executable(cam_node
     src/camera.cpp
     src/pipeline.cpp
     src/vision.cpp
+    src/cli.cpp
 )
 
 set_target_properties(cam_node PROPERTIES

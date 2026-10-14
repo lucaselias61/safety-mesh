@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
 
     list_cmd(app);
     run_cmd(app);
+    
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& error) {
