@@ -41,3 +41,25 @@ void run_cmd(CLI::App& app) {
         throw std::runtime_error("No RealSense device connected with serial " + *serial);
     });
 }
+
+
+void streams_cmd(CLI::App& app) {
+    auto serial = std::make_shared<std::string>();
+    auto* streams_command = app.add_subcommand("streams", "List available streams for a connected camera");
+    streams_command->add_option("--serial", *serial, "Specify the serial number of the camera")
+    ->required()
+    ->check([](const std::string& value) {return value.empty() ? "Serial number cannot be empty" : "";});
+
+    streams_command->callback([serial] {
+        for (const auto& camera : discover_cameras()) {
+            if (camera.get_serial() == *serial) {
+                const auto streams = camera.get_streams();
+                for (const auto& stream : streams) {
+                    std::cout << stream << '\n';
+                }
+                return;
+            }
+        }
+        throw std::runtime_error("No RealSense device connected with serial " + *serial);
+    });
+}

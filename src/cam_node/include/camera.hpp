@@ -21,12 +21,14 @@ public:
     const std::string& get_name() const noexcept;
     const Intrinsics& get_intrinsics() const noexcept;
     const rs2::device& get_device() const noexcept;
+    const std::vector<std::string>& get_streams() const noexcept;
 
 private:
     std::string serial_;
     std::string name_;
     Intrinsics intrinsics_;
     rs2::device device_;
+    std::vector<std::string> streams_;
 };
 
 // Returns connected cameras; SDK failures propagate to the caller.

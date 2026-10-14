@@ -44,6 +44,19 @@ Intrinsics read_intrinsics(const rs2::device& device) {
     return Intrinsics{*depth, *color};
 }
 
+std::vector<std::string> get_camera_streams(const rs2::device& device) {
+    std::vector<std::string> streams;
+    for (const auto& sensor : device.query_sensors()) {
+        for (const auto& profile : sensor.get_stream_profiles()) {
+            const auto stream_name = std::string(profile.stream_name());
+            if (std::find(streams.begin(), streams.end(), stream_name) == streams.end()) {
+                streams.push_back(stream_name);
+            }
+        }
+    }
+    return streams;
+}
+
 } // namespace
 
 /// @brief Constructs a Camera object with the given device.
@@ -52,6 +65,7 @@ Camera::Camera(rs2::device device) {
     serial_ = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     name_ = device.get_info(RS2_CAMERA_INFO_NAME);
     intrinsics_ = read_intrinsics(device);
+    streams_ = get_camera_streams(device);
     device_ = device;
 }
 
@@ -75,6 +89,12 @@ const rs2::device& Camera::get_device() const noexcept {
     return device_;
 }
 
+/// @brief streams getter
+const std::vector<std::string>& Camera::get_streams() const noexcept {
+    return streams_;
+}
+
+
 std::vector<Camera> discover_cameras() {
     rs2::context context;
     std::vector<Camera> cameras;
@@ -83,3 +103,5 @@ std::vector<Camera> discover_cameras() {
     }
     return cameras;
 }
+
+
