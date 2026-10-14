@@ -15,6 +15,11 @@ class Frames {
 public:
     explicit Frames(const rs2::frameset& f);
 
+    /// @brief Checks if the frameset contains valid frames.
+    bool operator!() const {
+        return !static_cast<bool>(frames_);
+    }
+
     rs2::video_frame get_color_frame() const;
     rs2::depth_frame get_depth_frame() const;
     rs2::motion_frame get_accel_frame() const;

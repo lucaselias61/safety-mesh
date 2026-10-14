@@ -10,10 +10,21 @@
 void Worker::run() {
     pipeline_.start();
     running_ = true;
+    int retry_count = 0;
 
     try {
         while (running_ && !shutdown_requested) {
             auto frames = pipeline_.get_frames();
+            if (!frames) {
+                std::cerr << "No color or depth frame, waiting...\n";
+                retry_count++;
+                if (retry_count >= 5) {
+                    std::cerr << "Retry limit reached, stopping worker...\n";
+                    stop();
+                    break;
+                }
+                continue;
+            }
             // auto detections = detector_.detect(frames.get_color_frame());
         }
     } catch (...) {

@@ -47,11 +47,13 @@ void Pipeline::stop() {
 }
 
 /// @brief Get the latest frames from the camera streams
+/// @note This will not block indefinitely. It will return immediately if no frames are available.
 /// @return The latest set of frames from the active camera streams (color | depth | accel | gyro).
 /// @throws std::runtime_error if the camera device is not connected.
 Frames Pipeline::get_frames() {
-    rs2::frameset frameset = pipeline_.wait_for_frames();
-    Frames frames(frameset);
-    return frames;
+    rs2::frameset frameset;
+    // here we use try_wait_for_frames instead of wait_for_frames to avoid blocking indefinitely
+    pipeline_.try_wait_for_frames(&frameset);
+    return Frames(frameset);
 }
 
