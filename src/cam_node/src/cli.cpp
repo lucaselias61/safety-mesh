@@ -56,10 +56,10 @@ void streams_cmd(CLI::App& app) {
                 const auto& streams = camera.get_supported_stream_profiles();
                 for (const auto& [name, profiles] : streams) {
                     for (const auto& profile : profiles) {
-                        std::cout << profile.id << " | " << name << " | " << profile.format << " | " << profile.fps << " FPS";
+                        std::cout << std::get<0>(profile) << " | " << name << " | " << std::get<2>(profile) << " | " << std::get<3>(profile) << " FPS";
 
-                        if (profile.width > 0) {
-                            std::cout << " | " << profile.width << "x" << profile.height;
+                        if (std::get<4>(profile) > 0) {
+                            std::cout << " | " << std::get<4>(profile) << "x" << std::get<5>(profile);
                         }
                         std::cout << '\n';
                     }

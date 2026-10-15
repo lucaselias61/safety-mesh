@@ -7,14 +7,9 @@
 #include <librealsense2/rs.hpp>
 
 
-struct StreamProfile {
-    int index = 0;
-    int id = 0;
-    std::string format;
-    int fps;
-    int width = 0;
-    int height = 0;
-};
+using StreamProfile =
+    std::tuple<  int,   std::string,   std::string,   int,   int,   int   >;
+//                ID      stream         format       FPS   width  height
 
 using SupportedStreamProfiles = std::map<std::string, std::vector<StreamProfile>>;
 

@@ -50,15 +50,17 @@ SupportedStreamProfiles _get_supported_stream_profiles(const rs2::device& device
     for (const auto& sensor : device.query_sensors()) {
         for (const auto& profile : sensor.get_stream_profiles()) {
            StreamProfile entry{
-                profile.stream_index(),
                 profile.unique_id(),
+                profile.stream_name(),
                 rs2_format_to_string(profile.format()),
-                profile.fps()
+                profile.fps(),
+                0,
+                0
             };
 
             if (auto video = profile.as<rs2::video_stream_profile>()) {
-                entry.width = video.width();
-                entry.height = video.height();
+                std::get<4>(entry) = video.width();
+                std::get<5>(entry) = video.height();
             }
 
             streams[profile.stream_name()].push_back(entry);
