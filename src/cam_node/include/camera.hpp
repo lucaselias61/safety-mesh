@@ -7,7 +7,7 @@
 #include <librealsense2/rs.hpp>
 
 
-struct StreamProfile {
+struct EntryStreamProfile {
     std::string name;
     std::string format;
     int fps;
@@ -15,7 +15,15 @@ struct StreamProfile {
     int height = 0;
 };
 
-using SupportedStreamProfiles = std::map<int, std::vector<StreamProfile>>;
+class StreamProfiles {
+public:
+    void add(int id, const rs2::stream_profile& profile);
+
+    std::string to_string() const;
+
+private:
+    std::map<int, std::vector<EntryStreamProfile>> profiles_;
+};
 
 /// Depth and color calibration parameters for a camera.
 struct Intrinsics {
@@ -33,7 +41,8 @@ public:
     const std::string& get_name() const noexcept;
     const Intrinsics& get_intrinsics() const noexcept;
     const rs2::device& get_device() const noexcept;
-    const SupportedStreamProfiles& get_supported_stream_profiles() const noexcept;
+    const StreamProfiles& get_supported_stream_profiles() const noexcept;
+    const StreamProfiles& get_active_stream_profiles() const noexcept;
 
     /// @brief Checks if the camera device is still connected.
     bool is_ready() const;
@@ -43,7 +52,6 @@ private:
     std::string name_;
     Intrinsics intrinsics_;
     rs2::device device_;
-    SupportedStreamProfiles supported_stream_profiles_;
 };
 
 // Returns connected cameras; SDK failures propagate to the caller.
