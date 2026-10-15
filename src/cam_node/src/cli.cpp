@@ -54,16 +54,14 @@ void streams_cmd(CLI::App& app) {
 
     streams_command->callback([serial, supported] {
         for (const auto& camera : discover_cameras()) {
-            if (camera.get_serial() == *serial) {
+             if (camera.get_serial() == *serial) {
+                const auto streams = *supported
+                    ? camera.get_supported_stream_profiles()
+                    : camera.get_active_stream_profiles();
 
-                if (*supported) {
-                    const auto& streams = camera.get_supported_stream_profiles();
-                    std::cout << streams.to_string();
-                } else {
-                    const auto& streams = camera.get_active_stream_profiles();
-                    std::cout << streams.to_string();
-                }
-            }
+                std::cout << streams.to_string();
+                return;
+            }// Exit the callback after processing the matching camera
         }
         throw std::runtime_error("No RealSense device connected with serial " + *serial);
     });
