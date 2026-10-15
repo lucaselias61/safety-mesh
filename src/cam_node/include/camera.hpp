@@ -7,11 +7,15 @@
 #include <librealsense2/rs.hpp>
 
 
-using StreamProfile =
-    std::tuple<  int,   std::string,   std::string,   int,   int,   int   >;
-//                ID      stream         format       FPS   width  height
+struct StreamProfile {
+    std::string name;
+    std::string format;
+    int fps;
+    int width = 0;
+    int height = 0;
+};
 
-using SupportedStreamProfiles = std::map<std::string, std::vector<StreamProfile>>;
+using SupportedStreamProfiles = std::map<int, std::vector<StreamProfile>>;
 
 /// Depth and color calibration parameters for a camera.
 struct Intrinsics {
