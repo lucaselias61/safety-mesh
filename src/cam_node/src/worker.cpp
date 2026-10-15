@@ -16,11 +16,8 @@ void Worker::run() {
         while (running_ && !shutdown_requested) {
             auto frames = pipeline_.get_frames();
             if (!frames) {
-                std::cerr << "No color or depth frame, waiting...\n";
-                retry_count++;
-                if (retry_count >= 5) {
-                    std::cerr << "Retry limit reached, stopping worker...\n";
-                    stop();
+                std::cerr << "No frames received, retrying...\n";
+                if (++retry_count >= 5) {
                     break;
                 }
                 continue;

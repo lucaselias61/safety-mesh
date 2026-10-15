@@ -95,6 +95,13 @@ const std::vector<std::string>& Camera::get_streams() const noexcept {
     return streams_;
 }
 
+/// @brief Checks if the camera device is still connected.
+bool Camera::is_ready() const {
+    if (!device_ || !device_.is_connected()) {return false;}
+    auto device = device_;
+    return !device.is_in_recovery_mode();
+}
+
 
 std::vector<Camera> discover_cameras() {
     rs2::context context;

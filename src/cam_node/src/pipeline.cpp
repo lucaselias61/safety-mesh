@@ -37,6 +37,10 @@ const Camera& Pipeline::camera() const noexcept {
 /// @brief Start the camera streams with the current configuration
 /// @note This will block until the camera is ready to provide frames.
 void Pipeline::start() {
+    if (!cam_.is_ready()) {
+        throw std::runtime_error("Camera is disconnected or in recovery mode");
+    }
+
     pipeline_.start(config_);
 }
 
@@ -57,3 +61,4 @@ Frames Pipeline::get_frames() {
     return Frames(frameset);
 }
 
+    

@@ -23,6 +23,9 @@ public:
     const rs2::device& get_device() const noexcept;
     const std::vector<std::string>& get_streams() const noexcept;
 
+    /// @brief Checks if the camera device is still connected.
+    bool is_ready() const;
+
 private:
     std::string serial_;
     std::string name_;
