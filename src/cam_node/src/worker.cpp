@@ -18,6 +18,7 @@ void Worker::run() {
             if (!frames) {
                 std::cerr << "No frames received, retrying...\n";
                 if (++retry_count >= 5) {
+                    std::cerr << "Max retry count reached\n";
                     break;
                 }
                 continue;

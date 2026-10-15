@@ -53,9 +53,17 @@ void streams_cmd(CLI::App& app) {
     streams_command->callback([serial] {
         for (const auto& camera : discover_cameras()) {
             if (camera.get_serial() == *serial) {
-                const auto streams = camera.get_streams();
-                for (const auto& stream : streams) {
-                    std::cout << stream << '\n';
+                const auto& streams = camera.get_supported_stream_profiles();
+                for (const auto& [name, profiles] : streams) {
+                    for (const auto& profile : profiles) {
+                        std::cout << name << " | " << profile.index << " | " << profile.id;
+                        std::cout << " | " << profile.format << " | " << profile.fps << " FPS";
+
+                        if (profile.width > 0) {
+                            std::cout << " | " << profile.width << "x" << profile.height;
+                        }
+                        std::cout << '\n';
+                    }
                 }
                 return;
             }

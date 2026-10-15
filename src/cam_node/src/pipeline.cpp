@@ -5,28 +5,21 @@
 
 Frames::Frames(const rs2::frameset& f) : frames_(f) {}
 
-rs2::video_frame Frames::get_color_frame() const {
-    return frames_.get_color_frame();
-}
+rs2::video_frame Frames::get_color_frame() const {return frames_.get_color_frame();}
+rs2::depth_frame Frames::get_depth_frame() const {return frames_.get_depth_frame();}
+rs2::motion_frame Frames::get_accel_frame() const {return frames_.first_or_default(RS2_STREAM_ACCEL).as<rs2::motion_frame>();}
+rs2::motion_frame Frames::get_gyro_frame() const {return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();}
 
-rs2::depth_frame Frames::get_depth_frame() const {
-    return frames_.get_depth_frame();
-}
-
-rs2::motion_frame Frames::get_accel_frame() const {
-    return frames_.first_or_default(RS2_STREAM_ACCEL).as<rs2::motion_frame>();
-}
-
-rs2::motion_frame Frames::get_gyro_frame() const {
-    return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();
-}
 
 Pipeline::Pipeline(const Camera& camera) : cam_(camera) {
     config_.enable_device(camera.get_serial());
-    config_.enable_stream(RS2_STREAM_COLOR);
-    config_.enable_stream(RS2_STREAM_DEPTH);
-    config_.enable_stream(RS2_STREAM_ACCEL);
-    config_.enable_stream(RS2_STREAM_GYRO);
+    std::vector<rs2_stream> STREAMS = {RS2_STREAM_COLOR, RS2_STREAM_DEPTH, RS2_STREAM_ACCEL, RS2_STREAM_GYRO};
+    for (const auto& stream : STREAMS) {
+        config_.enable_stream(stream);
+        // start();
+        // Frames frames = get_frames();
+        // if (frames)
+    }
 }
 
 /// @brief Camera getter

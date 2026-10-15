@@ -45,14 +45,23 @@ Intrinsics read_intrinsics(const rs2::device& device) {
     return Intrinsics{*depth, *color};
 }
 
-std::vector<std::string> get_camera_streams(const rs2::device& device) {
-    std::vector<std::string> streams;
+SupportedStreamProfiles _get_supported_stream_profiles(const rs2::device& device) {
+    SupportedStreamProfiles streams;
     for (const auto& sensor : device.query_sensors()) {
         for (const auto& profile : sensor.get_stream_profiles()) {
-            const auto stream_name = std::string(profile.stream_name());
-            if (std::find(streams.begin(), streams.end(), stream_name) == streams.end()) {
-                streams.push_back(stream_name);
+           StreamProfile entry{
+                profile.stream_index(),
+                profile.unique_id(),
+                rs2_format_to_string(profile.format()),
+                profile.fps()
+            };
+
+            if (auto video = profile.as<rs2::video_stream_profile>()) {
+                entry.width = video.width();
+                entry.height = video.height();
             }
+
+            streams[profile.stream_name()].push_back(entry);
         }
     }
     return streams;
@@ -66,7 +75,7 @@ Camera::Camera(rs2::device device) {
     serial_ = device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     name_ = device.get_info(RS2_CAMERA_INFO_NAME);
     intrinsics_ = read_intrinsics(device);
-    streams_ = get_camera_streams(device);
+    supported_stream_profiles_ = _get_supported_stream_profiles(device);
     device_ = device;
 }
 
@@ -90,9 +99,10 @@ const rs2::device& Camera::get_device() const noexcept {
     return device_;
 }
 
-/// @brief streams getter
-const std::vector<std::string>& Camera::get_streams() const noexcept {
-    return streams_;
+/// @brief supported streams getter
+/// @return The list of supported stream profiles for the camera.
+const SupportedStreamProfiles& Camera::get_supported_stream_profiles() const noexcept {
+    return supported_stream_profiles_;
 }
 
 /// @brief Checks if the camera device is still connected.
