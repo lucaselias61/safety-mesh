@@ -3,11 +3,11 @@
 #include "camera.hpp"
 #include "pipeline.hpp"
 #include "vision.hpp"
-#include "pipeline.hpp"
 
 class Worker {
 public:
-    explicit Worker(const Camera& cam) : cam_(cam), pipeline_(cam), engine_(pipeline_) {}
+    Worker(const Camera& cam, const PipelineProfile& profile)
+        : cam_(cam), pipeline_(cam, profile), engine_(pipeline_) {}
 
     void run();
     void stop();

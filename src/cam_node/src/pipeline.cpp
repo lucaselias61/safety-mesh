@@ -11,14 +11,31 @@ rs2::motion_frame Frames::get_accel_frame() const {return frames_.first_or_defau
 rs2::motion_frame Frames::get_gyro_frame() const {return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();}
 
 
-Pipeline::Pipeline(const Camera& camera) : cam_(camera) {
+Pipeline::Pipeline(const Camera& camera, const PipelineProfile& pipeline_profile) : cam_(camera), pipeline_profile_(pipeline_profile) {
     config_.enable_device(camera.get_serial());
-    std::vector<rs2_stream> STREAMS = {RS2_STREAM_COLOR, RS2_STREAM_DEPTH, RS2_STREAM_ACCEL, RS2_STREAM_GYRO};
-    for (const auto& stream : STREAMS) {
-        config_.enable_stream(stream);
-        // start();
-        // Frames frames = get_frames();
-        // if (frames)
+
+    for (const auto& [id, streams] : pipeline_profile_.get_profiles()) {
+        for (const auto& stream : streams) {
+            if (!stream.is_video()) {
+                config_.enable_stream(
+                    stream.stream_type(),
+                    -1,
+                    stream.format(),
+                    stream.fps()
+                );
+            }
+            config_.enable_stream(
+                stream.stream_type(),
+                -1,
+                stream.width(),
+                stream.height(),
+                stream.format(),
+                stream.fps()
+            );
+            // start();
+            // Frames frames = get_frames();
+            // if (frames)
+        }
     }
 }
 

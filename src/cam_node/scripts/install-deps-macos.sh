@@ -10,7 +10,7 @@ if ! command -v brew >/dev/null 2>&1; then
     echo "Install Homebrew first: https://brew.sh" >&2
     exit 1
 fi
-brew install cmake cli11 fmt librealsense opencv
+brew install cmake cli11 fmt librealsense opencv nlohmann-json
 # Update an existing SDK installation as well as installing a missing one.
 brew upgrade librealsense
 

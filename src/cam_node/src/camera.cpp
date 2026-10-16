@@ -1,4 +1,6 @@
 #include "camera.hpp"
+#include "pipeline.hpp"
+#include "stream.hpp"
 
 #include <librealsense2/rs.hpp>
 #include <fstream>
@@ -45,21 +47,21 @@ Intrinsics read_intrinsics(const rs2::device& device) {
     return Intrinsics{*depth, *color};
 }
 
-StreamProfiles _get_supported_stream_profiles(const rs2::device& device) {
-    StreamProfiles streams;
+std::map<int, StreamProfile> _get_supported_stream_profiles(const rs2::device& device) {
+    std::map<int, StreamProfile> streams;
     for (const auto& sensor : device.query_sensors()) {
         for (const auto& profile : sensor.get_stream_profiles()) {
-            streams.add(profile.unique_id(), profile);
+            streams.emplace(profile.unique_id(), StreamProfile(profile));
         }
     }
     return streams;
 }
 
-StreamProfiles _get_active_stream_profiles(const rs2::device& device) {
-    StreamProfiles streams;
+std::map<int, StreamProfile> _get_active_stream_profiles(const rs2::device& device) {
+    std::map<int, StreamProfile> streams;
     for (const auto& sensor : device.query_sensors()) {
         for (const auto& profile : sensor.get_active_streams()) {
-            streams.add(profile.unique_id(), profile);
+            streams.emplace(profile.unique_id(), StreamProfile(profile));
         }
     }
     return streams;  
@@ -90,13 +92,13 @@ const rs2::device& Camera::get_device() const noexcept {return device_;}
 
 /// @brief supported streams getter
 /// @return The list of supported stream profiles for the camera.
-StreamProfiles Camera::get_supported_stream_profiles() const noexcept {
+std::map<int, StreamProfile> Camera::get_supported_stream_profiles() const noexcept {
     return _get_supported_stream_profiles(device_);
 }
 
 /// @brief active streams getter
 /// @return The list of active stream profiles for the camera.
-StreamProfiles Camera::get_active_stream_profiles() const noexcept {
+std::map<int, StreamProfile> Camera::get_active_stream_profiles() const noexcept {
     return _get_active_stream_profiles(device_);
 }
 
@@ -106,40 +108,6 @@ bool Camera::is_ready() const {
     auto device = device_;
     return !device.is_in_recovery_mode();
 }
-
-void StreamProfiles::add(int id, const rs2::stream_profile& profile) {
-    EntryStreamProfile entry{
-        profile.stream_name(),
-        rs2_format_to_string(profile.format()),
-        profile.fps(),
-        0,
-        0
-    };
-
-    if (auto video = profile.as<rs2::video_stream_profile>()) {
-        entry.width = video.width();
-        entry.height = video.height();
-    }
-
-    profiles_[id].push_back(entry);
-}
-
-std::string StreamProfiles::to_string() const {
-        std::ostringstream out;
-        for (const auto& [id, profiles] : profiles_) {
-            for (const auto& profile : profiles) {
-                out << id << " | " << profile.name
-                    << " | " << profile.format
-                    << " | " << profile.fps << " FPS";
-                if (profile.width > 0) {
-                    out << " | " << profile.width
-                        << 'x' << profile.height;
-                }
-                out << '\n';
-            }
-        }
-        return out.str();
-    }
 
 
 std::vector<Camera> discover_cameras() {

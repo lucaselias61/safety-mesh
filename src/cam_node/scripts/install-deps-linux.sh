@@ -45,7 +45,7 @@ printf 'deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsens
 
 "${root_cmd[@]}" apt-get update
 "${root_cmd[@]}" apt-get install -y build-essential cmake libcli11-dev libfmt-dev \
-    libopencv-dev librealsense2-dev librealsense2-udev-rules
+    libopencv-dev librealsense2-dev librealsense2-udev-rules nlohmann-json3-dev
 sdk_version="$(dpkg-query -W -f='${Version}' librealsense2-dev)"
 if ! dpkg --compare-versions "$sdk_version" ge 2.58; then
     echo "RealSense $sdk_version was installed, but this project requires 2.58 or newer." >&2

@@ -49,20 +49,23 @@ List connected RealSense camera serial numbers and names:
 ./bin/cam_node list
 ```
 
-Start the cameras streaming and detection by serial number:
+Start streaming and detection using a camera config file:
+
+```sh
+cp config/camera.json.example config/camera.json
+./bin/cam_node run --config config/camera.json
+```
+
+or by its serial number:
 
 ```sh
 ./bin/cam_node run --serial 233322245
 ```
 
 `list` reads only device names and serial numbers
-`run` constructs `Camera` objects, reads their intrinsics, and starts streaming and detection.
+`run` starts streaming and detection when enabled.
 Missing cameras or initialization failures return a nonzero exit code.
 
-
-```sh
-
-```
 
 # Specifications
 

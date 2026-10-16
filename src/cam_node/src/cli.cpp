@@ -1,4 +1,5 @@
 #include "cli.hpp"
+#include "config.hpp"
 #include "camera.hpp"
 #include "worker.hpp"
 
@@ -24,21 +25,32 @@ void list_cmd(CLI::App& app) {
 
 void run_cmd(CLI::App& app) {
     // The callback owns these objects beyond command registration.
-    auto serial = std::make_shared<std::string>();
+    auto config = std::make_shared<std::string>();
     auto* run_command = app.add_subcommand("run", "Run a connected camera");
-    run_command->add_option("--serial", *serial, "Run a camera by serial number")
+    run_command->add_option("--config", *config, "Path to the camera configuration file")
     ->required()
-    ->check([](const std::string& value) {return value.empty() ? "Serial number cannot be empty" : "";});
+    ->check(CLI::ExistingFile);
 
-    run_command->callback([serial] {
+    run_command->callback([config] {
+        const auto camera_config = load_camera_config(*config);
+        if (!camera_config.enabled) {
+            return;
+        }
+        if (camera_config.streams.empty()) {
+            throw std::runtime_error("No streams enabled in camera configuration");
+        }
         for (const auto& camera : discover_cameras()) {
-            if (camera.get_serial() == *serial) {
-                Worker worker(camera);
+            if (camera.get_serial() == camera_config.serial) {
+                PipelineProfile profile;
+                for (const auto& stream : camera_config.streams) {
+                    profile.add(StreamProfile(camera.get_device(), stream));
+                }
+                Worker worker(camera, profile);
                 worker.run();
                 return;
             }
         }
-        throw std::runtime_error("No RealSense device connected with serial " + *serial);
+        throw std::runtime_error("No RealSense device connected with serial " + camera_config.serial);
     });
 }
 
@@ -58,8 +70,10 @@ void streams_cmd(CLI::App& app) {
                 const auto streams = *supported
                     ? camera.get_supported_stream_profiles()
                     : camera.get_active_stream_profiles();
-
-                std::cout << streams.to_string();
+                
+                for (const auto& [id, stream] : streams) {
+                    std::cout << id << " | " << stream.to_string() << '\n';
+                }
                 return;
             }// Exit the callback after processing the matching camera
         }
