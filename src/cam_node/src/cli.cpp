@@ -61,19 +61,22 @@ void streams_cmd(CLI::App& app) {
     streams_command->add_option("--serial", *serial, "Specify the serial number of the camera")
     ->required()
     ->check([](const std::string& value) {return value.empty() ? "Serial number cannot be empty" : "";});
+    auto key = std::make_shared<std::string>("all");
+    streams_command->add_option("--key", *key, "Filter and sort stream profiles by key (all, color, depth, infrared, fps, width, height)"); 
 
-    streams_command->callback([serial] {
+    streams_command->callback([serial, key] {
         for (const auto& camera : discover_cameras()) {
              if (camera.get_serial() == *serial) {
-                const auto streams = camera.get_supported_stream_profiles();
+                const auto streams = sort_n_filter_stream_profiles_by_key(
+                    camera.get_supported_stream_profiles(), *key);
 
                 if (streams.empty()) {
                     std::cout << "No supported stream profiles found.\n";
                     return;
                 }
 
-                for (const auto& [id, stream] : streams) {
-                    std::cout << id << " | " << stream.to_string() << '\n';
+                for (const auto& stream : streams) {
+                    std::cout << stream.to_string();
                 }
                 return;
             }// Exit the callback after processing the matching camera

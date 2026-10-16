@@ -24,8 +24,8 @@ public:
     const std::string& get_name() const noexcept;
     const Intrinsics& get_intrinsics() const noexcept;
     const rs2::device& get_device() const noexcept;
-    std::map<int, StreamProfile> get_supported_stream_profiles() const noexcept;
-    std::map<int, StreamProfile> get_active_stream_profiles() const noexcept;
+    std::vector<StreamProfile> get_supported_stream_profiles() const noexcept;
+    std::vector<StreamProfile> get_active_stream_profiles() const noexcept;
 
     /// @brief Checks if the camera device is still connected.
     bool is_ready() const;

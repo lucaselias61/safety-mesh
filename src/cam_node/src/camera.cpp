@@ -47,21 +47,21 @@ Intrinsics read_intrinsics(const rs2::device& device) {
     return Intrinsics{*depth, *color};
 }
 
-std::map<int, StreamProfile> _get_supported_stream_profiles(const rs2::device& device) {
-    std::map<int, StreamProfile> streams;
+std::vector<StreamProfile> _get_supported_stream_profiles(const rs2::device& device) {
+    std::vector<StreamProfile> streams;
     for (const auto& sensor : device.query_sensors()) {
         for (const auto& profile : sensor.get_stream_profiles()) {
-            streams.emplace(profile.unique_id(), StreamProfile(profile));
+            streams.push_back(StreamProfile(profile));
         }
     }
     return streams;
 }
 
-std::map<int, StreamProfile> _get_active_stream_profiles(const rs2::device& device) {
-    std::map<int, StreamProfile> streams;
+std::vector<StreamProfile> _get_active_stream_profiles(const rs2::device& device) {
+    std::vector<StreamProfile> streams;
     for (const auto& sensor : device.query_sensors()) {
         for (const auto& profile : sensor.get_active_streams()) {
-            streams.emplace(profile.unique_id(), StreamProfile(profile));
+            streams.push_back(StreamProfile(profile));
         }
     }
     return streams;  
@@ -92,13 +92,13 @@ const rs2::device& Camera::get_device() const noexcept {return device_;}
 
 /// @brief supported streams getter
 /// @return The list of supported stream profiles for the camera.
-std::map<int, StreamProfile> Camera::get_supported_stream_profiles() const noexcept {
+std::vector<StreamProfile> Camera::get_supported_stream_profiles() const noexcept {
     return _get_supported_stream_profiles(device_);
 }
 
 /// @brief active streams getter
 /// @return The list of active stream profiles for the camera.
-std::map<int, StreamProfile> Camera::get_active_stream_profiles() const noexcept {
+std::vector<StreamProfile> Camera::get_active_stream_profiles() const noexcept {
     return _get_active_stream_profiles(device_);
 }
 

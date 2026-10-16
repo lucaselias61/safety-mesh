@@ -1,6 +1,7 @@
 #include "stream.hpp"
 
-#include <stdexcept>
+#include <algorithm>
+#include <cctype>
 #include <string>
 #include <sstream>
 #include <librealsense2/rs.hpp>
@@ -69,4 +70,32 @@ std::string StreamProfile::to_string() const {
     }
     out << '\n';
     return out.str();
+}
+
+
+std::vector<StreamProfile> sort_n_filter_stream_profiles_by_key(const std::vector<StreamProfile>& profiles, std::string key) {
+    // Convert the key to lowercase for case-insensitive comparison
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    auto result = profiles;
+    // Filter by stream type if the key is color, depth, or infrared
+    if (key == "color" || key == "depth" || key == "infrared") {
+        const auto type = key == "color" ? RS2_STREAM_COLOR : key == "depth" ? RS2_STREAM_DEPTH : RS2_STREAM_INFRARED;
+        result.erase(std::remove_if(result.begin(), result.end(),
+            [type](const StreamProfile& stream) {
+                return stream.stream_type() != type;
+            }), result.end());
+    } else if (key != "all" && key != "fps" && key != "width" && key != "height") {
+        throw std::invalid_argument("Unknown profile key: " + key);
+    }
+
+    std::stable_sort(result.begin(), result.end(),
+        [&key](const StreamProfile& a, const StreamProfile& b) {
+            if (a.id() != b.id()) return a.id() < b.id();
+            if (key == "fps") return a.fps() < b.fps();
+            if (key == "width") return a.width() < b.width();
+            if (key == "height") return a.height() < b.height();
+            return false;
+        });
+    return result;
 }
