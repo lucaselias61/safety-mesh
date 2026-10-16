@@ -19,7 +19,7 @@ add_executable(cam_node
     src/vision.cpp
     src/cli.cpp
     src/stream.cpp
-    src/config.cpp
+    src/utils.cpp
 )
 
 set_target_properties(cam_node PROPERTIES

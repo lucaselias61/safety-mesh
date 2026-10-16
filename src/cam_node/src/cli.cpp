@@ -1,5 +1,5 @@
 #include "cli.hpp"
-#include "config.hpp"
+#include "utils.hpp"
 #include "camera.hpp"
 #include "worker.hpp"
 
@@ -62,13 +62,15 @@ void streams_cmd(CLI::App& app) {
     ->required()
     ->check([](const std::string& value) {return value.empty() ? "Serial number cannot be empty" : "";});
     auto key = std::make_shared<std::string>("all");
-    streams_command->add_option("--key", *key, "Filter and sort stream profiles by key (all, color, depth, infrared, fps, width, height)"); 
+    streams_command->add_option("--sort", *key, "Sort within each stream ID (all, fps, width, height)");
+    auto filter = std::make_shared<std::string>("all");
+    streams_command->add_option("--filter", *filter, "Filter stream profiles by type (all, color, depth, infrared)"); 
 
-    streams_command->callback([serial, key] {
+    streams_command->callback([serial, key, filter] {
         for (const auto& camera : discover_cameras()) {
              if (camera.get_serial() == *serial) {
-                const auto streams = sort_n_filter_stream_profiles_by_key(
-                    camera.get_supported_stream_profiles(), *key);
+                const auto streams = sort_stream_profiles_by_key(
+                    filter_stream_profiles(camera.get_supported_stream_profiles(), *filter), *key);
 
                 if (streams.empty()) {
                     std::cout << "No supported stream profiles found.\n";

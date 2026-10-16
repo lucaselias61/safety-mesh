@@ -37,7 +37,3 @@ public:
     std::string to_string() const;
 };
 
-// Always sorts by ID. Fps, width, and height sort within each ID.
-// color, depth, and infrared filter by stream type; all retains every profile.
-std::vector<StreamProfile> sort_n_filter_stream_profiles_by_key(
-    const std::vector<StreamProfile>& profiles, std::string key);

@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "utils.hpp"
 #include "stream.hpp"
 
 #include <nlohmann/json.hpp>
@@ -20,6 +20,12 @@ int positive_int(const nlohmann::json& object, const char* key) {
         throw std::runtime_error(std::string(key) + " must be a positive integer");
     }
     return value.get<int>();
+}
+
+std::string to_lowercase(std::string text) {
+    std::transform(text.begin(), text.end(), text.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return text;
 }
 
 }
@@ -76,4 +82,39 @@ CameraConfig load_camera_config(const std::string& path) {
     } catch (const std::exception& error) {
         throw std::runtime_error("Invalid camera config '" + path + "': " + error.what());
     }
+}
+
+
+std::vector<StreamProfile> sort_stream_profiles_by_key(const std::vector<StreamProfile>& profiles, std::string key) {
+    key = to_lowercase(key);
+    if (key != "all" && key != "fps" && key != "width" && key != "height") {
+        throw std::invalid_argument("Unknown sort key: " + key);
+    }
+
+    auto result = profiles;
+    std::stable_sort(result.begin(), result.end(),
+        [&key](const StreamProfile& a, const StreamProfile& b) {
+            if (a.id() != b.id()) return a.id() < b.id();
+            if (key == "fps") return a.fps() < b.fps();
+            if (key == "width") return a.width() < b.width();
+            if (key == "height") return a.height() < b.height();
+            return false;
+        });
+    return result;
+}
+
+std::vector<StreamProfile> filter_stream_profiles(const std::vector<StreamProfile>& profiles, std::string filter) {
+    filter = to_lowercase(filter);
+
+    auto result = profiles;
+    if (filter == "color" || filter == "depth" || filter == "infrared") {
+        const auto type = filter == "color" ? RS2_STREAM_COLOR : filter == "depth" ? RS2_STREAM_DEPTH : RS2_STREAM_INFRARED;
+        result.erase(std::remove_if(result.begin(), result.end(),
+            [type](const StreamProfile& stream) {
+                return stream.stream_type() != type;
+            }), result.end());
+    } else if (filter != "all") {
+        throw std::invalid_argument("Unknown filter: " + filter);
+    }
+    return result;
 }
