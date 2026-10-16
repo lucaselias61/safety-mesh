@@ -57,20 +57,21 @@ void run_cmd(CLI::App& app) {
 
 void streams_cmd(CLI::App& app) {
     auto serial = std::make_shared<std::string>();
-    auto* streams_command = app.add_subcommand("streams", "List available streams for a connected camera");
+    auto* streams_command = app.add_subcommand("streams", "List supported stream profiles for a connected camera");
     streams_command->add_option("--serial", *serial, "Specify the serial number of the camera")
     ->required()
     ->check([](const std::string& value) {return value.empty() ? "Serial number cannot be empty" : "";});
-    auto supported = std::make_shared<bool>(false);
-    streams_command->add_flag("--supported", *supported, "List all supported streams for the camera");
 
-    streams_command->callback([serial, supported] {
+    streams_command->callback([serial] {
         for (const auto& camera : discover_cameras()) {
              if (camera.get_serial() == *serial) {
-                const auto streams = *supported
-                    ? camera.get_supported_stream_profiles()
-                    : camera.get_active_stream_profiles();
-                
+                const auto streams = camera.get_supported_stream_profiles();
+
+                if (streams.empty()) {
+                    std::cout << "No supported stream profiles found.\n";
+                    return;
+                }
+
                 for (const auto& [id, stream] : streams) {
                     std::cout << id << " | " << stream.to_string() << '\n';
                 }
