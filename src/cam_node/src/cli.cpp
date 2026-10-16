@@ -28,7 +28,7 @@ void list_cmd(CLI::App& app) {
 
 void view_cmd(CLI::App& app) {
     auto serial = std::make_shared<std::string>();
-    auto* command = app.add_subcommand("view", "Preview a camera's color stream");
+    auto* command = app.add_subcommand("view", "Preview color and depth heatmap side by side");
     command->add_option("--serial", *serial, "Camera serial number")
         ->required()->check([](const std::string& value) {
             return value.empty() ? "Serial number cannot be empty" : "";
@@ -36,30 +36,40 @@ void view_cmd(CLI::App& app) {
 
     command->callback([serial] {
         for (const auto& camera : discover_cameras()) {
-            if (camera.get_serial() != *serial) {
-                continue;
-            }
+            if (camera.get_serial() != *serial) {continue;}
             PipelineProfile profile;
-            profile.add(StreamProfile(camera.get_device(),
-                StreamConfig{"Color", 640, 480, 30, "RGB8"}));
+            profile.add(StreamProfile(camera.get_device(), StreamConfig{"Color", 640, 480, 30, "RGB8"}));
+            profile.add(StreamProfile(camera.get_device(), StreamConfig{"Depth", 640, 480, 30, "Z16"}));
             Pipeline pipeline(camera, profile);
+            rs2::colorizer colorizer;
             pipeline.start();
 
             const std::string window = "Camera " + *serial;
             try {
                 cv::namedWindow(window, cv::WINDOW_AUTOSIZE);
                 while (!shutdown_requested) {
-                    const auto color = pipeline.get_frames().get_color_frame();
-                    if (color) {
-                        cv::Mat rgb(color.get_height(), color.get_width(), CV_8UC3,
-                            const_cast<void*>(color.get_data()), color.get_stride_in_bytes());
+                    const auto frames = pipeline.get_frames();
+                    const auto color = frames.get_color_frame();
+                    const auto depth = frames.get_depth_frame();
+                    if (color && depth) {
+                        cv::Mat rgb(color.get_height(), color.get_width(), CV_8UC3, const_cast<void*>(color.get_data()), color.get_stride_in_bytes());
                         cv::Mat bgr;
                         cv::cvtColor(rgb, bgr, cv::COLOR_RGB2BGR);
-                        cv::imshow(window, bgr);
+
+                        const rs2::video_frame heatmap = colorizer.colorize(depth);
+                        cv::Mat depth_rgb(heatmap.get_height(), heatmap.get_width(), CV_8UC3,
+                            const_cast<void*>(heatmap.get_data()), heatmap.get_stride_in_bytes());
+                        cv::Mat depth_bgr;
+                        cv::cvtColor(depth_rgb, depth_bgr, cv::COLOR_RGB2BGR);
+                        if (depth_bgr.size() != bgr.size()) {
+                            cv::resize(depth_bgr, depth_bgr, bgr.size(), 0, 0, cv::INTER_NEAREST);
+                        }
+                        cv::Mat preview;
+                        cv::hconcat(bgr, depth_bgr, preview);
+                        cv::imshow(window, preview);
                     }
                     const int key = cv::waitKey(1);
-                    if (key == 27 || key == 'q' ||
-                        cv::getWindowProperty(window, cv::WND_PROP_VISIBLE) < 1) {
+                    if (key == 27 || key == 'q' || cv::getWindowProperty(window, cv::WND_PROP_VISIBLE) < 1) {
                         break;
                     }
                 }

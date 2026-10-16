@@ -23,5 +23,5 @@ void run_cmd(CLI::App& app);
  */
 void streams_cmd(CLI::App& app);
 
-/// Displays a connected camera's color stream in an OpenCV window.
+/// Displays color and a depth heatmap side by side in an OpenCV window.
 void view_cmd(CLI::App& app);

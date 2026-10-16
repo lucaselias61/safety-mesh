@@ -28,13 +28,17 @@ std::string to_lowercase(std::string text) {
     return text;
 }
 
+nlohmann::json load_json(const std::string& path) {
+    std::ifstream file(path);
+    if (!file) {throw std::runtime_error("Cannot open file");}
+    return nlohmann::json::parse(file);
+}
+
 }
 
 CameraConfig load_camera_config(const std::string& path) {
     try {
-        std::ifstream file(path);
-        if (!file) {throw std::runtime_error("Cannot open file");}
-        const auto json = nlohmann::json::parse(file);
+        const auto json = load_json(path);
         CameraConfig config{
             json.at("serial").get<std::string>(),
             json.at("enabled").get<bool>(),
@@ -50,14 +54,9 @@ CameraConfig load_camera_config(const std::string& path) {
                 const auto& value = entry.value();
                 if (!value.at("enabled").get<bool>()) {continue;}
                 std::string name;
-                auto lowercase = [](std::string text) {
-                    std::transform(text.begin(), text.end(), text.begin(),
-                        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                    return text;
-                };
                 for (int type = 1; type < RS2_STREAM_COUNT; ++type) {
                     const std::string sdk_name = rs2_stream_to_string(static_cast<rs2_stream>(type));
-                    if (lowercase(entry.key()) == lowercase(sdk_name)) {
+                    if (to_lowercase(entry.key()) == to_lowercase(sdk_name)) {
                         name = sdk_name;
                         break;
                     }
