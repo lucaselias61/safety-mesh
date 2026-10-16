@@ -45,6 +45,9 @@ void view_cmd(CLI::App& app) {
             pipeline.start();
 
             const std::string window = "Camera " + *serial;
+            cv::Mat preview(480, 1280, CV_8UC3);
+            cv::Mat color_panel = preview(cv::Rect(0, 0, 640, 480));
+            cv::Mat depth_panel = preview(cv::Rect(640, 0, 640, 480));
             try {
                 cv::namedWindow(window, cv::WINDOW_AUTOSIZE);
                 while (!shutdown_requested) {
@@ -53,19 +56,12 @@ void view_cmd(CLI::App& app) {
                     const auto depth = frames.get_depth_frame();
                     if (color && depth) {
                         cv::Mat rgb(color.get_height(), color.get_width(), CV_8UC3, const_cast<void*>(color.get_data()), color.get_stride_in_bytes());
-                        cv::Mat bgr;
-                        cv::cvtColor(rgb, bgr, cv::COLOR_RGB2BGR);
+                        cv::cvtColor(rgb, color_panel, cv::COLOR_RGB2BGR);
 
                         const rs2::video_frame heatmap = colorizer.colorize(depth);
                         cv::Mat depth_rgb(heatmap.get_height(), heatmap.get_width(), CV_8UC3,
                             const_cast<void*>(heatmap.get_data()), heatmap.get_stride_in_bytes());
-                        cv::Mat depth_bgr;
-                        cv::cvtColor(depth_rgb, depth_bgr, cv::COLOR_RGB2BGR);
-                        if (depth_bgr.size() != bgr.size()) {
-                            cv::resize(depth_bgr, depth_bgr, bgr.size(), 0, 0, cv::INTER_NEAREST);
-                        }
-                        cv::Mat preview;
-                        cv::hconcat(bgr, depth_bgr, preview);
+                        cv::cvtColor(depth_rgb, depth_panel, cv::COLOR_RGB2BGR);
                         cv::imshow(window, preview);
                     }
                     const int key = cv::waitKey(1);
