@@ -2,6 +2,10 @@
 #include "utils.hpp"
 #include "camera.hpp"
 #include "worker.hpp"
+#include "shutdown.hpp"
+
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include <CLI/CLI.hpp>
 #include <iostream>
@@ -19,6 +23,55 @@ void list_cmd(CLI::App& app) {
         for (const auto& camera : cameras) {
             std::cout << camera.get_serial() << '\t' << camera.get_name() << '\n';
         }
+    });
+}
+
+void view_cmd(CLI::App& app) {
+    auto serial = std::make_shared<std::string>();
+    auto* command = app.add_subcommand("view", "Preview a camera's color stream");
+    command->add_option("--serial", *serial, "Camera serial number")
+        ->required()->check([](const std::string& value) {
+            return value.empty() ? "Serial number cannot be empty" : "";
+        });
+
+    command->callback([serial] {
+        for (const auto& camera : discover_cameras()) {
+            if (camera.get_serial() != *serial) {
+                continue;
+            }
+            PipelineProfile profile;
+            profile.add(StreamProfile(camera.get_device(),
+                StreamConfig{"Color", 640, 480, 30, "RGB8"}));
+            Pipeline pipeline(camera, profile);
+            pipeline.start();
+
+            const std::string window = "Camera " + *serial;
+            try {
+                cv::namedWindow(window, cv::WINDOW_AUTOSIZE);
+                while (!shutdown_requested) {
+                    const auto color = pipeline.get_frames().get_color_frame();
+                    if (color) {
+                        cv::Mat rgb(color.get_height(), color.get_width(), CV_8UC3,
+                            const_cast<void*>(color.get_data()), color.get_stride_in_bytes());
+                        cv::Mat bgr;
+                        cv::cvtColor(rgb, bgr, cv::COLOR_RGB2BGR);
+                        cv::imshow(window, bgr);
+                    }
+                    const int key = cv::waitKey(1);
+                    if (key == 27 || key == 'q' ||
+                        cv::getWindowProperty(window, cv::WND_PROP_VISIBLE) < 1) {
+                        break;
+                    }
+                }
+                cv::destroyWindow(window);
+            } catch (...) {
+                cv::destroyAllWindows();
+                throw;
+            }
+            pipeline.stop();
+            return;
+        }
+        throw std::runtime_error("No RealSense device connected with serial " + *serial);
     });
 }
 
