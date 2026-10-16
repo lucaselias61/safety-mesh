@@ -1,6 +1,7 @@
 #include "pipeline.hpp"
 
 #include <librealsense2/rs.hpp>
+#include <iostream>
 
 
 Frames::Frames(const rs2::frameset& f) : frames_(f) {}
@@ -17,21 +18,9 @@ Pipeline::Pipeline(const Camera& camera, const PipelineProfile& pipeline_profile
     for (const auto& [id, streams] : pipeline_profile_.get_profiles()) {
         for (const auto& stream : streams) {
             if (!stream.is_video()) {
-                config_.enable_stream(
-                    stream.stream_type(),
-                    -1,
-                    stream.format(),
-                    stream.fps()
-                );
+                config_.enable_stream(stream.stream_type(), -1, stream.format(), stream.fps());
             }
-            config_.enable_stream(
-                stream.stream_type(),
-                -1,
-                stream.width(),
-                stream.height(),
-                stream.format(),
-                stream.fps()
-            );
+            config_.enable_stream(stream.stream_type(), -1, stream.width(), stream.height(), stream.format(), stream.fps());
             // start();
             // Frames frames = get_frames();
             // if (frames)
@@ -51,7 +40,12 @@ void Pipeline::start() {
         throw std::runtime_error("Camera is disconnected or in recovery mode");
     }
 
-    pipeline_.start(config_);
+    const auto active_profile = pipeline_.start(config_);
+    std::cout << "Enabled streams for camera " << cam_.get_serial() << ":\n";
+    for (const auto& stream : active_profile.get_streams()) {
+        std::cout << StreamProfile(stream).to_string();
+    }
+    std::cout.flush();
 }
 
 /// @brief Stop the camera streams
