@@ -110,6 +110,12 @@ bool Camera::is_ready() const {
 }
 
 
+/// @brief Resets the camera device.
+void Camera::reset() {
+    device_.hardware_reset();
+}
+
+
 std::vector<Camera> discover_cameras() {
     rs2::context context;
     std::vector<Camera> cameras;

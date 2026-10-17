@@ -30,6 +30,7 @@ public:
 
     /// @brief Checks if the camera device is still connected.
     bool is_ready() const;
+    void reset();
 
 private:
     std::string serial_;
