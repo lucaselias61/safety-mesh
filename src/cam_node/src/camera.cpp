@@ -92,13 +92,13 @@ const rs2::device& Camera::get_device() const noexcept {return device_;}
 
 /// @brief supported streams getter
 /// @return The list of supported stream profiles for the camera.
-std::vector<StreamProfile> Camera::get_supported_stream_profiles() const noexcept {
+std::vector<StreamProfile> Camera::get_supported_stream_profiles() const {
     return _get_supported_stream_profiles(device_);
 }
 
 /// @brief active streams getter
 /// @return The list of active stream profiles for the camera.
-std::vector<StreamProfile> Camera::get_active_stream_profiles() const noexcept {
+std::vector<StreamProfile> Camera::get_active_stream_profiles() const {
     return _get_active_stream_profiles(device_);
 }
 
