@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+
 struct CameraConfig {
     std::string serial;
     bool enabled;
@@ -24,3 +25,16 @@ std::vector<StreamProfile> sort_stream_profiles_by_key(const std::vector<StreamP
 // The filter can be "all", "color", "depth", or "infrared".
 // Throws std::invalid_argument if the filter is unknown.
 std::vector<StreamProfile> filter_stream_profiles(const std::vector<StreamProfile>& profiles, std::string filter);
+
+
+struct EngineConfig {
+    std::string backend;
+    std::string model_path;
+    double confidence_threshold;
+    double nms_threshold;
+    int input_size;
+};
+
+
+// Throws std::runtime_error if the file cannot be read or is invalid.
+EngineConfig load_engine_config(const std::string& path);

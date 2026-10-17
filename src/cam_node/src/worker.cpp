@@ -2,7 +2,6 @@
 #include "pipeline.hpp"
 #include "camera.hpp"
 #include "shutdown.hpp"
-#include "vision.hpp"
 
 #include <iostream>
 
@@ -23,7 +22,12 @@ void Worker::run() {
                 }
                 continue;
             }
-            // auto detections = detector_.detect(frames.get_color_frame());
+            std::vector<Detection> detections = engine_->detect(frames.get_color_frame());
+            retry_count = 0; // Reset retry count on successful detection
+            for (const auto& detection : detections) {
+                std::cout << "Detected object with confidence: " << detection.confidence << "\n";
+                std::cout << "Bounding box: [" << detection.bbox[0] << ", " << detection.bbox[1] << ", " << detection.bbox[2] << ", " << detection.bbox[3] << "]\n";
+            }
         }
     } catch (...) {
         std::cerr << "Stopping worker...\n";

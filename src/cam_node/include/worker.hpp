@@ -2,12 +2,13 @@
 
 #include "camera.hpp"
 #include "pipeline.hpp"
-#include "vision.hpp"
+#include "engines/engine.hpp"
+
 
 class Worker {
 public:
-    Worker(const Camera& cam, const PipelineProfile& profile)
-        : cam_(cam), pipeline_(cam, profile), engine_(pipeline_) {}
+    explicit Worker(const Camera& cam, const PipelineProfile& profile, std::unique_ptr<Engine> engine)
+        : cam_(cam), pipeline_(cam, profile), engine_(std::move(engine)) {}
 
     void run();
     void stop();
@@ -17,5 +18,5 @@ private:
     Camera cam_;
     bool running_ = false;
     Pipeline pipeline_;
-    Inference engine_;
+    std::unique_ptr<Engine> engine_;
 };

@@ -1,0 +1,29 @@
+{
+  "camera": {
+    "serial": "233322245",
+    "enabled": true,
+    "streams": {
+      "color": {
+        "enabled": true, 
+        "format": "RGB8", 
+        "width": 640, 
+        "height": 480, 
+        "fps": 15
+        },
+      "depth": {
+        "enabled": true, 
+        "format": "Z16", 
+        "width": 640, 
+        "height": 480, 
+        "fps": 15
+        }
+    }
+  },
+  "engine": {
+    "backend": "opencv_dnn",
+    "model_path": "models/yolo11n.onnx",
+    "confidence_threshold": 0.25,
+    "nms_threshold": 0.45,
+    "input_size": 640
+  }
+}

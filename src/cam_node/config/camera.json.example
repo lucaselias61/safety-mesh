@@ -1,8 +1,0 @@
-{
-  "serial": "233322245",
-  "enabled": true,
-  "streams": {
-    "color": {"enabled": true, "format": "RGB8", "width": 640, "height": 480, "fps": 30},
-    "depth": {"enabled": true, "format": "Z16", "width": 640, "height": 480, "fps": 30}
-  }
-}

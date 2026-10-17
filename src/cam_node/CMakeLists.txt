@@ -9,14 +9,13 @@ find_package(CLI11 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(realsense2 2.58 CONFIG REQUIRED)
-find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc highgui)
+find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc highgui dnn)
 
 add_executable(cam_node
     src/main.cpp
     src/worker.cpp
     src/camera.cpp
     src/pipeline.cpp
-    src/vision.cpp
     src/cli.cpp
     src/stream.cpp
     src/utils.cpp

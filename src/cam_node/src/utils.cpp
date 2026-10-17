@@ -34,18 +34,25 @@ nlohmann::json load_json(const std::string& path) {
     return nlohmann::json::parse(file);
 }
 
+
+bool file_exists(const std::string& path) {
+    std::ifstream file(path);
+    return static_cast<bool>(file);
+}
+
 }
 
 CameraConfig load_camera_config(const std::string& path) {
     try {
         const auto json = load_json(path);
+        const auto& camera_json = json.at("camera");
         CameraConfig config{
-            json.at("serial").get<std::string>(),
-            json.at("enabled").get<bool>(),
+            camera_json.at("serial").get<std::string>(),
+            camera_json.at("enabled").get<bool>(),
             {}
         };
         if (config.serial.empty()) {throw std::runtime_error("serial must not be empty");}
-        const auto& streams = json.at("streams");
+        const auto& streams = camera_json.at("streams");
         if (!streams.is_object()) {
             throw std::runtime_error("streams must be an object");
         }
@@ -116,4 +123,37 @@ std::vector<StreamProfile> filter_stream_profiles(const std::vector<StreamProfil
         throw std::invalid_argument("Unknown filter: " + filter);
     }
     return result;
+}
+
+
+EngineConfig load_engine_config(const std::string& path) {
+    try {
+        const auto json = load_json(path);
+        const auto engine_json = json.at("engine");
+        EngineConfig config{
+            engine_json.at("backend").get<std::string>(),
+            engine_json.at("model_path").get<std::string>(),
+            engine_json.at("confidence_threshold").get<double>(),
+            engine_json.at("nms_threshold").get<double>(),
+            positive_int(engine_json, "input_size"),
+        };
+        if (config.model_path.empty()) {
+            throw std::runtime_error("model_path must not be empty");
+        }
+        if (!file_exists(config.model_path)) {
+            throw std::runtime_error("model_path does not exist: " + config.model_path);
+        }
+        if (config.backend.empty()) {
+            throw std::runtime_error("backend must not be empty");
+        }
+        if (config.confidence_threshold <= 0.0 || config.confidence_threshold > 1.0) {
+            throw std::runtime_error("confidence_threshold must be between 0 and 1");
+        }
+        if (config.nms_threshold <= 0.0 || config.nms_threshold > 1.0) {
+            throw std::runtime_error("nms_threshold must be between 0 and 1");
+        }
+        return config;
+    } catch (const std::exception& error) {
+        throw std::runtime_error("Invalid engine config '" + path + "': " + error.what());
+    }
 }

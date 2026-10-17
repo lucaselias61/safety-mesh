@@ -3,6 +3,7 @@
 #include "camera.hpp"
 #include "worker.hpp"
 #include "shutdown.hpp"
+#include "engines/opencv_dnn_engine.hpp"
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -25,6 +26,7 @@ void list_cmd(CLI::App& app) {
         }
     });
 }
+
 
 void view_cmd(CLI::App& app) {
     auto serial = std::make_shared<std::string>();
@@ -92,6 +94,7 @@ void run_cmd(CLI::App& app) {
 
     run_command->callback([config] {
         const auto camera_config = load_camera_config(*config);
+        const auto engine_config = load_engine_config(*config);
         if (!camera_config.enabled) {
             return;
         }
@@ -103,8 +106,16 @@ void run_cmd(CLI::App& app) {
                 PipelineProfile profile;
                 for (const auto& stream : camera_config.streams) {
                     profile.add(StreamProfile(camera.get_device(), stream));
+                };
+                std::unique_ptr<Engine> engine;
+                if (engine_config.backend == "opencv_dnn") {
+                    engine = std::make_unique<OpenCVDnnEngine>(engine_config);
                 }
-                Worker worker(camera, profile);
+                else {
+                    throw std::runtime_error("Unsupported engine backend: " + engine_config.backend);
+                }
+                // Pass the unique_ptr to the worker using std::move. Now engine == nullptr.
+                Worker worker(camera, profile, std::move(engine));
                 worker.run();
                 return;
             }
