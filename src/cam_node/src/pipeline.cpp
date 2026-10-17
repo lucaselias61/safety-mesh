@@ -41,10 +41,11 @@ void Pipeline::start() {
     }
 
     const auto active_profile = pipeline_.start(config_);
-    std::cout << "Enabled streams for camera " << cam_.get_serial() << ":\n";
+    std::cout << "Enabled streams for camera " << cam_.get_serial() << ":\n" << "\n";
     for (const auto& stream : active_profile.get_streams()) {
         std::cout << StreamProfile(stream).to_string();
     }
+    std::cout << "\n";
     std::cout.flush();
 }
 

@@ -20,6 +20,7 @@ add_executable(cam_node
     src/cli.cpp
     src/stream.cpp
     src/utils.cpp
+    src/engines/opencv_dnn_engine.cpp
 )
 
 set_target_properties(cam_node PROPERTIES
