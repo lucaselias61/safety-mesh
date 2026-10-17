@@ -38,8 +38,8 @@ void view_cmd(CLI::App& app) {
         for (const auto& camera : discover_cameras()) {
             if (camera.get_serial() != *serial) {continue;}
             PipelineProfile profile;
-            profile.add(StreamProfile(camera.get_device(), StreamConfig{"Color", 640, 480, 30, "RGB8"}));
-            profile.add(StreamProfile(camera.get_device(), StreamConfig{"Depth", 640, 480, 30, "Z16"}));
+            profile.add(StreamProfile(camera.get_device(), StreamConfig{"Color", 640, 480, 15, "RGB8"}));
+            profile.add(StreamProfile(camera.get_device(), StreamConfig{"Depth", 640, 480, 15, "Z16"}));
             Pipeline pipeline(camera, profile);
             rs2::colorizer colorizer;
             pipeline.start();
