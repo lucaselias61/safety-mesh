@@ -17,6 +17,7 @@ add_executable(cam_node
     src/camera.cpp
     src/pipeline.cpp
     src/cli.cpp
+    src/commands.cpp
     src/stream.cpp
     src/utils.cpp
     src/engines/opencv_dnn_engine.cpp
