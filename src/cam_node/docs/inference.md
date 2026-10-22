@@ -1,7 +1,14 @@
 # Inference 
 
-The models were run on the CPU first for vetectionalidating the d output tensor and the general end-to-end flow.
+Multiple models were tested to compare requirements and results. The models were run on the CPU first for validating the output tensor and the general end-to-end flow.
 
-## GPU Accelaration
+## Engines
 
-It is optimized for a Nvidia GPU using TensorRT drivers and .engine format.
+### CPU implementation
+
+- **OpenCV's DNN Module:** OpenCV loads ONNX models and exposes inference APIs. [More about the module](https://opencv.org/opencv-dnn-module/)
+
+
+### GPU Accelaration
+
+- **TensorRT:** Models in the '.engine' format are loaded into a Nvidia GPU. running 

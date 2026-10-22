@@ -1,3 +1,4 @@
+// CPU implementation of the OpenCVDnnEngine using OpenCV's DNN module.
 #include "engines/opencv_dnn_engine.hpp"
 
 #include <algorithm>
