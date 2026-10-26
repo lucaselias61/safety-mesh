@@ -12,3 +12,5 @@ Multiple models were tested to compare requirements and results. The models were
 ### GPU Accelaration
 
 - **TensorRT:** Models in the '.engine' format are loaded into a Nvidia GPU. running 
+
+## Modules 
