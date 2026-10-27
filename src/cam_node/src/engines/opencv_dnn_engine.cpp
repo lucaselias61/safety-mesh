@@ -49,7 +49,8 @@ std::vector<Detection> OpenCVDnnEngine::detect(const rs2::video_frame &frame) {
 
   std::vector<cv::Rect> boxes;
   std::vector<float> scores;
-  const float scale = img_size / static_cast<float>(input_size_);
+  const float scale =
+      static_cast<float>(img_size) / static_cast<float>(input_size_);
   for (int i = 0; i < predictions.rows; ++i) {
     const float *p = predictions.ptr<float>(i);
     if (p[4] < confidence_threshold_)
@@ -65,8 +66,8 @@ std::vector<Detection> OpenCVDnnEngine::detect(const rs2::video_frame &frame) {
   }
 
   std::vector<int> indices;
-  cv::dnn::NMSBoxes(boxes, scores, confidence_threshold_, nms_threshold_,
-                    indices);
+  cv::dnn::NMSBoxes(boxes, scores, static_cast<float>(confidence_threshold_),
+                    static_cast<float>(nms_threshold_), indices);
   std::vector<Detection> detections;
   const auto timestamp = std::time(nullptr);
   for (int i : indices) {

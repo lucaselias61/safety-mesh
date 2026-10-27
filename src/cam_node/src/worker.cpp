@@ -31,9 +31,9 @@ void Worker::run() {
       for (const auto &detection : detections) {
         std::cout << "Detected object with confidence: " << detection.confidence
                   << "\n";
-        std::cout << "Bounding box: [" << detection.bbox[0] << ", "
-                  << detection.bbox[1] << ", " << detection.bbox[2] << ", "
-                  << detection.bbox[3] << "]\n";
+        std::cout << "Bounding box [x, y, width, height]: [" << detection.bbox.x
+                  << ", " << detection.bbox.y << ", " << detection.bbox.width
+                  << ", " << detection.bbox.height << "]\n";
       }
     }
   } catch (...) {

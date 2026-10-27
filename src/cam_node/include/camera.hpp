@@ -17,7 +17,7 @@ struct Intrinsics {
  * about a RealSense camera. */
 class Camera {
 public:
-  explicit Camera(rs2::device device);
+  explicit Camera(const rs2::device &device);
 
   const std::string &get_serial() const noexcept;
   const std::string &get_name() const noexcept;

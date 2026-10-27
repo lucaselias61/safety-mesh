@@ -33,10 +33,9 @@ cv::Mat create_preview(const rs2::video_frame &color,
 
   for (const auto &detection : detections) {
     const auto &b = detection.bbox;
-    if (b.size() != 4 || b[2] <= b[0] || b[3] <= b[1])
+    if (b.empty())
       continue;
-    cv::rectangle(color_bgr, cv::Point(b[0], b[1]), cv::Point(b[2], b[3]),
-                  cv::Scalar(0, 255, 0), 2);
+    cv::rectangle(color_bgr, b, cv::Scalar(0, 255, 0), 2);
   }
   if (!depth)
     return color_bgr;

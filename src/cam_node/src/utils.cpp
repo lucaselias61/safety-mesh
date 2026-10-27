@@ -143,7 +143,7 @@ filter_stream_profiles(const std::vector<StreamProfile> &profiles,
 EngineConfig load_engine_config(const std::string &path) {
   try {
     const auto json = load_json(path);
-    const auto engine_json = json.at("engine");
+    const auto &engine_json = json.at("engine");
     EngineConfig config{
         engine_json.at("backend").get<std::string>(),
         engine_json.at("model_path").get<std::string>(),

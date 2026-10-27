@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
   std::signal(SIGINT, handle_shutdown);  // Ctrl+C
   std::signal(SIGTERM, handle_shutdown); // Docker stop
 
@@ -27,13 +27,16 @@ int main(int argc, char *argv[]) {
     app.parse(argc, argv);
   } catch (const CLI::ParseError &error) {
     return app.exit(error);
-  } catch (const rs2::error &error) {
-    std::cerr << "(RealSense error): " << error.get_failed_function() << "("
-              << error.get_failed_args() << "): " << error.what() << '\n';
-    return 1;
-  } catch (const std::exception &error) {
-    std::cerr << "(Camera Node error): " << error.what() << '\n';
-    return 1;
   }
   return 0;
+} catch (const rs2::error &error) {
+  std::cerr << "(RealSense error): " << error.get_failed_function() << "("
+            << error.get_failed_args() << "): " << error.what() << '\n';
+  return 1;
+} catch (const std::exception &error) {
+  std::cerr << "(Camera Node error): " << error.what() << '\n';
+  return 1;
+} catch (...) {
+  std::cerr << "(Camera Node error): Unknown exception\n";
+  return 1;
 }
