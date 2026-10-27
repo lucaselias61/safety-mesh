@@ -99,7 +99,8 @@ std::vector<StreamProfile>
 sort_stream_profiles_by_key(const std::vector<StreamProfile> &profiles,
                             std::string key) {
   key = to_lowercase(key);
-  if (key != "all" && key != "fps" && key != "width" && key != "height" && key != "resolution") {
+  if (key != "all" && key != "fps" && key != "width" && key != "height" &&
+      key != "resolution") {
     throw std::invalid_argument("Unknown sort key: " + key);
   }
 
@@ -115,7 +116,8 @@ sort_stream_profiles_by_key(const std::vector<StreamProfile> &profiles,
                      if (key == "height")
                        return a.height() < b.height();
                      if (key == "resolution")
-                       return (a.width() * a.height()) < (b.width() * b.height());
+                       return (a.width() * a.height()) <
+                              (b.width() * b.height());
                      return false;
                    });
   return result;
