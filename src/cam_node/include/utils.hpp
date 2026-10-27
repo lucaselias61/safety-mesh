@@ -14,7 +14,7 @@ struct CameraConfig {
 // Throws std::runtime_error if the file cannot be read or is invalid.
 CameraConfig load_camera_config(const std::string &path);
 
-// Always sorts by ID; "fps", "width", or "height" sort within each ID.
+// Always sorts by ID; "fps", "width", "height" or "resolution" sort within each ID.
 // The key "all" sorts by ID only. Keys are case-insensitive.
 // Throws std::invalid_argument if the key is unknown.
 std::vector<StreamProfile>

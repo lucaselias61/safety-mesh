@@ -58,7 +58,7 @@ void streams_cmd(CLI::App &app) {
       });
   auto key = std::make_shared<std::string>("all");
   streams_command->add_option(
-      "--sort", *key, "Sort within each stream ID (all, fps, width, height)");
+      "--sort", *key, "Sort within each stream ID (all, fps, width, height, resolution)");
   auto filter = std::make_shared<std::string>("all");
   streams_command->add_option(
       "--filter", *filter,
