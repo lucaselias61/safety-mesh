@@ -26,7 +26,6 @@ void Worker::run() {
       }
       std::vector<Detection> detections =
           engine_->detect(frames.get_color_frame());
-      view(std::make_shared<Frames>(std::move(frames)), detections);
       retry_count = 0; // Reset retry count on successful detection
       for (const auto &detection : detections) {
         std::cout << "Detected object with confidence: " << detection.confidence
