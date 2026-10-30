@@ -11,6 +11,6 @@ Multiple models were tested to compare requirements and results. The models were
 
 ### GPU Accelaration
 
-- **TensorRT:** Models in the '.engine' format are loaded into a Nvidia GPU. running 
+- **TensorRT:** Models in the '.engine' format are loaded into a Nvidia GPU. Multi-instance GPU (MIG) deployment for dedicated GPU slices, it virtualy turns one GPU into multiple smaller ones for parallel work.
 
 ## Modules 
