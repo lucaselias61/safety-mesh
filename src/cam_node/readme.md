@@ -120,3 +120,34 @@ Written in C++ because the Camera Node depends on low-level camera SDKs, AI infe
 		  "fps": 28.7,
 		  "latency_ms": 42
 		}
+
+## TensorRT backend
+
+On an NVIDIA GPU system with CUDA and TensorRT 10 or newer installed:
+
+```sh
+cmake -S . -B build -DTENSORRT=ON -DTensorRT_ROOT=/path/to/TensorRT
+cmake --build build --parallel
+```
+
+Build the plan offline on the deployment GPU using NVIDIA's `trtexec`:
+
+```sh
+trtexec --onnx=models/yolo11n.onnx --saveEngine=models/yolo11n.engine
+```
+
+For a dynamic ONNX input, also supply `--shapes=images:1x3x640x640`
+(replace `images` with the model's input name). Set the engine configuration
+`backend` to `tensor_rt`, `model_path` to the resulting plan, and `input_size`
+to its square image size. The backend expects one FP32 linear NCHW RGB input
+and one FP32 output `[1, 84, N]` (standard COCO YOLOv8/YOLO11 detection,
+without embedded NMS). It selects people and applies the configured NMS.
+Dynamic plans use optimization profile 0, which must support the configured
+input shape. FP16 input/output and data-dependent output shapes are unsupported.
+
+Following [NVIDIA's C++ runtime workflow](https://docs.nvidia.com/deeplearning/tensorrt/latest/inference-library/c-api-docs.html),
+the backend deserializes a plan, binds reusable device buffers by tensor name,
+and uses `enqueueV3` with a CUDA stream. Only load plans from trusted sources;
+plans must be compatible with the deployment GPU, platform, and TensorRT version.
+Use a separate engine instance for each worker; concurrent calls to the same
+instance are unsupported.
