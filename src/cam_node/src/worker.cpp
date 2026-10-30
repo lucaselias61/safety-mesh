@@ -1,6 +1,5 @@
 #include "worker.hpp"
 #include "camera.hpp"
-#include "commands.hpp"
 #include "pipeline.hpp"
 #include "shutdown.hpp"
 

@@ -18,8 +18,11 @@ add_executable(cam_node
     src/worker.cpp
     src/camera.cpp
     src/pipeline.cpp
-    src/cli.cpp
-    src/commands.cpp
+    src/cli/list.cpp
+    src/cli/run.cpp
+    src/cli/streams.cpp
+    src/cli/view.cpp
+    src/preview.cpp
     src/stream.cpp
     src/utils.cpp
     src/deprojection.cpp
