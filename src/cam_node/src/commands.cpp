@@ -2,6 +2,9 @@
 #include "camera.hpp"
 #include "engines/engine.hpp"
 #include "engines/opencv_dnn_engine.hpp"
+#ifdef CAM_NODE_WITH_TENSORRT
+#include "engines/tensor_rt_engine.hpp"
+#endif
 #include "pipeline.hpp"
 #include "shutdown.hpp"
 #include "utils.hpp"
@@ -144,6 +147,13 @@ void run(const std::shared_ptr<std::string> &config) {
       std::unique_ptr<Engine> engine;
       if (engine_config.backend == "opencv_dnn") {
         engine = std::make_unique<OpenCVDnnEngine>(engine_config);
+      } else if (engine_config.backend == "tensor_rt") {
+#ifdef CAM_NODE_WITH_TENSORRT
+        engine = std::make_unique<TensorRTEngine>(engine_config);
+#else
+        throw std::runtime_error(
+            "TensorRT backend requires a build with -DTENSORRT=ON");
+#endif
       } else {
         throw std::runtime_error("Unsupported engine backend: " +
                                  engine_config.backend);
