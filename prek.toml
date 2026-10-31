@@ -1,19 +1,19 @@
 # Install once with `prek install`, run manually with `prek run --all-files`.
+# The hooks pip-install the pinned clang-format and clang-tidy, so every machine
+# runs the same versions regardless of what the OS ships.
 [[repos]]
-repo = "local"
+repo = "https://github.com/cpp-linter/cpp-linter-hooks"
+rev = "v1.8.1"
 
 [[repos.hooks]]
 id = "clang-format"
-name = "clang-format"
-language = "system"
-entry = "clang-format -i"
+args = ["--style=file", "--version=23.1.3"]
 files = '^src/cam_node/.*\.(cpp|hpp)$'
 
 [[repos.hooks]]
 id = "clang-tidy"
-name = "clang-tidy"
-language = "system"
-entry = "clang-tidy -p src/cam_node/build --quiet"
+# clang-tidy wheels skip some releases, so pin only the major version.
+args = ["--version=23", "--compile-commands=src/cam_node/build"]
 files = '^src/cam_node/src/.*\.cpp$'
 # Only built with -DTENSORRT=ON, so it is absent from compile_commands.json.
 exclude = 'tensor_rt_engine\.cpp$'
