@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+# Configure and build the cam_node executable:
+# - CPU backend by default, TensorRT with --tensorrt.
+# - Separate build directories for each backend.
+# - Copy the executable to bin/cam_node and update the editor compilation database.
+
+# Requires Linux and installed build dependencies. TensorRT builds also need CUDA and TensorRT.
+
 set -euo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+# Build a TensorRT engine from an ONNX model:
+# - Optimize the model for the deployment GPU using trtexec.
+# - Save the engine and model/GPU metadata.
+# - Refuse existing output files.
+
+# Requires trtexec and a working NVIDIA deployment GPU.
+
 set -euo pipefail
 
 usage() { echo "Usage: $0 --onnx MODEL --output ENGINE [--shapes images:1x3x640x640]"; }

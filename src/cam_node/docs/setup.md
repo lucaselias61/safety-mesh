@@ -46,7 +46,7 @@ Then create the engine:
 ./scripts/build-tensorrt-engine.sh --onnx models/yolo11n.onnx --output models/yolo11n.engine
 ```
 
-Generate the engine on the deployment GPU. Regenerate it when the model or GPU/TensorRT environment changes.
+It Generates the GPU-optimized .engine file using trtexec. Regenerate it when the model or GPU/TensorRT environment changes.
 
 For more options and information see [configure inference](inference.md#gpu-acceleration). Engine generation installs no dependencies.
 

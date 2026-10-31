@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+
+# Check the environment and install Ubuntu build dependencies:
+# - C++ build tools, CMake, CLI11, fmt and nlohmann/json.
+# - OpenCV libraries.
+# - RealSense SDK and USB permission rules.
+
+# Requires Ubuntu 22.04, 24.04 or 26.04 and root or sudo access.
+
 set -euo pipefail
 
 if [[ "$(uname -s)" != Linux ]]; then
