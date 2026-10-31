@@ -1,0 +1,19 @@
+# Install once with `prek install`, run manually with `prek run --all-files`.
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "clang-format"
+name = "clang-format"
+language = "system"
+entry = "clang-format -i"
+files = '^src/cam_node/.*\.(cpp|hpp)$'
+
+[[repos.hooks]]
+id = "clang-tidy"
+name = "clang-tidy"
+language = "system"
+entry = "clang-tidy -p src/cam_node/build --quiet"
+files = '^src/cam_node/src/.*\.cpp$'
+# Only built with -DTENSORRT=ON, so it is absent from compile_commands.json.
+exclude = 'tensor_rt_engine\.cpp$'
