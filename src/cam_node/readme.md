@@ -4,24 +4,20 @@ Its a human detection pipeline that with the help of a RealSense depth camera, c
 
 ## Build
 
-From `cam_node/`, install dependencies for your platform:
+From `cam_node/`, install dependencies:
 
 ```sh
-# macOS:
-./scripts/install-deps-macos.sh
-
-# Ubuntu Linux:
-./scripts/install-deps-linux.sh
+./scripts/install-deps-ubuntu.sh
 ```
 
-Then configure and build on either platform:
+Then configure and build:
 
 ```sh
 ./scripts/build.sh
 ```
 
-macOS requires Homebrew. Linux supports Ubuntu 22.04, 24.04, and 26.04 LTS,
-using APT and the official RealSense repository. 
+Ubuntu 22.04, 24.04, and 26.04 LTS are supported, using APT and the official
+RealSense repository. 
 
 It installs: 
 - USB permission rules
@@ -35,11 +31,10 @@ After source changes, rebuild with:
 cmake --build build --parallel
 ```
 
-To configure manually on macOS:
+To configure manually:
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_PREFIX_PATH="$(brew --prefix)"
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
