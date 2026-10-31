@@ -29,9 +29,8 @@ add_executable(cam_node
     src/engines/opencv_dnn_engine.cpp
 )
 
-set_target_properties(cam_node PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin"
-)
+set(CAM_NODE_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Executable output directory")
+set_target_properties(cam_node PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CAM_NODE_OUTPUT_DIR}")
 
 target_compile_features(cam_node PRIVATE cxx_std_17)
 set_target_properties(cam_node PROPERTIES CXX_EXTENSIONS OFF)

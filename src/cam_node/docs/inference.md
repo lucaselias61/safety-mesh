@@ -14,20 +14,9 @@ Use a standard COCO YOLOv8/YOLO11 detection export with output `[1, 84, N]`, wit
 
 ## GPU acceleration
 
-**TensorRT** loads `.engine` plans on an NVIDIA GPU. CUDA and TensorRT 10 or newer must already be installed:
+For a tar installation, add `--tensorrt-root /path/to/TensorRT` to the build command and set `TRTEXEC=/path/to/TensorRT/bin/trtexec` for engine conversion.
 
-```sh
-cmake -S . -B build -DTENSORRT=ON -DTensorRT_ROOT=/path/to/TensorRT
-cmake --build build --parallel
-```
-
-Build the plan offline on the deployment GPU using NVIDIA's `trtexec`:
-
-```sh
-trtexec --onnx=models/yolo11n.onnx --saveEngine=models/yolo11n.engine
-```
-
-For a dynamic ONNX input, also supply `--shapes=images:1x3x640x640` (replace `images` with the model's input name).
+Build engines on the deployment GPU. For dynamic inputs, add `--shapes images:1x3x640x640`, using the model's input name. The script refuses existing outputs and writes model hash, GPU, driver and TensorRT details to `.engine.meta.txt`.
 
 Set `backend` to `tensor_rt`, `model_path` to the resulting plan, and `input_size` to its square image size.
 
