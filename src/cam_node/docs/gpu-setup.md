@@ -1,5 +1,9 @@
 # GPU setup
 
+The current backend targets TensorRT 10 and rejects older versions. Pascal GPUs, such as the GTX 1050 Ti, are not supported by TensorRT 10. Use the CPU backend on those GPUs; TensorRT 8.6 support would require code changes and testing.
+
+Check your GPU against the [TensorRT support matrix](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/getting-started/support-matrix.html) before installing dependencies. The CUDA version shown by `nvidia-smi` describes driver capability, not the installed toolkit.
+
 The GPU installer supports Ubuntu 22.04/24.04 x86-64 and TensorRT 10. Install a compatible NVIDIA driver first using [Ubuntu's driver installation guide](https://ubuntu.com/server/docs/nvidia-drivers-installation/). Verify it with `nvidia-smi` before continuing.
 
 Configure [NVIDIA's CUDA APT repository](https://developer.nvidia.com/cuda-downloads) for your Ubuntu release so the packages can be found. Follow the repository setup steps; this script installs the toolkit separately.
