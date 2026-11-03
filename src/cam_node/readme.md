@@ -26,6 +26,6 @@ cp config/cam_node.example.json config/cam_node.json
 ./bin/cam_node run --config config/cam_node.json
 ```
 
-Ubuntu 22.04, 24.04, and 26.04 LTS are supported by the setup scripts. RealSense 2.58 or newer is required.
+Ubuntu 24.04 LTS is supported by the setup scripts, which install pinned dependency versions, including RealSense 2.58.4.
 
 See [docs](docs/README.md) for setup, configuration and project details.

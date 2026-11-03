@@ -5,6 +5,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
+find_package(CLI11 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
@@ -18,4 +19,8 @@ set_target_properties(safety_manager PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${SAFE
 
 target_compile_features(safety_manager PRIVATE cxx_std_17)
 target_include_directories(safety_manager PRIVATE include)
-target_link_libraries(safety_manager PRIVATE nlohmann_json::nlohmann_json fmt::fmt)
+target_link_libraries(safety_manager PRIVATE
+    CLI11::CLI11
+    nlohmann_json::nlohmann_json
+    fmt::fmt
+)

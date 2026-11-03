@@ -5,9 +5,24 @@
 # - OpenCV libraries.
 # - RealSense SDK and USB permission rules.
 
-# Requires Ubuntu 22.04, 24.04 or 26.04 and root or sudo access.
+# Requires Ubuntu 24.04 and root or sudo access.
+# Package versions are pinned; update them together when upgrading.
 
 set -euo pipefail
+
+# Pinned for Ubuntu 24.04 (noble) and the official RealSense repository.
+realsense_version=2.58.4-0~realsense.19927
+packages=(
+    build-essential=12.10ubuntu1
+    cmake=3.28.3-1build7
+    libcli11-dev=2.4.1+ds-1
+    libfmt-dev=9.1.0+ds1-2
+    nlohmann-json3-dev=3.11.3-1
+    libopencv-dev=4.6.0+dfsg-13.1ubuntu1
+    "librealsense2=$realsense_version"
+    "librealsense2-dev=$realsense_version"
+    "librealsense2-udev-rules=$realsense_version"
+)
 
 if [[ "$(uname -s)" != Linux ]]; then
     echo "The current platform is not Linux." >&2
@@ -20,8 +35,8 @@ if [[ ! -r /etc/os-release ]]; then
 fi
 . /etc/os-release
 case "${ID:-}:${VERSION_ID:-}" in
-    ubuntu:22.04|ubuntu:24.04|ubuntu:26.04) ;;
-    *) echo "Supported Linux distributions: Ubuntu 22.04, 24.04, and 26.04 LTS." >&2; exit 1 ;;
+    ubuntu:24.04) ;;
+    *) echo "Supported Linux distribution: Ubuntu 24.04 LTS." >&2; exit 1 ;;
 esac
 
 root_cmd=()
@@ -52,13 +67,6 @@ printf 'deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsens
     "$VERSION_CODENAME" | "${root_cmd[@]}" tee /etc/apt/sources.list.d/librealsense.list >/dev/null
 
 "${root_cmd[@]}" apt-get update
-"${root_cmd[@]}" apt-get install -y build-essential cmake libcli11-dev libfmt-dev \
-    libopencv-dev librealsense2-dev librealsense2-udev-rules nlohmann-json3-dev
-sdk_version="$(dpkg-query -W -f='${Version}' librealsense2-dev)"
-if ! dpkg --compare-versions "$sdk_version" ge 2.58; then
-    echo "RealSense $sdk_version was installed, but this project requires 2.58 or newer." >&2
-    echo "Build the required SDK from source if it is unavailable for this Ubuntu release." >&2
-    exit 1
-fi
+"${root_cmd[@]}" apt-get install -y "${packages[@]}"
 
 echo "Dependencies installed. Build with ./scripts/build.sh"

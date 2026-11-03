@@ -1,0 +1,2 @@
+# Matches the existing code: clang-format previously fell back to LLVM style.
+BasedOnStyle: LLVM

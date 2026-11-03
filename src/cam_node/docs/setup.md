@@ -8,7 +8,7 @@ Run commands from `cam_node/`.
 ./scripts/install-deps-ubuntu.sh
 ```
 
-The installer supports Ubuntu 22.04, 24.04, and 26.04 LTS, using APT and the official RealSense repository.
+The installer supports Ubuntu 24.04 LTS, using APT and the official RealSense repository. Package versions, including RealSense 2.58.4, are pinned in the script.
 
 It installs the C++ build tools, CMake, CLI11, fmt, nlohmann/json, OpenCV, RealSense SDK and USB permission rules. RealSense 2.58 or newer is required. The script does not install a kernel driver.
 

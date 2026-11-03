@@ -32,8 +32,8 @@ done
 [[ "$(uname -s)" == Linux ]] || { echo "Requires Ubuntu Linux." >&2; exit 1; }
 . /etc/os-release
 case "${ID:-}:${VERSION_ID:-}:$(uname -m)" in
-    ubuntu:22.04:x86_64|ubuntu:24.04:x86_64) ;;
-    *) echo "GPU installer supports Ubuntu 22.04/24.04 x86-64." >&2; exit 1 ;;
+    ubuntu:24.04:x86_64) ;;
+    *) echo "GPU installer supports Ubuntu 24.04 x86-64." >&2; exit 1 ;;
 esac
 command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null || {
     echo "Install a compatible NVIDIA driver first." >&2; exit 1;
