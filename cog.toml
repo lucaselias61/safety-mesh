@@ -1,28 +1,16 @@
-from_latest_tag = false
-tag_prefix = "v"
-ignore_merge_commits = false
-ignore_fixup_commits = false
-disable_changelog = false
-disable_bump_commit = false
+#:schema https://docs.cocogitto.io/cog-schema.json
+# Requires Cocogitto 7 or later.
+# Release one package: cog bump --package cam_node --auto
+#                      cog bump --package safety_manager --auto
+# Release all changed packages: cog bump --auto
+
+ignore_merge_commits = true
+
+# Create cam_node-<version> and safety_manager-<version> tags without a global tag.
+tag_prefix = ""
+monorepo_version_separator = "-"
 generate_mono_repository_global_tag = false
-generate_mono_repository_package_tags = false
-branch_whitelist = []
-pre = "alpha.*"
-skip_ci = "[skip ci]"
-skip_untracked = false
-pre_bump_hooks = [
-  "echo 'bumping from {{latest|0.0.0}} to {{version|0.0.1}}'",
-  '''perl -pi -e 'BEGIN { ($major, $minor, $patch) = "{{version}}" =~ /^(\d+)\.(\d+)\.(\d+)/; die "Invalid version" unless defined $patch; } s/^(#define SAFETY_MESH_VERSION_MAJOR )\d+/${1}$major/; s/^(#define SAFETY_MESH_VERSION_MINOR )\d+/${1}$minor/; s/^(#define SAFETY_MESH_VERSION_PATCH )\d+/${1}$patch/;' include/safety_mesh/version.hpp''',
-  "cmake --preset conan-debug",
-  "cmake --build --preset conan-debug",
-  "git add include/safety_mesh/version.hpp",
-]
-post_bump_hooks = ["git push", "git push origin v{{version}}"]
-
-pre_package_bump_hooks = []
-post_package_bump_hooks = []
-
-[git_hooks]
+generate_mono_repository_package_tags = true
 
 [git_hooks.commit-msg]
 script = '''#!/bin/sh
@@ -30,10 +18,16 @@ set -e
 cog verify --file "$1"
 '''
 
-[commit_types]
+# Package hooks run in their package directory before the release commit.
+# Each package keeps its version in include/version.hpp.
+[monorepo.packages.cam_node]
+path = "src/cam_node"
+pre_bump_hooks = [
+  '''perl -pi -e 's/^(#define CAM_NODE_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
+]
 
-[changelog]
-path = "CHANGELOG.md"
-authors = []
-
-[bump_profiles]
+[monorepo.packages.safety_manager]
+path = "src/safety_manager"
+pre_bump_hooks = [
+  '''perl -pi -e 's/^(#define SAFETY_MANAGER_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
+]
