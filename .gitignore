@@ -6,11 +6,11 @@ lib/
 #Visual Studio Project
 .vs/*
 .vscode/
-src/**/.vscode/
+modules/**/.vscode/
 
 main.dSYM/*
 build/
-src/**/build/
+modules/**/build/
 compile_commands.json
 
 /CMakeUserPresets.json

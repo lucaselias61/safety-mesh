@@ -21,13 +21,13 @@ cog verify --file "$1"
 # Package hooks run in their package directory before the release commit.
 # Each package keeps its version in include/version.hpp.
 [monorepo.packages.cam_node]
-path = "src/cam_node"
+path = "modules/cam_node"
 pre_bump_hooks = [
   '''perl -pi -e 's/^(#define CAM_NODE_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
 ]
 
 [monorepo.packages.safety_manager]
-path = "src/safety_manager"
+path = "modules/safety_manager"
 pre_bump_hooks = [
   '''perl -pi -e 's/^(#define SAFETY_MANAGER_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
 ]
