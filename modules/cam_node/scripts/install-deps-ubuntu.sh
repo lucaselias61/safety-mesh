@@ -5,8 +5,8 @@
 # - OpenCV libraries.
 # - RealSense SDK and USB permission rules.
 
-# Requires Ubuntu 24.04 and root or sudo access.
-# Package versions are pinned; update them together when upgrading.
+# Requires Ubuntu 24.04 or newer and root or sudo access.
+# Package versions are pinned on 24.04; newer releases use APT candidates.
 
 set -euo pipefail
 
@@ -34,10 +34,22 @@ if [[ ! -r /etc/os-release ]]; then
     exit 1
 fi
 . /etc/os-release
-case "${ID:-}:${VERSION_ID:-}" in
-    ubuntu:24.04) ;;
-    *) echo "Supported Linux distribution: Ubuntu 24.04 LTS." >&2; exit 1 ;;
-esac
+if [[ "${ID:-}" != ubuntu || ! "${VERSION_ID:-}" =~ ^[0-9]+\.[0-9]+$ ]] ||
+    ! dpkg --compare-versions "$VERSION_ID" ge 24.04; then
+    echo "Requires Ubuntu 24.04 or newer." >&2
+    exit 1
+fi
+if [[ -z "${VERSION_CODENAME:-}" ]]; then
+    echo "Cannot identify the Ubuntu repository codename." >&2
+    exit 1
+fi
+if [[ "$VERSION_ID" != 24.04 ]]; then
+    # Do not request Noble package versions from a newer Ubuntu archive.
+    for index in "${!packages[@]}"; do
+        packages[$index]="${packages[$index]%%=*}"
+    done
+    echo "Ubuntu $VERSION_ID: using available packages; this release needs deployment validation." >&2
+fi
 
 root_cmd=()
 if [[ "$(id -u)" != 0 ]]; then
@@ -67,6 +79,15 @@ printf 'deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsens
     "$VERSION_CODENAME" | "${root_cmd[@]}" tee /etc/apt/sources.list.d/librealsense.list >/dev/null
 
 "${root_cmd[@]}" apt-get update
+if [[ "$VERSION_ID" != 24.04 ]]; then
+    realsense_candidate="$(LC_ALL=C apt-cache policy librealsense2-dev | awk '/Candidate:/ {print $2; exit}')"
+    if [[ -z "$realsense_candidate" || "$realsense_candidate" == '(none)' ]] ||
+        ! dpkg --compare-versions "$realsense_candidate" ge 2.58; then
+        echo "Requires a RealSense SDK >= 2.58 package for Ubuntu $VERSION_ID ($VERSION_CODENAME)." >&2
+        exit 1
+    fi
+fi
+"${root_cmd[@]}" apt-get --simulate install "${packages[@]}"
 "${root_cmd[@]}" apt-get install -y "${packages[@]}"
 
 echo "Dependencies installed. Build with ./scripts/build.sh"

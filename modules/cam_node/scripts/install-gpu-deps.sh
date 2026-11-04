@@ -6,7 +6,8 @@
 # - TensorRT command-line tools, including trtexec.
 # - ONNX parser development files.
 
-# Requires a working NVIDIA driver and NVIDIA's CUDA APT repository.
+# Requires Ubuntu 24.04 or newer (x86-64), a working NVIDIA driver,
+# and NVIDIA's CUDA APT repository for the installed Ubuntu release.
 
 set -euo pipefail
 
@@ -31,10 +32,14 @@ done
 }
 [[ "$(uname -s)" == Linux ]] || { echo "Requires Ubuntu Linux." >&2; exit 1; }
 . /etc/os-release
-case "${ID:-}:${VERSION_ID:-}:$(uname -m)" in
-    ubuntu:24.04:x86_64) ;;
-    *) echo "GPU installer supports Ubuntu 24.04 x86-64." >&2; exit 1 ;;
-esac
+if [[ "${ID:-}" != ubuntu || "$(uname -m)" != x86_64 || ! "${VERSION_ID:-}" =~ ^[0-9]+\.[0-9]+$ ]] ||
+    ! dpkg --compare-versions "$VERSION_ID" ge 24.04; then
+    echo "GPU installer requires Ubuntu 24.04 or newer, x86-64." >&2
+    exit 1
+fi
+if [[ "$VERSION_ID" != 24.04 ]]; then
+    echo "Ubuntu $VERSION_ID: CUDA/TensorRT packages must support this release; deployment validation is required." >&2
+fi
 command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null || {
     echo "Install a compatible NVIDIA driver first." >&2; exit 1;
 }
