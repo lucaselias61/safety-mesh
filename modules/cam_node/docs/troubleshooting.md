@@ -10,4 +10,4 @@
 | TensorRT backend unavailable | Reconfigure with `-DTENSORRT=ON` and rebuild. See [inference](inference.md). |
 | No frames received | The worker retries, then stops after five consecutive missing frames. Check the camera connection and stream profiles. |
 | Preview window fails | `view` requires a graphical display and OpenCV window support. |
-| Dependency or build failure | Run the [setup](setup.md) installer on Ubuntu 24.04. RealSense must be 2.58 or newer. |
+| Dependency or build failure | See [setup](setup.md). The installer accepts Ubuntu 24.04 or newer; newer releases need compatible repositories and deployment validation. RealSense must be 2.58 or newer. |

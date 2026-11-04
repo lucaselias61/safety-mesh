@@ -4,7 +4,7 @@ The current backend targets TensorRT 10 and rejects older versions. Pascal GPUs,
 
 Check your GPU against the [TensorRT support matrix](https://docs.nvidia.com/deeplearning/tensorrt/10.x.x/getting-started/support-matrix.html) before installing dependencies. The CUDA version shown by `nvidia-smi` describes driver capability, not the installed toolkit.
 
-The GPU installer supports Ubuntu 24.04 x86-64 and TensorRT 10. Install a compatible NVIDIA driver first using [Ubuntu's driver installation guide](https://ubuntu.com/server/docs/nvidia-drivers-installation/). Verify it with `nvidia-smi` before continuing.
+The GPU installer accepts Ubuntu 24.04 or newer on x86-64 and requires TensorRT 10. Newer Ubuntu releases require deployment validation and CUDA/TensorRT packages compatible with that release; accepting the OS version does not establish compatibility. The script simulates package resolution before installation. Install a compatible NVIDIA driver first using [Ubuntu's driver installation guide](https://ubuntu.com/server/docs/nvidia-drivers-installation/). Verify it with `nvidia-smi` before continuing.
 
 Configure [NVIDIA's CUDA APT repository](https://developer.nvidia.com/cuda-downloads) for your Ubuntu release so the packages can be found. Follow the repository setup steps; this script installs the toolkit separately.
 
