@@ -1,0 +1,33 @@
+// cam_node -> safety_manager, one CameraFrame per UDP datagram.
+// Never change or reuse a field number; add new fields with new numbers.
+syntax = "proto3";
+
+package protocol;
+
+// World-frame point in metres.
+message Point3 {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message Person {
+  string person_id = 1;          // Camera-local id, e.g. "person_4".
+  repeated Point3 keypoints = 2; // World-frame skeleton keypoints.
+  float confidence = 3;          // 0..1.
+}
+
+message Health {
+  float fps = 1;
+  uint32 latency_ms = 2;
+  bool calibration_valid = 3;
+}
+
+message CameraFrame {
+  uint32 protocol_version = 1; // Must equal protocol::kProtocolVersion.
+  string camera_id = 2;        // e.g. "cam_1".
+  uint64 sequence = 3;         // +1 per datagram per camera; detects loss and reordering.
+  int64 timestamp_ns = 4;      // Capture time, Unix epoch nanoseconds.
+  Health health = 5;           // Doubles as the heartbeat.
+  repeated Person persons = 6; // Zero or more detected people.
+}

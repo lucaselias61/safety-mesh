@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Check the environment and install Ubuntu build dependencies:
-# - C++ build tools, CMake, CLI11, fmt and nlohmann/json.
+# - C++ build tools, CMake, CLI11, fmt, nlohmann/json and Protobuf.
 
 # Requires Ubuntu 24.04 and root or sudo access.
 # Package versions are pinned; update them together when upgrading.
@@ -15,6 +15,8 @@ packages=(
     libcli11-dev=2.4.1+ds-1
     libfmt-dev=9.1.0+ds1-2
     nlohmann-json3-dev=3.11.3-1
+    libprotobuf-dev=3.21.12-8.2ubuntu0.4
+    protobuf-compiler=3.21.12-8.2ubuntu0.4
 )
 
 if [[ "$(uname -s)" != Linux ]]; then
