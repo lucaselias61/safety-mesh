@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## cam_node-0.2.0 - 2026-11-05
+#### Features
+- (**cam_node**) add Docker Compose deployment with TensorRT - (2149c37) - lucaselias61
+- (**cam_node**) allow installation on Ubuntu 24.04 and newer - (2b679d0) - lucaselias61
+- (**cam_node**) add --version flag - (8545a2e) - lucaselias61
+#### Bug Fixes
+- (**cam_node**) replace undefined check_cuda with handle_cuda_error - (bb714ee) - lucaselias61
+#### Documentation
+- (**cam_node**) clarify dependency installation on newer Ubuntu releases - (e0b715e) - lucaselias61
+#### Refactoring
+- rename src to modules - (de678a5) - lucaselias61
+
+- - -
+
 ## cam_node-0.1.0 - 2026-11-03
 #### Features
 - (**cam_node**) add TensorRT inference engine - (9efb0bc) - lucaselias61
