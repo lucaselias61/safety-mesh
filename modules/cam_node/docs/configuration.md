@@ -1,6 +1,6 @@
 # Configuration
 
-Camera and engine settings share one JSON file. Start from [cam_node.example.json](../config/cam_node.example.json).
+Camera and engine settings share one JSON file. Start from [`serial_number.example.json`](../config/serial_number.example.json).
 
 All fields below are required unless stated otherwise. The example values are not automatic defaults.
 

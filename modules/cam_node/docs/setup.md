@@ -2,6 +2,9 @@
 
 Run commands from `cam_node/`.
 
+For container deployment, see [Docker setup](docker.md). It includes the GPU libraries
+and builds the engine on the target PC at startup.
+
 ## Dependencies
 
 ```sh

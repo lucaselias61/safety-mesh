@@ -29,11 +29,11 @@ Displays color and a depth heatmap side by side at 640 × 480, 15 FPS. Requires 
 
 ## Run detection
 
-Copy [the example configuration](../config/cam_node.example.json) and set your camera serial:
+Copy [the example configuration](../config/serial_number.example.json) and set your camera serial:
 
 ```sh
-cp config/cam_node.example.json config/cam_node.json
-./bin/cam_node run --config config/cam_node.json
+cp config/serial_number.example.json config/233322245.json
+./bin/cam_node run --config config/233322245.json
 ```
 
 `run` requires `--config`; it has no `--serial` option. Stop with Ctrl+C. SIGTERM also requests shutdown.

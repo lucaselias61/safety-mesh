@@ -3,3 +3,5 @@ bin/
 .vscode/
 
 camera.json
+models/.engines/
+__pycache__/

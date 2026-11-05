@@ -1,0 +1,9 @@
+*
+!Dockerfile
+!CMakeLists.txt
+!include/
+!include/**
+!src/
+!src/**
+!docker/
+!docker/entrypoint.py

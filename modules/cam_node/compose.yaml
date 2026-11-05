@@ -1,0 +1,47 @@
+name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
+
+services:
+  cam-node:
+    container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
+    image: safety-mesh/cam-node:dev
+    platform: linux/amd64
+    build:
+      context: .
+      args:
+        BUILD_JOBS: ${BUILD_JOBS:-4}
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      CAMERA_SERIAL: ${CAMERA_SERIAL:-}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${GPU_DEVICE:-0}"]
+              capabilities: [gpu]
+    # RSUSB needs USB access, including devices connected after container start.
+    # This grants container access; host udev rules are configured separately.
+    device_cgroup_rules:
+      - 'c 189:* rwm'
+    volumes:
+      - type: bind
+        source: /dev/bus/usb
+        target: /dev/bus/usb
+        bind:
+          create_host_path: false
+      # Bind host ./models to /models; generated engines persist in ./models/.engines
+      # across container removal and can be reused by containers sharing this directory.
+      - type: bind
+        source: ./models
+        target: /models
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./config/${CAMERA_SERIAL:?Set CAMERA_SERIAL to select the config}.json
+        target: /config/camera.json
+        read_only: true
+        bind:
+          create_host_path: false

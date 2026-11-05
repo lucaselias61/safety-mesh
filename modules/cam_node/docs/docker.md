@@ -1,0 +1,143 @@
+# Docker deployment
+
+Run these commands from `modules/cam_node/` on a native x86-64 Linux PC.
+The image contains CUDA, TensorRT, OpenCV, RealSense, and the compiled camera node.
+It does not run the native installation scripts.
+
+## Host setup (once per PC)
+
+Install Docker Engine with the Compose plugin and a working NVIDIA driver compatible
+with CUDA 13.2. Verify `nvidia-smi` on the host. Install and configure
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
+
+```sh
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+Restarting Docker interrupts running containers. Rootless Docker and Docker Desktop
+camera passthrough are not covered by this configuration. Use `sudo docker compose`
+if your account cannot access Docker.
+
+The image uses NVIDIA's `tensorrt:26.05-py3` (TensorRT 10, Ubuntu 24.04 userspace)
+on the Linux host, including Ubuntu 26.04. Host CUDA/TensorRT packages are not required.
+The host NVIDIA driver must still satisfy the container's requirements.
+
+## Start
+
+`compose.yaml` contains the application, GPU, USB access, model, and configuration
+settings. In each new terminal, set your camera serial and create its configuration:
+
+```sh
+export CAMERA_SERIAL=123456789
+cp config/serial_number.example.json "config/${CAMERA_SERIAL}.json"
+```
+
+Edit `config/123456789.json`: set `camera.serial` to `123456789`,
+`engine.backend` to `tensor_rt`, and `engine.model_path` to `/models/yolo11n.onnx`.
+The example uses native execution defaults, so these engine settings must be changed
+for Docker. Compose uses the serial to name both the project and container
+`cam-123456789`. Connect the selected RealSense camera to USB 3, then:
+
+```sh
+docker compose up --build -d
+docker compose logs -f cam-node
+```
+
+The first image build downloads dependencies and compiles RealSense and `cam_node`;
+it needs internet access but no GPU. The ONNX model is already in `models/`.
+Startup selects the configured camera, generates an engine on the selected GPU, then starts
+detection. Engine compilation can take several minutes. Subsequent starts reuse the
+cached engine. No graphical preview is configured.
+
+`config/${CAMERA_SERIAL}.json` is mounted read-only at `/config/camera.json`
+and must exist before starting the container. `CAMERA_SERIAL` overrides its camera
+serial. Each camera uses its own configuration file. If you do not know the serial,
+build the image and list cameras using the example as a temporary config mount:
+
+```sh
+CAMERA_SERIAL=discovery docker compose build
+CAMERA_SERIAL=discovery docker compose run --rm \
+  --volume "./config/serial_number.example.json:/config/camera.json:ro" cam-node list
+```
+
+Then set the discovered serial and create its configuration as shown above.
+
+Compose accepts `CAMERA_SERIAL`, `GPU_DEVICE` (host GPU index or
+UUID, default `0`), and `BUILD_JOBS` (default `4`)
+from the shell or an untracked `.env` file beside `compose.yaml`.
+
+You can also supply the serial for an individual command:
+
+```sh
+CAMERA_SERIAL=123456789 docker compose up --build -d
+```
+
+Relative paths resolve from `compose.yaml`'s directory. All commands below
+assume `CAMERA_SERIAL` is exported as shown above. If you previously exported
+`COMPOSE_FILE` for the split configuration, run `unset COMPOSE_FILE` first.
+
+Edit camera stream settings to match the connected camera's supported profiles.
+To inspect them, use the existing CLI through Compose, for example
+`docker compose run --rm cam-node --help`. Diagnostic commands bypass engine generation.
+
+## Model and engine storage
+
+The host `models/` directory is mounted at `/models` and must be writable by the
+container. With `tensor_rt`, the Docker configuration's `engine.model_path` names the
+**ONNX source**, unlike native execution where it names a compiled engine.
+Startup generates a temporary runtime configuration with the compiled engine path.
+Use the [documented YOLO model layout](inference.md#model-requirements).
+The ONNX input tensor must be named `images`.
+
+Engines and metadata persist under `models/.engines/` across container replacement.
+The cache key includes model contents, input shape, GPU identity, driver, TensorRT,
+CUDA, and the TensorRT container tag. Changing these generates a new engine. Builds use
+a lock and temporary files so failed or concurrent builds do not publish partial plans.
+The build preserves FP32 linear input/output as required by the current runtime.
+Old cache entries are retained; stop the service before deleting unused entries.
+Files created by the default container user may be owned by root on the host.
+
+## Camera access and permissions
+
+Compose grants GPU access using an NVIDIA device reservation, mounts `/dev/bus/usb`,
+and allows USB device major `189`. It does not use privileged mode. RealSense is
+built with `FORCE_RSUSB_BACKEND=ON`, so it uses userspace USB rather than requiring
+RealSense-specific kernel patches. Validate capture stability and frame rates on
+your camera and host.
+
+If USB permissions prevent access, install the rules shipped with the pinned SDK
+onto the host (this requires a successful image build):
+
+```sh
+docker compose build
+docker compose run --rm --no-deps --entrypoint cat cam-node \
+  /opt/cam_node/99-realsense-libusb.rules > /tmp/cam-node-realsense.rules
+sudo install -m 0644 /tmp/cam-node-realsense.rules \
+  /etc/udev/rules.d/99-realsense-libusb.rules
+sudo udevadm control --reload-rules
+```
+
+Unplug and reconnect the camera, then restart the service. Host udev rules cannot
+be installed by an ordinary Dockerfile build.
+
+## Stop and verify
+
+```sh
+docker compose exec cam-node nvidia-smi
+docker compose logs --tail=100 cam-node
+docker compose down
+```
+
+`unless-stopped` restarts the service after an exit or host reboot when Docker is
+enabled at boot. A missing camera or invalid configuration produces a startup error;
+inspect logs if the service keeps restarting. SIGTERM reaches the application through
+the startup wrapper and Compose's init process.
+
+Validate image compilation, camera enumeration, first engine generation, cached
+restart, detection, and shutdown on the target PC before deployment. Python startup
+tests can run without Docker or a GPU:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_docker_entrypoint.py'
+```

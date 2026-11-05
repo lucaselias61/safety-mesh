@@ -3,6 +3,7 @@
 To get started, follow setup, usage and configuration.
 
 - [Setup](setup.md): dependencies and build.
+- [Docker](docker.md): Compose deployment with GPU access and persistent engines.
 - [Usage](usage.md): camera commands and detection.
 - [Configuration](configuration.md): camera streams and inference settings.
 - [Architecture](architecture.md): modules and pipeline flow.
