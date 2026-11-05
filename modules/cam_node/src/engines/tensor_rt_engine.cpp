@@ -182,15 +182,15 @@ std::vector<Detection> TensorRTEngine::detect(const rs2::video_frame &frame) {
   // Ensure queued work finishes before local host memory is released on
   // failure.
   try {
-    check_cuda(cudaMemcpyAsync(state.input.data, blob.ptr<float>(),
-                               state.input_bytes, cudaMemcpyHostToDevice,
-                               state.stream.value));
+    handle_cuda_error(cudaMemcpyAsync(state.input.data, blob.ptr<float>(),
+                                      state.input_bytes, cudaMemcpyHostToDevice,
+                                      state.stream.value));
     if (!state.context->enqueueV3(state.stream.value))
       throw std::runtime_error("TensorRT enqueueV3 failed");
-    check_cuda(cudaMemcpyAsync(state.predictions.data(), state.output.data,
-                               state.output_bytes, cudaMemcpyDeviceToHost,
-                               state.stream.value));
-    check_cuda(cudaStreamSynchronize(state.stream.value));
+    handle_cuda_error(cudaMemcpyAsync(
+        state.predictions.data(), state.output.data, state.output_bytes,
+        cudaMemcpyDeviceToHost, state.stream.value));
+    handle_cuda_error(cudaStreamSynchronize(state.stream.value));
   } catch (...) {
     cudaStreamSynchronize(state.stream.value);
     throw;
