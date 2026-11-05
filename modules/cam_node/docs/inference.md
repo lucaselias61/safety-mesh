@@ -18,7 +18,7 @@ For a tar installation, add `--tensorrt-root /path/to/TensorRT` to the build com
 
 Build engines on the deployment GPU. For dynamic inputs, add `--shapes images:1x3x640x640`, using the model's input name. The script refuses existing outputs and writes model hash, GPU, driver and TensorRT details to `.engine.meta.txt`.
 
-Set `backend` to `tensor_rt`, `model_path` to the resulting plan, and `input_size` to its square image size.
+Set `backend` to `tensorrt`, `model_path` to the resulting plan, and `input_size` to its square image size.
 
 The backend expects one FP32 linear NCHW RGB input and one FP32 output `[1, 84, N]`. Dynamic plans use optimization profile 0, which must support the configured input shape. FP16 input/output and data-dependent output shapes are unsupported.
 

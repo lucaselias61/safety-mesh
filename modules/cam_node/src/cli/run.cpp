@@ -3,7 +3,7 @@
 #include "engines/engine.hpp"
 #include "engines/opencv_dnn_engine.hpp"
 #ifdef CAM_NODE_WITH_TENSORRT
-#include "engines/tensor_rt_engine.hpp"
+#include "engines/tensorrt/tensorrt_engine.hpp"
 #endif
 #include "pipeline.hpp"
 #include "stream.hpp"
@@ -37,7 +37,7 @@ void run(const std::shared_ptr<std::string> &config) {
       std::unique_ptr<Engine> engine;
       if (engine_config.backend == "opencv_dnn") {
         engine = std::make_unique<OpenCVDnnEngine>(engine_config);
-      } else if (engine_config.backend == "tensor_rt") {
+      } else if (engine_config.backend == "tensorrt") {
 #ifdef CAM_NODE_WITH_TENSORRT
         engine = std::make_unique<TensorRTEngine>(engine_config);
 #else

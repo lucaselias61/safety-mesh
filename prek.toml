@@ -18,8 +18,8 @@ name = "clang-tidy (cam_node)"
 # clang-tidy wheels skip some releases, so pin only the major version.
 args = ["--version=23", "--compile-commands=modules/cam_node/build"]
 files = '^modules/cam_node/src/.*\.cpp$'
-# Only built with -DTENSORRT=ON, so it is absent from compile_commands.json.
-exclude = 'tensor_rt_engine\.cpp$'
+# Only built with -DTENSORRT=ON, so these are absent from compile_commands.json.
+exclude = '^modules/cam_node/src/engines/tensorrt/'
 
 [[repos.hooks]]
 id = "clang-tidy"

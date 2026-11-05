@@ -33,11 +33,11 @@ def select_camera(config):
 
 def prepare_engine(config):
     engine = config["engine"]
-    if engine["backend"] != "tensor_rt":
+    if engine["backend"] != "tensorrt":
         return
     model = Path(engine["model_path"])
     if not model.is_file() or model.suffix.lower() != ".onnx":
-        raise ValueError("Docker startup requires an existing ONNX model_path for tensor_rt.")
+        raise ValueError("Docker startup requires an existing ONNX model_path for tensorrt.")
     size = engine["input_size"]
     if type(size) is not int or size < 1:
         raise ValueError("engine.input_size must be a positive integer.")

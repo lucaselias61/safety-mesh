@@ -62,7 +62,7 @@ class StartupTests(unittest.TestCase):
                 Path(output).write_bytes(b"complete-engine")
 
             def prepare():
-                config = {"engine": {"backend": "tensor_rt", "model_path": str(model), "input_size": 640}}
+                config = {"engine": {"backend": "tensorrt", "model_path": str(model), "input_size": 640}}
                 entrypoint.prepare_engine(config)
                 return Path(config["engine"]["model_path"])
 
@@ -94,7 +94,7 @@ class StartupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             model = Path(directory) / "model.onnx"
             model.write_bytes(b"model")
-            config = {"engine": {"backend": "tensor_rt", "model_path": str(model), "input_size": 640}}
+            config = {"engine": {"backend": "tensorrt", "model_path": str(model), "input_size": 640}}
             with patch.object(entrypoint, "capture", return_value="version"), patch.object(
                 entrypoint.shutil, "which", return_value="trtexec"
             ), patch.object(Path, "read_text", return_value="cuda-version"), patch.object(

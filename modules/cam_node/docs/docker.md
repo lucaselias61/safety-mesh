@@ -34,7 +34,7 @@ cp config/serial_number.example.json "config/${CAMERA_SERIAL}.json"
 ```
 
 Edit `config/123456789.json`: set `camera.serial` to `123456789`,
-`engine.backend` to `tensor_rt`, and `engine.model_path` to `/models/yolo11n.onnx`.
+`engine.backend` to `tensorrt`, and `engine.model_path` to `/models/yolo11n.onnx`.
 The example uses native execution defaults, so these engine settings must be changed
 for Docker. Compose uses the serial to name both the project and container
 `cam-123456789`. Connect the selected RealSense camera to USB 3, then:
@@ -84,7 +84,7 @@ To inspect them, use the existing CLI through Compose, for example
 ## Model and engine storage
 
 The host `models/` directory is mounted at `/models` and must be writable by the
-container. With `tensor_rt`, the Docker configuration's `engine.model_path` names the
+container. With `tensorrt`, the Docker configuration's `engine.model_path` names the
 **ONNX source**, unlike native execution where it names a compiled engine.
 Startup generates a temporary runtime configuration with the compiled engine path.
 Use the [documented YOLO model layout](inference.md#model-requirements).

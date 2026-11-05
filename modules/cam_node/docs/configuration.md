@@ -27,7 +27,7 @@ At least one stream must be enabled for an enabled camera. Detection needs an en
 
 | Field | Meaning |
 | --- | --- |
-| `engine.backend` | `opencv_dnn` or `tensor_rt`. |
+| `engine.backend` | `opencv_dnn` or `tensorrt`. |
 | `engine.model_path` | Existing model file. Relative paths resolve from the working directory. |
 | `engine.confidence_threshold` | Person score threshold, greater than 0 and at most 1. |
 | `engine.nms_threshold` | Overlap threshold for removing duplicate boxes, greater than 0 and at most 1. |
