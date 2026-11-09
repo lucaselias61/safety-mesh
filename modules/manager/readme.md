@@ -1,10 +1,10 @@
-# Safety Manager
+# Manager
 
 Handles the central coordination and safety decision pipeline.
 
 # Specifications
 
-Written in C++ because the Safety Manager needs reliable state handling, safe concurrency, strict message validation, and deterministic safety decisions without memory-safety risks.
+Written in C++ because the Manager needs reliable state handling, safe concurrency, strict message validation, and deterministic safety decisions without memory-safety risks.
 
 # Behaviour
 

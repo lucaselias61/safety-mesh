@@ -1,12 +1,12 @@
 #:schema https://docs.cocogitto.io/cog-schema.json
 # Requires Cocogitto 7 or later.
 # Release one package: cog bump --package cam_node --auto
-#                      cog bump --package safety_manager --auto
+#                      cog bump --package manager --auto
 # Release all changed packages: cog bump --auto
 
 ignore_merge_commits = true
 
-# Create cam_node-<version> and safety_manager-<version> tags without a global tag.
+# Create cam_node-<version> and manager-<version> tags without a global tag.
 tag_prefix = ""
 monorepo_version_separator = "-"
 generate_mono_repository_global_tag = false
@@ -26,8 +26,8 @@ pre_bump_hooks = [
   '''perl -pi -e 's/^(#define CAM_NODE_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
 ]
 
-[monorepo.packages.safety_manager]
-path = "modules/safety_manager"
+[monorepo.packages.manager]
+path = "modules/manager"
 pre_bump_hooks = [
-  '''perl -pi -e 's/^(#define SAFETY_MANAGER_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
+  '''perl -pi -e 's/^(#define MANAGER_VERSION ")[^"]*"/${1}{{version}}"/' include/version.hpp''',
 ]

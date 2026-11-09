@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) try {
   std::signal(SIGINT, handle_shutdown);  // Ctrl+C
   std::signal(SIGTERM, handle_shutdown); // Docker stop
 
-  CLI::App app{"Safety Manager", "safety_manager"};
-  app.set_version_flag("--version", SAFETY_MANAGER_VERSION);
+  CLI::App app{"Manager", "manager"};
+  app.set_version_flag("--version", MANAGER_VERSION);
 
   try {
     // CLI11 expects the arguments in reverse order, without the program name.
@@ -28,9 +28,9 @@ int main(int argc, char *argv[]) try {
   }
   return 0;
 } catch (const std::exception &error) {
-  std::cerr << "(Safety Manager error): " << error.what() << '\n';
+  std::cerr << "(Manager error): " << error.what() << '\n';
   return 1;
 } catch (...) {
-  std::cerr << "(Safety Manager error): Unknown exception\n";
+  std::cerr << "(Manager error): Unknown exception\n";
   return 1;
 }

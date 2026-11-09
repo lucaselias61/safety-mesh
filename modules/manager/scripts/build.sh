@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Configure and build the safety_manager executable:
+# Configure and build the manager executable:
 # - Release build in build/release.
-# - Copy the executable to bin/safety_manager and update the editor compilation database.
+# - Copy the executable to bin/manager and update the editor compilation database.
 
 # Requires Linux and installed build dependencies.
 
@@ -22,10 +22,10 @@ command -v cmake >/dev/null || { echo "Run ./scripts/install-deps-ubuntu.sh firs
 build_dir="build/release"
 # APT packages already provide CMake configs in the system search paths.
 cmake -S . -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-    "-DSAFETY_MANAGER_OUTPUT_DIR=$project_dir/$build_dir/bin"
+    "-DMANAGER_OUTPUT_DIR=$project_dir/$build_dir/bin"
 # Compile targets with multiple build jobs.
 cmake --build "$build_dir" --parallel
 mkdir -p bin
-cp "$build_dir/bin/safety_manager" bin/safety_manager
+cp "$build_dir/bin/manager" bin/manager
 # Keep the editor pointed at the latest build.
 cp "$build_dir/compile_commands.json" build/compile_commands.json

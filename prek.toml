@@ -23,6 +23,6 @@ exclude = '^modules/cam_node/src/engines/tensorrt/'
 
 [[repos.hooks]]
 id = "clang-tidy"
-name = "clang-tidy (safety_manager)"
-args = ["--version=23", "--compile-commands=modules/safety_manager/build"]
-files = '^modules/safety_manager/src/.*\.cpp$'
+name = "clang-tidy (manager)"
+args = ["--version=23", "--compile-commands=modules/manager/build"]
+files = '^modules/manager/src/.*\.cpp$'

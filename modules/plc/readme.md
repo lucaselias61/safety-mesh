@@ -28,7 +28,7 @@ Written in the PLC's native safety language because the PLC must enforce the fin
 
 # Inputs
 
-[[Safety Manager#Outputs]]
+[[Manager#Outputs]]
 
 # Outputs
 

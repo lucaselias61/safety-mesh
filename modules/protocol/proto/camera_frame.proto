@@ -1,4 +1,4 @@
-// cam_node -> safety_manager, one CameraFrame per UDP datagram.
+// cam_node -> manager, one CameraFrame per UDP datagram.
 // Never change or reuse a field number; add new fields with new numbers.
 syntax = "proto3";
 

@@ -7,7 +7,7 @@ codec. No sockets, no application logic.
 
 | Schema | Direction | Transport |
 |---|---|---|
-| `proto/camera_frame.proto` | cam_node → safety_manager | UDP, one `CameraFrame` per datagram |
+| `proto/camera_frame.proto` | cam_node → manager | UDP, one `CameraFrame` per datagram |
 
 ## Datagram layout
 

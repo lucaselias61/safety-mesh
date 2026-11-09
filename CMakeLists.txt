@@ -9,5 +9,5 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(modules/protocol)
 add_subdirectory(modules/cam_node)
-add_subdirectory(modules/safety_manager)
+add_subdirectory(modules/manager)
 
