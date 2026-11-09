@@ -3,7 +3,6 @@ FROM nvcr.io/nvidia/tensorrt:26.05-py3
 ARG REALSENSE_VERSION=2.58.4
 ARG BUILD_JOBS=4
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TENSORRT_CONTAINER_TAG=26.05-py3
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

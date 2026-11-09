@@ -45,14 +45,6 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=ON
 cmake --build build --parallel
 ```
 
-Then create the engine:
-
-```sh
-./scripts/build-tensorrt-engine.sh --onnx models/yolo11n.onnx --output models/yolo11n.engine
-```
-
-It Generates the GPU-optimized .engine file using trtexec. Regenerate it when the model or GPU/TensorRT environment changes.
-
-For more options and information see [configure inference](inference.md#gpu-acceleration). Engine generation installs no dependencies.
+Set `engine.model_path` to the ONNX model, for example `models/yolo11n.onnx`. The first run builds a GPU-optimized engine and caches it; see [configure inference](inference.md#gpu-acceleration).
 
 Both setup methods create `bin/cam_node`, so the last build selects the executable. `build.sh` copies the compilation database to `build/compile_commands.json` for the editor; manual builds generate it there directly.

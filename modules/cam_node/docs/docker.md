@@ -46,9 +46,9 @@ docker compose logs -f cam-node
 
 The first image build downloads dependencies and compiles RealSense and `cam_node`;
 it needs internet access but no GPU. The ONNX model is already in `models/`.
-Startup selects the configured camera, generates an engine on the selected GPU, then starts
-detection. Engine compilation can take several minutes. Subsequent starts reuse the
-cached engine. No graphical preview is configured.
+Startup selects the configured camera and starts `cam_node`, which builds an engine
+on the selected GPU before detection starts. Engine compilation can take several
+minutes. Subsequent starts reuse the cached engine. No graphical preview is configured.
 
 `config/${CAMERA_SERIAL}.json` is mounted read-only at `/config/camera.json`
 and must exist before starting the container. `CAMERA_SERIAL` overrides its camera
@@ -79,23 +79,22 @@ assume `CAMERA_SERIAL` is exported as shown above. If you previously exported
 
 Edit camera stream settings to match the connected camera's supported profiles.
 To inspect them, use the existing CLI through Compose, for example
-`docker compose run --rm cam-node --help`. Diagnostic commands bypass engine generation.
+`docker compose run --rm cam-node --help`. Diagnostic commands bypass camera selection and do not build engines.
 
 ## Model and engine storage
 
 The host `models/` directory is mounted at `/models` and must be writable by the
 container. With `tensorrt`, the Docker configuration's `engine.model_path` names the
-**ONNX source**.
-Startup generates a temporary runtime configuration with the compiled engine path.
+**ONNX source**, and `cam_node` builds and caches the engine as in native execution
+([GPU acceleration](inference.md#gpu-acceleration)).
 Use the [documented YOLO model layout](inference.md#model-requirements).
-The ONNX input tensor must be named `images`.
 
 Engines and metadata persist under `models/.engines/` across container replacement.
-The cache key includes model contents, input shape, GPU identity, driver, TensorRT,
-CUDA, and the TensorRT container tag. Changing these generates a new engine. Builds use
+The cache key includes model contents, input size, GPU identity, CUDA driver and
+runtime, and TensorRT versions. Changing these generates a new engine. Builds use
 a lock and temporary files so failed or concurrent builds do not publish partial plans.
-The build preserves FP32 linear input/output as required by the current runtime.
 Old cache entries are retained; stop the service before deleting unused entries.
+Entries created by earlier images that built engines with `trtexec` are not reused.
 Files created by the default container user may be owned by root on the host.
 
 ## Camera access and permissions
