@@ -1,5 +1,8 @@
 #include "engines/tensorrt/tensorrt_engine.hpp"
 
+#include "engines/tensorrt/tensorrt_builder.hpp"
+#include "tensorrt_common.hpp"
+
 #include <NvInfer.h>
 #include <cuda_runtime_api.h>
 #include <opencv2/dnn.hpp>
@@ -7,30 +10,15 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <fstream>
 #include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <string>
 
-#if NV_TENSORRT_MAJOR < 10
-#error "TensorRTEngine requires TensorRT 10 or newer"
-#endif
-
 namespace {
-void handle_cuda_error(cudaError_t result) {
-  if (result != cudaSuccess)
-    throw std::runtime_error(std::string("CUDA: ") +
-                             cudaGetErrorString(result));
-}
-
-struct Logger : nvinfer1::ILogger {
-  void log(Severity severity, const char *message) noexcept override {
-    if (severity <= Severity::kWARNING)
-      std::fprintf(stderr, "TensorRT: %s\n", message);
-  }
-};
+using tensorrt::handle_cuda_error;
+using tensorrt::Logger;
 
 // RAII wrapper for a CUDA stream, which is a stream of operations for the GPU.
 // Ensures proper creation, synchronization, and destruction.
@@ -106,15 +94,15 @@ struct TensorRTEngine::Impl {
         confidence_threshold < 0 || confidence_threshold > 1 ||
         !std::isfinite(nms_threshold) || nms_threshold < 0 || nms_threshold > 1)
       throw std::invalid_argument("Invalid TensorRT detection configuration");
-    std::ifstream file(config.model_path, std::ios::binary);
+    const std::string plan_path =
+        resolve_tensorrt_plan(config.model_path, input_size);
+    std::ifstream file(plan_path, std::ios::binary);
     if (!file)
-      throw std::runtime_error("Cannot open TensorRT plan: " +
-                               config.model_path);
+      throw std::runtime_error("Cannot open TensorRT plan: " + plan_path);
     std::vector<char> plan{std::istreambuf_iterator<char>(file),
                            std::istreambuf_iterator<char>()};
     if (file.bad() || plan.empty())
-      throw std::runtime_error("Cannot read TensorRT plan: " +
-                               config.model_path);
+      throw std::runtime_error("Cannot read TensorRT plan: " + plan_path);
     runtime.reset(nvinfer1::createInferRuntime(logger));
     if (!runtime)
       throw std::runtime_error("Cannot create TensorRT runtime");

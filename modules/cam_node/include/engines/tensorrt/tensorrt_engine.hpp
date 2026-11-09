@@ -5,9 +5,10 @@
 
 #include <memory>
 
-// TensorRT 10+ runtime for a trusted, prebuilt YOLOv8/YOLO11 engine.
-// Expects FP32 linear tensors: [1, 3, input_size, input_size] -> [1, 84, N].
-// Each instance owns its execution context; detect must not run concurrently.
+// TensorRT 10+ runtime for a YOLOv8/YOLO11 ONNX model, built and cached on
+// first use, or a trusted prebuilt plan (see resolve_tensorrt_plan). Expects
+// FP32 linear tensors: [1, 3, input_size, input_size] -> [1, 84, N]. Each
+// instance owns its execution context; detect must not run concurrently.
 class TensorRTEngine : public Engine {
 public:
   explicit TensorRTEngine(const EngineConfig &config);

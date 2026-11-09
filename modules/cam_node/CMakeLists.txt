@@ -49,11 +49,17 @@ if(TENSORRT)
         HINTS ${TensorRT_ROOT} ENV TensorRT_ROOT PATH_SUFFIXES include)
     find_library(TENSORRT_LIBRARY nvinfer
         HINTS ${TensorRT_ROOT} ENV TensorRT_ROOT PATH_SUFFIXES lib lib64)
-    if(NOT TENSORRT_INCLUDE_DIR OR NOT TENSORRT_LIBRARY)
-        message(FATAL_ERROR "TensorRT headers and nvinfer are required; set TensorRT_ROOT")
+    find_library(TENSORRT_ONNX_PARSER_LIBRARY nvonnxparser
+        HINTS ${TensorRT_ROOT} ENV TensorRT_ROOT PATH_SUFFIXES lib lib64)
+    if(NOT TENSORRT_INCLUDE_DIR OR NOT TENSORRT_LIBRARY OR NOT TENSORRT_ONNX_PARSER_LIBRARY)
+        message(FATAL_ERROR "TensorRT headers, nvinfer and nvonnxparser are required; set TensorRT_ROOT")
     endif()
-    target_sources(cam_node PRIVATE src/engines/tensorrt/tensorrt_engine.cpp)
+    target_sources(cam_node PRIVATE
+        src/engines/tensorrt/tensorrt_builder.cpp
+        src/engines/tensorrt/tensorrt_engine.cpp
+    )
     target_include_directories(cam_node PRIVATE ${TENSORRT_INCLUDE_DIR})
-    target_link_libraries(cam_node PRIVATE ${TENSORRT_LIBRARY} CUDA::cudart)
+    target_link_libraries(cam_node PRIVATE
+        ${TENSORRT_LIBRARY} ${TENSORRT_ONNX_PARSER_LIBRARY} CUDA::cudart)
     target_compile_definitions(cam_node PRIVATE CAM_NODE_WITH_TENSORRT=1)
 endif()
