@@ -12,6 +12,12 @@ services:
     init: true
     restart: unless-stopped
     stop_grace_period: 30s
+    # Detections are logged continuously; rotation caps disk use at about 50 MB.
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "5"
     environment:
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       CAMERA_SERIAL: ${CAMERA_SERIAL:-}

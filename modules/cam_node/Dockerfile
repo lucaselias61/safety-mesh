@@ -4,12 +4,14 @@ ARG REALSENSE_VERSION=2.58.4
 ARG BUILD_JOBS=4
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Build dependencies pinned in the file shared with the native installer.
+COPY scripts/ubuntu-24.04-packages.txt /tmp/ubuntu-24.04-packages.txt
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        build-essential cmake ca-certificates git pkg-config python3 \
-        libcli11-dev libfmt-dev nlohmann-json3-dev libopencv-dev \
+        $(sed 's/#.*//' /tmp/ubuntu-24.04-packages.txt) \
+        ca-certificates git pkg-config python3 \
         libusb-1.0-0-dev libudev-dev libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* /tmp/ubuntu-24.04-packages.txt
 
 # Userspace USB backend: no RealSense kernel modules are installed on the host.
 RUN git clone --depth 1 --branch "v${REALSENSE_VERSION}" \

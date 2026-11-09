@@ -7,3 +7,4 @@
 !src/**
 !docker/
 !docker/entrypoint.py
+!scripts/ubuntu-24.04-packages.txt

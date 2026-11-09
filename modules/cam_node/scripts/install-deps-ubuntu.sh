@@ -10,15 +10,16 @@
 
 set -euo pipefail
 
-# Pinned for Ubuntu 24.04 (noble) and the official RealSense repository.
+# Ubuntu packages are pinned in a file shared with the Dockerfile.
+packages_file="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/ubuntu-24.04-packages.txt"
+packages=()
+while read -r package _; do
+    [[ -z "$package" || "$package" == \#* ]] && continue
+    packages+=("$package")
+done < "$packages_file"
+# Pinned for the official RealSense repository on Ubuntu 24.04 (noble).
 realsense_version=2.58.4-0~realsense.19927
-packages=(
-    build-essential=12.10ubuntu1
-    cmake=3.28.3-1build7
-    libcli11-dev=2.4.1+ds-1
-    libfmt-dev=9.1.0+ds1-2
-    nlohmann-json3-dev=3.11.3-1
-    libopencv-dev=4.6.0+dfsg-13.1ubuntu1
+packages+=(
     "librealsense2=$realsense_version"
     "librealsense2-dev=$realsense_version"
     "librealsense2-udev-rules=$realsense_version"

@@ -6,16 +6,24 @@ It does not run the native installation scripts.
 
 ## Host setup (once per PC)
 
-Install Docker Engine with the Compose plugin and a working NVIDIA driver compatible
-with CUDA 13.2. Verify `nvidia-smi` on the host. Install and configure
-[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html):
+Install a working NVIDIA driver compatible with CUDA 13.2 using
+[Ubuntu's driver installation guide](https://ubuntu.com/server/docs/nvidia-drivers-installation/),
+and verify `nvidia-smi` on the host. Then install Docker Engine, the Compose plugin and the
+NVIDIA Container Toolkit:
 
 ```sh
-sudo nvidia-ctk runtime configure --runtime=docker
-sudo systemctl restart docker
+./scripts/install-docker-host.sh
 ```
 
-Restarting Docker interrupts running containers. Rootless Docker and Docker Desktop
+The script requires Ubuntu 24.04 or newer on x86-64. It follows
+[Docker's](https://docs.docker.com/engine/install/ubuntu/) and
+[NVIDIA's](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+APT instructions with pinned versions, configures Docker to use the NVIDIA runtime, and
+finishes by running `nvidia-smi` in a container. It stops if conflicting packages such
+as `docker.io` are installed, and does not install the driver.
+
+If the runtime configuration changes, the script restarts Docker, which interrupts
+running containers. Rootless Docker and Docker Desktop
 camera passthrough are not covered by this configuration. Use `sudo docker compose`
 if your account cannot access Docker.
 
@@ -130,7 +138,8 @@ docker compose down
 
 `unless-stopped` restarts the service after an exit or host reboot when Docker is
 enabled at boot. A missing camera or invalid configuration produces a startup error;
-inspect logs if the service keeps restarting. SIGTERM reaches the application through
+inspect logs if the service keeps restarting. Docker keeps the newest five 10 MB
+log files per container and discards older output. SIGTERM reaches the application through
 the startup wrapper and Compose's init process.
 
 Validate image compilation, camera enumeration, first engine generation, cached

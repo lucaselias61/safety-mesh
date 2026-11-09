@@ -1,0 +1,10 @@
+# Ubuntu 24.04 (noble) build dependencies, pinned for repeatable builds.
+# Shared by scripts/install-deps-ubuntu.sh and the Dockerfile.
+# RealSense is pinned separately: natively from its APT repository,
+# in Docker as a source build.
+build-essential=12.10ubuntu1
+cmake=3.28.3-1build7
+libcli11-dev=2.4.1+ds-1
+libfmt-dev=9.1.0+ds1-2
+nlohmann-json3-dev=3.11.3-1
+libopencv-dev=4.6.0+dfsg-13.1ubuntu1
