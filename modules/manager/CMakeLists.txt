@@ -11,7 +11,7 @@ find_package(fmt CONFIG REQUIRED)
 
 # Standalone builds pull in the shared protocol module directly.
 if(NOT TARGET comm_protocol)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../comm/protocol" "${CMAKE_CURRENT_BINARY_DIR}/comm_protocol")
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../comm" "${CMAKE_CURRENT_BINARY_DIR}/comm")
 endif()
 
 add_executable(manager

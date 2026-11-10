@@ -14,3 +14,5 @@ modules/**/build/
 compile_commands.json
 
 /CMakeUserPresets.json
+
+modules/**/.cache/
