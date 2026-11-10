@@ -1,7 +1,7 @@
 // Builds an artificial CameraFrame, encodes it into a datagram, prints its
 // size and bytes, then decodes it and prints the received frame.
 
-#include <protocol/codec.hpp>
+#include <comm/protocol/codec.hpp>
 
 #include <google/protobuf/text_format.h>
 
@@ -9,8 +9,8 @@
 #include <string>
 
 int main() {
-  protocol::CameraFrame sent;
-  sent.set_protocol_version(protocol::kProtocolVersion);
+  comm::protocol::CameraFrame sent;
+  sent.set_protocol_version(comm::protocol::kProtocolVersion);
   sent.set_camera_id("cam_1");
   sent.set_sequence(42);
   sent.set_timestamp_ns(1762000000000000000LL);
@@ -30,26 +30,26 @@ int main() {
 
   // Encode.
   std::string datagram;
-  if (!protocol::encode(sent, datagram)) {
+  if (!comm::protocol::encode(sent, datagram)) {
     std::printf("encode failed: datagram exceeds %zu bytes\n",
-                protocol::kMaxDatagramSize);
+                comm::protocol::kMaxDatagramSize);
     return 1;
   }
 
   std::printf("Datagram: %zu bytes (%zu payload + %zu CRC)\n", datagram.size(),
-              datagram.size() - protocol::kChecksumSize,
-              protocol::kChecksumSize);
+              datagram.size() - comm::protocol::kChecksumSize,
+              comm::protocol::kChecksumSize);
   for (std::size_t i = 0; i < datagram.size(); ++i) {
     std::printf("%02X%c", static_cast<unsigned char>(datagram[i]),
                 (i % 16 == 15 || i + 1 == datagram.size()) ? '\n' : ' ');
   }
 
   // Decode.
-  protocol::CameraFrame received;
+  comm::protocol::CameraFrame received;
   const auto error =
-      protocol::decode(datagram.data(), datagram.size(), received);
-  std::printf("\nDecode: %s\n", protocol::to_string(error));
-  if (error != protocol::DecodeError::None) {
+      comm::protocol::decode(datagram.data(), datagram.size(), received);
+  std::printf("\nDecode: %s\n", comm::protocol::to_string(error));
+  if (error != comm::protocol::DecodeError::None) {
     return 1;
   }
 

@@ -1,0 +1,2 @@
+add_executable(comm_protocol_datagram_demo datagram_demo.cpp)
+target_link_libraries(comm_protocol_datagram_demo PRIVATE comm_protocol)

@@ -15,7 +15,7 @@ codec. No sockets, no application logic.
 [ protobuf payload ][ CRC-32 of payload, 4 bytes big-endian ]
 ```
 
-- Default cap at 1400 bytes (`protocol::kMaxDatagramSize`) to avoid IP fragmentation. check MTU (maximum transmission unit) for 
+- Default cap at 1400 bytes (`comm::protocol::kMaxDatagramSize`) to avoid IP fragmentation. check MTU (maximum transmission unit) for 
 increased Datagram size
 - `decode` checks length, CRC, parse, then `protocol_version`. Drop anything
   that fails.
@@ -43,7 +43,7 @@ values go on the wire, not names.
 
 ## Package
 
-`package protocol;` sets the C++ namespace (`protocol::CameraFrame`)
+`package comm.protocol;` sets the C++ namespace (`comm::protocol::CameraFrame`)
 and prevents name clashes with other `.proto` files. It is not sent on the
 wire, so renaming it doesn't break compatibility.
 
@@ -51,21 +51,21 @@ wire, so renaming it doesn't break compatibility.
 
 - Never change or reuse a field number. Add new fields with new numbers.
 - Don't change a field's type.
-- Bump `protocol::kProtocolVersion` only for incompatible changes.
+- Bump `comm::protocol::kProtocolVersion` only for incompatible changes.
 
 ## Usage
 
 ```cmake
-target_link_libraries(my_target PRIVATE protocol)
+target_link_libraries(my_target PRIVATE comm_protocol)
 ```
 
 ```cpp
-#include <protocol/codec.hpp>
+#include <comm/protocol/codec.hpp>
 
-protocol::CameraFrame frame;
-frame.set_protocol_version(protocol::kProtocolVersion);
+comm::protocol::CameraFrame frame;
+frame.set_protocol_version(comm::protocol::kProtocolVersion);
 std::string datagram;
-if (protocol::encode(frame, datagram)) {
+if (comm::protocol::encode(frame, datagram)) {
   // sendto(...)
 }
 ```

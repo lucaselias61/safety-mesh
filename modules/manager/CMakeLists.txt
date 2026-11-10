@@ -10,8 +10,8 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
 # Standalone builds pull in the shared protocol module directly.
-if(NOT TARGET protocol)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../protocol" "${CMAKE_CURRENT_BINARY_DIR}/protocol")
+if(NOT TARGET comm_protocol)
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../comm/protocol" "${CMAKE_CURRENT_BINARY_DIR}/comm_protocol")
 endif()
 
 add_executable(manager
@@ -28,5 +28,5 @@ target_link_libraries(manager PRIVATE
     CLI11::CLI11
     nlohmann_json::nlohmann_json
     fmt::fmt
-    protocol
+    comm_protocol
 )

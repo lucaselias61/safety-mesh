@@ -1,8 +1,8 @@
-#include <protocol/codec.hpp>
+#include <comm/protocol/codec.hpp>
 
 #include <array>
 
-namespace protocol {
+namespace comm::protocol {
 namespace {
 
 const std::array<std::uint32_t, 256> &crc_table() {
@@ -60,7 +60,7 @@ std::uint32_t crc32(const void *data, std::size_t size) {
   return crc ^ 0xFFFFFFFFU;
 }
 
-bool encode(const protocol::CameraFrame &frame, std::string &out) {
+bool encode(const CameraFrame &frame, std::string &out) {
   out.clear();
   if (!frame.SerializeToString(&out)) {
     return false;
@@ -69,8 +69,7 @@ bool encode(const protocol::CameraFrame &frame, std::string &out) {
   return out.size() <= kMaxDatagramSize;
 }
 
-DecodeError decode(const void *data, std::size_t size,
-                   protocol::CameraFrame &out) {
+DecodeError decode(const void *data, std::size_t size, CameraFrame &out) {
   if (size < kChecksumSize) {
     return DecodeError::TooShort;
   }
@@ -88,4 +87,4 @@ DecodeError decode(const void *data, std::size_t size,
   return DecodeError::None;
 }
 
-} // namespace protocol
+} // namespace comm::protocol
