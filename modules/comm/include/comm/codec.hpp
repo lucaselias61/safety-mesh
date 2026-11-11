@@ -1,12 +1,12 @@
 #pragma once
 
-#include <comm/protocol/camera_frame.pb.h>
+#include <comm/camera_frame.pb.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
 
-namespace comm::protocol {
+namespace comm {
 
 // Bump when the datagram layout changes incompatibly.
 inline constexpr std::uint32_t kProtocolVersion = 1;
@@ -37,4 +37,4 @@ DecodeError decode(const void *data, std::size_t size, CameraFrame &out);
 // CRC-32 (IEEE 802.3), exposed for tests and for non-protobuf telegrams.
 std::uint32_t crc32(const void *data, std::size_t size);
 
-} // namespace comm::protocol
+} // namespace comm

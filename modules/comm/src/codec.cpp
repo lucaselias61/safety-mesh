@@ -1,8 +1,8 @@
-#include <comm/protocol/codec.hpp>
+#include <comm/codec.hpp>
 
 #include <array>
 
-namespace comm::protocol {
+namespace comm {
 namespace {
 
 const std::array<std::uint32_t, 256> &crc_table() {
@@ -87,4 +87,4 @@ DecodeError decode(const void *data, std::size_t size, CameraFrame &out) {
   return DecodeError::None;
 }
 
-} // namespace comm::protocol
+} // namespace comm

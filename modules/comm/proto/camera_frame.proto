@@ -2,7 +2,7 @@
 // Never change or reuse a field number; add new fields with new numbers.
 syntax = "proto3";
 
-package comm.protocol;
+package comm;
 
 // World-frame point in metres.
 message Point3 {
@@ -24,7 +24,7 @@ message Health {
 }
 
 message CameraFrame {
-  uint32 protocol_version = 1; // Must equal comm::protocol::kProtocolVersion.
+  uint32 protocol_version = 1; // Must equal comm::kProtocolVersion.
   string camera_id = 2;        // e.g. "cam_1".
   uint64 sequence = 3;         // +1 per datagram per camera; detects loss and reordering.
   int64 timestamp_ns = 4;      // Capture time, Unix epoch nanoseconds.

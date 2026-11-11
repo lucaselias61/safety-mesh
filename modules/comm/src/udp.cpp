@@ -1,4 +1,4 @@
-#include <comm/transport/udp.hpp>
+#include <comm/udp.hpp>
 
 #include <fcntl.h>
 #include <netdb.h>
@@ -17,7 +17,7 @@
 #include <system_error>
 #include <utility>
 
-namespace comm::transport {
+namespace comm {
 namespace {
 
 using AddressList = std::unique_ptr<addrinfo, decltype(&freeaddrinfo)>;
@@ -170,4 +170,4 @@ ReceiveResult UdpReceiver::receive(void *buffer, std::size_t capacity,
   return {ReceiveStatus::Ok, static_cast<std::size_t>(received)};
 }
 
-} // namespace comm::transport
+} // namespace comm

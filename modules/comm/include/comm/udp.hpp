@@ -7,9 +7,9 @@
 #include <string_view>
 
 // UDP datagrams as raw bytes. Knows nothing about the message format; pair
-// with comm::protocol to encode and decode. UDP may drop, duplicate or reorder
+// with comm/codec.hpp to encode and decode. UDP may drop, duplicate or reorder
 // datagrams, so receivers must check sequence numbers and timestamps.
-namespace comm::transport {
+namespace comm {
 
 // Sends datagrams to one fixed destination. Not thread-safe.
 class UdpSender {
@@ -76,4 +76,4 @@ private:
   int fd_ = -1;
 };
 
-} // namespace comm::transport
+} // namespace comm

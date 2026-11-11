@@ -2,13 +2,14 @@
 
 Communication between Safety Mesh modules, as two CMake targets:
 
-| Target | Namespace | Contents | Depends on |
+| Target | Header | Contents | Depends on |
 |---|---|---|---|
-| `comm_protocol` | `comm::protocol` | Message schemas and codec | protobuf |
-| `comm_transport` | `comm::transport` | UDP datagrams as raw bytes | POSIX sockets |
+| `comm_protobuf` | `<comm/codec.hpp>` | Message schemas and datagram codec | protobuf |
+| `comm_udp` | `<comm/udp.hpp>` | UDP datagrams as raw bytes | POSIX sockets |
 
-`comm_protocol` defines what is sent and has no sockets. `comm_transport`
-moves bytes and knows nothing about the format. Link only what you use.
+Everything lives in namespace `comm`. `comm_protobuf` defines what is sent
+and has no sockets. `comm_udp` moves bytes and knows nothing about the
+format. Link only what you use.
 No application logic lives here.
 
 ## Messages
@@ -23,7 +24,7 @@ No application logic lives here.
 [ protobuf payload ][ CRC-32 of payload, 4 bytes big-endian ]
 ```
 
-- Default cap at 1400 bytes (`comm::protocol::kMaxDatagramSize`) to avoid IP fragmentation. check MTU (maximum transmission unit) for 
+- Default cap at 1400 bytes (`comm::kMaxDatagramSize`) to avoid IP fragmentation. check MTU (maximum transmission unit) for 
 increased Datagram size
 - `decode` checks length, CRC, parse, then `protocol_version`. Drop anything
   that fails.
@@ -51,7 +52,7 @@ values go on the wire, not names.
 
 ## Package
 
-`package comm.protocol;` sets the C++ namespace (`comm::protocol::CameraFrame`)
+`package comm;` sets the C++ namespace (`comm::CameraFrame`)
 and prevents name clashes with other `.proto` files. It is not sent on the
 wire, so renaming it doesn't break compatibility.
 
@@ -59,7 +60,7 @@ wire, so renaming it doesn't break compatibility.
 
 - Never change or reuse a field number. Add new fields with new numbers.
 - Don't change a field's type.
-- Bump `comm::protocol::kProtocolVersion` only for incompatible changes.
+- Bump `comm::kProtocolVersion` only for incompatible changes.
 
 Generated `*.pb.h` / `*.pb.cc` files go to the build directory and are not
 committed.
@@ -76,26 +77,26 @@ port and waits for one datagram with a timeout.
 - `receive` returns `Timeout` when nothing arrives in time or a signal
   interrupts the wait, so a loop can check for shutdown.
 - `receive` returns `Truncated` when a datagram is larger than the buffer.
-  Use a buffer of `comm::protocol::kMaxDatagramSize` bytes.
+  Use a buffer of `comm::kMaxDatagramSize` bytes.
 
 ## Usage
 
 Sender (cam_node):
 
 ```cmake
-target_link_libraries(my_target PRIVATE comm_protocol comm_transport)
+target_link_libraries(my_target PRIVATE comm_protobuf comm_udp)
 ```
 
 ```cpp
-#include <comm/protocol/codec.hpp>
-#include <comm/transport/udp.hpp>
+#include <comm/codec.hpp>
+#include <comm/udp.hpp>
 
-comm::transport::UdpSender sender("192.168.1.10", 5000);
+comm::UdpSender sender("192.168.1.10", 5000);
 
-comm::protocol::CameraFrame frame;
-frame.set_protocol_version(comm::protocol::kProtocolVersion);
+comm::CameraFrame frame;
+frame.set_protocol_version(comm::kProtocolVersion);
 std::string datagram;
-if (comm::protocol::encode(frame, datagram) && !sender.send(datagram)) {
+if (comm::encode(frame, datagram) && !sender.send(datagram)) {
   // Count or log the failure.
 }
 ```
@@ -103,15 +104,15 @@ if (comm::protocol::encode(frame, datagram) && !sender.send(datagram)) {
 Receiver (manager):
 
 ```cpp
-comm::transport::UdpReceiver receiver(5000);
-std::array<char, comm::protocol::kMaxDatagramSize> buffer;
+comm::UdpReceiver receiver(5000);
+std::array<char, comm::kMaxDatagramSize> buffer;
 
 const auto result = receiver.receive(buffer.data(), buffer.size(),
                                      std::chrono::milliseconds(100));
-comm::protocol::CameraFrame frame;
-if (result.status == comm::transport::ReceiveStatus::Ok &&
-    comm::protocol::decode(buffer.data(), result.size, frame) ==
-        comm::protocol::DecodeError::None) {
+comm::CameraFrame frame;
+if (result.status == comm::ReceiveStatus::Ok &&
+    comm::decode(buffer.data(), result.size, frame) ==
+        comm::DecodeError::None) {
   // Check sequence and timestamp, then use the frame.
 }
 ```
@@ -125,5 +126,5 @@ ctest --test-dir build --output-on-failure
 
 `comm_udp_loopback_test` sends real datagrams over `127.0.0.1`: a full
 encode/send/receive/decode round trip, timeouts, truncation and a corrupted
-datagram that `decode` rejects. `comm_protocol_datagram_demo` prints an
-encoded frame byte by byte.
+datagram that `decode` rejects. `comm_protobuf_datagram_test` checks the
+codec: round trip, byte layout, CRC-32, size limit and every decode error.
