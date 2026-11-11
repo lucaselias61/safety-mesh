@@ -5,9 +5,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
-# Two targets, both in namespace comm:
+# Targets, all in namespace comm:
 # - comm_protobuf: message schemas and datagram codec (protobuf).
 # - comm_udp: UDP datagrams as raw bytes.
+# - comm_ads: reads TwinCAT PLC variables over ADS.
 
 # --- comm_protobuf -----------------------------------------------------------
 
@@ -52,6 +53,24 @@ set_target_properties(comm_udp PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(comm_udp PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+
+# --- comm_ads ----------------------------------------------------------------
+
+option(COMM_BUILD_ADS "Build the ADS (TwinCAT PLC) client" ON)
+if(COMM_BUILD_ADS)
+    include(cmake/BeckhoffAds.cmake)  # defines beckhoff_adslib
+
+    add_library(comm_ads STATIC
+        src/ads.cpp
+    )
+    target_compile_features(comm_ads PUBLIC cxx_std_17)
+    set_target_properties(comm_ads PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_include_directories(comm_ads PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    )
+    # PRIVATE: the AdsLib headers stay an implementation detail of ads.cpp.
+    target_link_libraries(comm_ads PRIVATE beckhoff_adslib)
+endif()
 
 # --- tests -------------------------------------------------------------------
 

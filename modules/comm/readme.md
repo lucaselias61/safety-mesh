@@ -1,11 +1,12 @@
 # Comm
 
-Communication between Safety Mesh modules, as two CMake targets:
+Communication between Safety Mesh modules and the PLC.
 
 | Target | Header | Contents | Depends on |
 |---|---|---|---|
 | `comm_protobuf` | `<comm/codec.hpp>` | Message schemas and datagram codec | protobuf |
 | `comm_udp` | `<comm/udp.hpp>` | UDP datagrams as raw bytes | POSIX sockets |
+| `comm_ads` | `<comm/ads.hpp>` | Reads TwinCAT PLC variables over ADS | [Beckhoff/ADS](https://github.com/Beckhoff/ADS) (MIT, fetched at configure time) |
 
 Everything lives in namespace `comm`. `comm_protobuf` defines what is sent
 and has no sockets. `comm_udp` moves bytes and knows nothing about the
