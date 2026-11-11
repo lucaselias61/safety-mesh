@@ -92,7 +92,7 @@ def main():
                         help="PLC path of ST_RobotPose, e.g. GVL.stRobotPose [ADS_SYMBOL]")
     parser.add_argument("--plc-ip", default=env("ADS_PLC_IP", "192.168.137.49"),
                         help="[ADS_PLC_IP]")
-    parser.add_argument("--plc-net-id", default=env("ADS_PLC_NET_ID", "192.168.137.49.1.1"),
+    parser.add_argument("--plc-net-id", default=env("ADS_PLC_NET_ID", "130.149.137.49.1.1"),
                         help="[ADS_PLC_NET_ID]")
     parser.add_argument("--port", type=int, default=int(env("ADS_PORT", "852")),
                         help="AMS port (852 = PLC runtime 2) [ADS_PORT]")
