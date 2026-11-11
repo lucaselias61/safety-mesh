@@ -21,4 +21,4 @@ Declarations are in `include/`, implementations in `src/`, and commands in `src/
 - **AI pose detection:** detects human pose keypoints in the camera image.
 - **Camera frame output:** uses depth to locate detections in 3D and broadcasts them.
 
-Person bounding box detection is implemented. Pose keypoints and broadcasting are planned. A deprojection helper exists in `src/deprojection.cpp`, but is not connected to the worker yet. See [outputs](outputs.md).
+Person bounding box detection is implemented. Pose keypoints and broadcasting are planned. Camera geometry helpers (deproject, project, transform, color-to-depth pixel) exist in `src/geometry.cpp`, but are not connected to the worker yet. See [outputs](outputs.md).

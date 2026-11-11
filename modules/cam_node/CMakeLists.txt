@@ -25,7 +25,7 @@ add_executable(cam_node
     src/preview.cpp
     src/stream.cpp
     src/utils.cpp
-    src/deprojection.cpp
+    src/geometry.cpp
     src/engines/opencv_dnn_engine.cpp
 )
 

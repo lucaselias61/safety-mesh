@@ -2,11 +2,13 @@
 #pragma once
 
 #include "camera.hpp"
+#include "geometry.hpp"
 #include "stream.hpp"
 
 #include <filesystem>
 #include <librealsense2/rs.hpp>
 #include <map>
+#include <optional>
 #include <string>
 
 class PipelineProfile {
@@ -61,9 +63,14 @@ public:
   Frames get_frames();
   const Camera &camera() const noexcept;
 
+  /// @brief Calibration state of the active depth and color streams.
+  /// @return std::nullopt before start() or when depth or color is disabled.
+  const std::optional<geometry::Calibration> &calibration() const noexcept;
+
 private:
   Camera cam_;
   rs2::pipeline pipeline_;
   rs2::config config_;
   PipelineProfile pipeline_profile_;
+  std::optional<geometry::Calibration> calibration_;
 };
