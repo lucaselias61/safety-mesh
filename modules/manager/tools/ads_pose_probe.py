@@ -10,11 +10,16 @@ our code; if neither works, check the AMS route and PLC configuration.
 
 Needs a static AMS route on the PLC for this machine (local Net ID + IP).
 Linux/macOS only (pyads sets the local Net ID there).
+
+Defaults come from ADS_* environment variables, then from modules/manager/.env
+(see .env.example); command-line flags override both.
 """
 
 import argparse
+import os
 import struct
 import time
+from pathlib import Path
 
 import pyads
 from pyads.pyads_ex import adsGetSymbolInfo
@@ -23,6 +28,33 @@ from pyads.pyads_ex import adsGetSymbolInfo
 DOUBLES = struct.Struct("<12d")
 PACKED_SIZE = 4 + DOUBLES.size  # 100: pack_mode 1
 ALIGNED_SIZE = 8 + DOUBLES.size  # 104: 4 padding bytes after nCycle
+
+
+ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+
+
+def load_env_file(path: Path):
+    """Minimal .env loader: KEY=VALUE lines, # comments, optional quotes.
+    Variables already set in the environment take precedence."""
+    if not path.is_file():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip().removeprefix("export ").strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
+
+
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
 
 
 def decode(raw: bytes):
@@ -51,17 +83,26 @@ def connect(args):
 
 
 def main():
+    load_env_file(ENV_FILE)
+    env = os.environ.get
+
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--symbol", required=True,
-                        help="PLC path of ST_RobotPose, e.g. GVL.stRobotPose")
-    parser.add_argument("--plc-ip", default="192.168.137.39")
-    parser.add_argument("--plc-net-id", default="192.168.137.39.1.1")
-    parser.add_argument("--port", type=int, default=852,
-                        help="AMS port (852 = PLC runtime 2)")
-    parser.add_argument("--local-net-id", default="192.168.137.168.1.1",
-                        help="AMS Net ID of this machine (must match the PLC route)")
-    parser.add_argument("--rate", type=float, default=10.0, help="Polls per second")
-    parser.add_argument("--raw", action="store_true", help="Also print the raw bytes")
+    parser.add_argument("--symbol", default=env("ADS_SYMBOL"),
+                        required=env("ADS_SYMBOL") is None,
+                        help="PLC path of ST_RobotPose, e.g. GVL.stRobotPose [ADS_SYMBOL]")
+    parser.add_argument("--plc-ip", default=env("ADS_PLC_IP", "192.168.137.49"),
+                        help="[ADS_PLC_IP]")
+    parser.add_argument("--plc-net-id", default=env("ADS_PLC_NET_ID", "192.168.137.49.1.1"),
+                        help="[ADS_PLC_NET_ID]")
+    parser.add_argument("--port", type=int, default=int(env("ADS_PORT", "852")),
+                        help="AMS port (852 = PLC runtime 2) [ADS_PORT]")
+    parser.add_argument("--local-net-id", default=env("ADS_LOCAL_NET_ID", "192.168.137.168.1.1"),
+                        help="AMS Net ID of this machine (must match the PLC route) [ADS_LOCAL_NET_ID]")
+    parser.add_argument("--rate", type=float, default=float(env("ADS_RATE", "10.0")),
+                        help="Polls per second [ADS_RATE]")
+    parser.add_argument("--raw", action=argparse.BooleanOptionalAction,
+                        default=env_bool("ADS_RAW"),
+                        help="Also print the raw bytes [ADS_RAW]")
     args = parser.parse_args()
 
     pyads.open_port()
