@@ -1,0 +1,15 @@
+{
+  "local_net_id": "192.168.137.168.1.1",
+  "robots": [
+    {
+      "id": "kr10_1", 
+      "model": "kuka_kr10_r1100", 
+      "plc": {
+        "ip": "192.168.137.49", 
+        "net_id": "130.149.137.49.1.1", 
+        "port": 852, 
+        "symbol": "GVL.stRobotPose"
+      }
+    }
+  ]
+}

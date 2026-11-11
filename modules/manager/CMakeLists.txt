@@ -14,6 +14,14 @@ if(NOT TARGET comm_protobuf)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../comm" "${CMAKE_CURRENT_BINARY_DIR}/comm")
 endif()
 
+# Robot PLC input, shared by the manager, tools and tests.
+add_library(manager_robot STATIC
+    src/robot_pose.cpp
+)
+target_compile_features(manager_robot PUBLIC cxx_std_17)
+target_include_directories(manager_robot PUBLIC include)
+target_link_libraries(manager_robot PUBLIC comm_ads)
+
 add_executable(manager
     src/main.cpp
     src/manager.cpp
@@ -29,4 +37,18 @@ target_link_libraries(manager PRIVATE
     nlohmann_json::nlohmann_json
     fmt::fmt
     comm_protobuf
+    manager_robot
 )
+
+# Prints the robot pose read from the PLC: bin/ads_pose_probe --symbol ...
+add_executable(ads_pose_probe tools/ads_pose_probe.cpp)
+set_target_properties(ads_pose_probe PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${MANAGER_OUTPUT_DIR}")
+target_link_libraries(ads_pose_probe PRIVATE CLI11::CLI11 fmt::fmt manager_robot)
+
+option(MANAGER_BUILD_TESTS "Build manager tests" ON)
+if(MANAGER_BUILD_TESTS)
+    enable_testing()
+    add_executable(manager_robot_pose_test tests/robot_pose_test.cpp)
+    target_link_libraries(manager_robot_pose_test PRIVATE manager_robot)
+    add_test(NAME manager_robot_pose COMMAND manager_robot_pose_test)
+endif()

@@ -1,0 +1,11 @@
+{
+  "model": "kuka_kr10_r1100",
+  "joints": [
+    { "name": "A1", "a_m": null, "alpha_deg": null, "d_m": null, "theta_offset_deg": null, "min_deg": null, "max_deg": null },
+    { "name": "A2", "a_m": null, "alpha_deg": null, "d_m": null, "theta_offset_deg": null, "min_deg": null, "max_deg": null },
+    { "name": "A3", "a_m": null, "alpha_deg": null, "d_m": null, "theta_offset_deg": null, "min_deg": null, "max_deg": null },
+    { "name": "A4", "a_m": null, "alpha_deg": null, "d_m": null, "theta_offset_deg": null, "min_deg": null, "max_deg": null },
+    { "name": "A5", "a_m": null, "alpha_deg": null, "d_m": null, "theta_offset_deg": null, "min_deg": null, "max_deg": null },
+    { "name": "A6", "a_m": null, "alpha_deg": null, "d_m": null, "theta_offset_deg": null, "min_deg": null, "max_deg": null }
+  ]
+}
