@@ -28,12 +28,16 @@ def select_camera(config):
     config["camera"]["serial"] = serial
 
 
+def load_config(path):
+    with Path(path).open() as source:
+        return json.load(source)
+
+
 def main():
     # Diagnostic commands bypass automatic camera selection.
     if len(sys.argv) > 1:
         os.execv(CAM_NODE, [CAM_NODE, *sys.argv[1:]])
-    with Path("/config/camera.json").open() as source:
-        config = json.load(source)
+    config = load_config("/config/camera.json")
     if not config["camera"]["enabled"]:
         print("Camera disabled; exiting.", flush=True)
         return
