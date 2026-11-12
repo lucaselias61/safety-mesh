@@ -26,6 +26,15 @@ Written in the PLC's native safety language because the PLC must enforce the fin
 - **Built-In Fault Detection**
   PLC diagnostics to detect internal faults, communication timeouts, I/O errors, or output inconsistencies. On fault, robot stops.
 
+# PLC Code
+
+Structured Text that must be implemented on the PLC. Folders follow the TwinCAT project layout.
+
+| File | Type | Used by |
+| --- | --- | --- |
+| `DUTs/ST_RobotPose.st` | `ST_RobotPose`: robot TCP pose and joints, `nCycle` incremented on every write | Manager `RobotPosePoller` reads it over ADS (e.g. `GVL.stRobotPose`). Packed (100 bytes) and 8-byte aligned (104 bytes) layouts are both accepted. Pose counts as stale when `nCycle` stops advancing. |
+| `DUTs/ST_RobotDH.st` | `ST_RobotDH`: DH table (a, alpha, d, theta offset) and joint limits for A1..A6 | Instance in the GVL (e.g. `GVL.stRobotDH`), readable over ADS in one read. Mirrors `modules/manager/config/robots/kuka_kr10_r1100.json`; keep both in sync. |
+
 # Inputs
 
 [[Manager#Outputs]]

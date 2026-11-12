@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+/// Mirrors ST_RobotPose in modules/plc/DUTs/ST_RobotPose.st.
 /// Units are whatever the PLC sends.
 struct RobotPose {
   std::uint32_t cycle = 0;      // +1 per PLC write
