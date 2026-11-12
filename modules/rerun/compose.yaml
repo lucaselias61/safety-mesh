@@ -1,0 +1,35 @@
+# Rerun viewer shared by all cam_node and manager containers on this host.
+# Web viewer: http://<host>:9090. SDKs: rerun+http://rerun:9876/proxy.
+# Once per host: docker network create safety-mesh
+name: rerun
+
+services:
+  rerun:
+    container_name: rerun
+    image: safety-mesh/rerun:dev
+    build:
+      context: .
+    init: true
+    restart: unless-stopped
+    command:
+      - --serve-web
+      - --bind=0.0.0.0
+      - --web-viewer-port=${RERUN_WEB_VIEWER_PORT:-9090}
+      - --port=${RERUN_PORT:-9876}
+      # Buffer for late viewers; oldest data dropped past this.
+      - --server-memory-limit=${RERUN_MEMORY_LIMIT:-2GB}
+    ports:
+      # Same port inside and out, so viewer-issued URLs stay valid.
+      - "${RERUN_WEB_VIEWER_PORT:-9090}:${RERUN_WEB_VIEWER_PORT:-9090}" # Web viewer (HTTP)
+      - "${RERUN_PORT:-9876}:${RERUN_PORT:-9876}" # gRPC: SDKs and native viewers
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - safety-mesh
+
+networks:
+  safety-mesh:
+    external: true
