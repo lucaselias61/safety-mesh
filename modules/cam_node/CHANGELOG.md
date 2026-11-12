@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## cam_node-0.3.0 - 2026-11-12
+#### Features
+- (**cam_node**) add Logger with LOG_LEVEL and Rerun ViewerSink - (9392b66) - lucaselias61
+- (**cam_node**) add geometry module with RealSense calibration - (f5e1ab6) - lucaselias61
+- (**cam_node**) add Docker host installer and pin shared build deps - (8e99695) - lucaselias61
+- (**cam_node**) build and cache TensorRT engines from ONNX on first run - (a5ed856) - lucaselias61
+#### Refactoring
+- (**cam_node**) extract load_config in docker entrypoint - (7098062) - lucaselias61
+- (**cam_node**) build Docker engines with cam_node, not trtexec - (e633df4) - lucaselias61
+- (**cam_node**) move TensorRT engine into engines/tensorrt/ - (a45933e) - lucaselias61
+
+- - -
+
 ## cam_node-0.2.0 - 2026-11-05
 #### Features
 - (**cam_node**) add Docker Compose deployment with TensorRT - (2149c37) - lucaselias61
