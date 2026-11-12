@@ -12,6 +12,9 @@ find_package(realsense2 2.58 CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc highgui dnn)
 
 option(TENSORRT "Enable the TensorRT 10+ GPU backend" OFF)
+option(CAM_NODE_RERUN "Stream to a Rerun viewer when RERUN_URL is set" ON)
+set(CAM_NODE_RERUN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../rerun" CACHE PATH
+    "Shared Rerun connection library")
 
 add_executable(cam_node
     src/main.cpp
@@ -26,6 +29,7 @@ add_executable(cam_node
     src/stream.cpp
     src/utils.cpp
     src/geometry.cpp
+    src/logger.cpp
     src/engines/opencv_dnn_engine.cpp
 )
 
@@ -42,6 +46,15 @@ target_link_libraries(cam_node PRIVATE
     realsense2::realsense2
     ${OpenCV_LIBS}
 )
+
+if(CAM_NODE_RERUN)
+    if(NOT TARGET rerun_logger) # May already be added by manager.
+        add_subdirectory("${CAM_NODE_RERUN_DIR}" "${CMAKE_BINARY_DIR}/rerun_logger")
+    endif()
+    target_sources(cam_node PRIVATE src/viewer_sink.cpp)
+    target_link_libraries(cam_node PRIVATE rerun_logger)
+    target_compile_definitions(cam_node PRIVATE CAM_NODE_WITH_RERUN=1)
+endif()
 
 if(TENSORRT)
     find_package(CUDAToolkit REQUIRED)

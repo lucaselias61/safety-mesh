@@ -10,8 +10,9 @@ CLI → configuration → Camera → Pipeline → Worker → Engine → detectio
 
 - **Camera** discovers RealSense devices and provides their serial numbers, intrinsics and stream profiles.
 - **Pipeline** starts the configured streams and receives frames.
-- **Worker** passes color frames to the engine and prints detections. Stops after five consecutive missing frames or a shutdown request.
+- **Worker** passes color frames to the engine and hands detections to the **Logger**. Stops after five consecutive missing frames or a shutdown request.
 - **Engine** detects people using OpenCV DNN or TensorRT through a common interface.
+- **Logger** decides what is logged and where: text at `LOG_LEVEL`, and, with `RERUN_URL`, the Rerun viewer through `ViewerSink`, which converts camera types to Rerun archetypes and sends them over the shared `ViewerConnection` from `modules/rerun`.
 
 Declarations are in `include/`, implementations in `src/`, and commands in `src/cli/`.
 

@@ -34,3 +34,30 @@ At least one stream must be enabled for an enabled camera. Detection needs an en
 | `engine.input_size` | Positive integer; square model input size. |
 
 See [inference](inference.md) for model and backend requirements.
+
+## Logging
+
+`LOG_LEVEL` sets the text log verbosity: `debug`, `info` (default), `warn`
+or `error`. Messages below it are dropped. Detections are logged at `info`,
+missing frames at `warn` and errors at `error`; `debug` and `info` go to
+stdout, `warn` and `error` to stderr. An invalid value prints a warning and
+uses `info`. It applies to the `run` worker loop and viewer messages; other
+commands' output is unaffected.
+
+## Rerun (live debugging)
+
+Optional. Set through environment variables, not the JSON file, so one
+config works with and without a viewer. Logging is off when `RERUN_URL` is
+unset; an invalid value prints a warning and leaves the camera running
+without logging.
+
+| Variable | Meaning |
+| --- | --- |
+| `RERUN_URL` | Viewer to stream to, e.g. `rerun+http://host.docker.internal:9876/proxy` (see `modules/rerun`). |
+| `RERUN_IMAGE_FPS` | Optional. Maximum rate of color and depth images, default `5`; `0` logs no images. Detections and timings are logged every frame. |
+
+Everything is logged under `cams/<serial>/` on the `capture_time` and
+`frame` timelines: `color` (image, detections, keypoints), `depth` (depth
+image placed relative to color, shown as a point cloud) and `health`
+(`wait_ms`, `detect_ms`, `fps`). Build with `-DCAM_NODE_RERUN=OFF` to leave
+the Rerun SDK out entirely.

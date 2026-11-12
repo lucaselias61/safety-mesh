@@ -35,10 +35,12 @@ WORKDIR /src/cam_node
 COPY CMakeLists.txt ./
 COPY include/ ./include/
 COPY src/ ./src/
+# Context from compose.yaml; same relative path as in the repo.
+COPY --from=rerun . /src/rerun/
 RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=ON \
         -DCAM_NODE_OUTPUT_DIR=/opt/cam_node/bin \
     && cmake --build build --parallel "${BUILD_JOBS}" \
-    && rm -rf /src/cam_node
+    && rm -rf /src
 
 COPY docker/entrypoint.py /opt/cam_node/entrypoint.py
 WORKDIR /opt/cam_node

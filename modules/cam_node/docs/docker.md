@@ -53,7 +53,9 @@ docker compose logs -f cam-node
 ```
 
 The first image build downloads dependencies and compiles RealSense and `cam_node`;
-it needs internet access but no GPU. The ONNX model is already in `models/`.
+it needs internet access but no GPU. Compose also passes `../rerun` (the shared
+Rerun connection library) as an extra build context, which needs Docker Compose 2.17
+or newer; build through Compose rather than with a plain `docker build`. The ONNX model is already in `models/`.
 Startup selects the configured camera and starts `cam_node`, which builds an engine
 on the selected GPU before detection starts. Engine compilation can take several
 minutes. Subsequent starts reuse the cached engine. No graphical preview is configured.
@@ -72,8 +74,12 @@ CAMERA_SERIAL=discovery docker compose run --rm \
 Then set the discovered serial and create its configuration as shown above.
 
 Compose accepts `CAMERA_SERIAL`, `GPU_DEVICE` (host GPU index or
-UUID, default `0`), and `BUILD_JOBS` (default `4`)
-from the shell or an untracked `.env` file beside `compose.yaml`.
+UUID, default `0`), `BUILD_JOBS` (default `4`), `LOG_LEVEL` (default `info`, see
+[logging](configuration.md#logging)), and the optional
+[Rerun settings](configuration.md#rerun-live-debugging) `RERUN_URL` and
+`RERUN_IMAGE_FPS` from the shell or an untracked `.env` file beside
+`compose.yaml`. With the viewer from `modules/rerun` on the same host, use
+`RERUN_URL=rerun+http://host.docker.internal:9876/proxy`.
 
 You can also supply the serial for an individual command:
 

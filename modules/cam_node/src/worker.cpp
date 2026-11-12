@@ -3,39 +3,39 @@
 #include "pipeline.hpp"
 #include "shutdown.hpp"
 
-#include <iostream>
+#include <chrono>
 #include <memory>
 #include <utility>
 
 void Worker::run() {
   pipeline_.start();
   running_ = true;
+  if (pipeline_.calibration())
+    logger_.calibration(*pipeline_.calibration());
   int retry_count = 0;
 
   try {
     while (running_ && !shutdown_requested) {
+      const auto wait_start = std::chrono::steady_clock::now();
       auto frames = pipeline_.get_frames();
+      const auto frames_ready = std::chrono::steady_clock::now();
       if (!frames) {
-        std::cerr << "No frames received, retrying...\n";
+        logger_.warn("No frames received, retrying...");
         if (++retry_count >= 5) {
-          std::cerr << "Max retry count reached\n";
+          logger_.error("Max retry count reached");
           break;
         }
         continue;
       }
       std::vector<Detection> detections =
           engine_->detect(frames.get_color_frame());
+      logger_.frame(frames, detections,
+                    {frames_ready - wait_start,
+                     std::chrono::steady_clock::now() - frames_ready});
       retry_count = 0; // Reset retry count on successful detection
-      for (const auto &detection : detections) {
-        std::cout << "Detected object with confidence: " << detection.confidence
-                  << "\n";
-        std::cout << "Bounding box [x, y, width, height]: [" << detection.bbox.x
-                  << ", " << detection.bbox.y << ", " << detection.bbox.width
-                  << ", " << detection.bbox.height << "]\n";
-      }
     }
   } catch (...) {
-    std::cerr << "Stopping worker...\n";
+    logger_.error("Stopping worker...");
     stop();
     throw;
   }

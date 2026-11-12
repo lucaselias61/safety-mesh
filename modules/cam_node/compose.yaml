@@ -7,6 +7,9 @@ services:
     platform: linux/amd64
     build:
       context: .
+      # Shared Rerun library, outside this directory.
+      additional_contexts:
+        rerun: ../rerun
       args:
         BUILD_JOBS: ${BUILD_JOBS:-4}
     init: true
@@ -19,8 +22,15 @@ services:
         max-size: 10m
         max-file: "5"
     environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       CAMERA_SERIAL: ${CAMERA_SERIAL:-}
+      # Rerun viewer (modules/rerun); empty RERUN_URL = off.
+      RERUN_URL: ${RERUN_URL:-}
+      RERUN_IMAGE_FPS: ${RERUN_IMAGE_FPS:-5}
+    # Makes host.docker.internal work on Linux (viewer on this host).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     deploy:
       resources:
         reservations:

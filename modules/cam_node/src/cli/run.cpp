@@ -5,6 +5,7 @@
 #ifdef CAM_NODE_WITH_TENSORRT
 #include "engines/tensorrt/tensorrt_engine.hpp"
 #endif
+#include "logger.hpp"
 #include "pipeline.hpp"
 #include "stream.hpp"
 #include "utils.hpp"
@@ -50,7 +51,8 @@ void run(const std::shared_ptr<std::string> &config) {
       }
       // Pass the unique_ptr to the worker using std::move. Now engine ==
       // nullptr.
-      Worker worker(camera, profile, std::move(engine));
+      Worker worker(camera, profile, std::move(engine),
+                    Logger::from_env(camera.get_serial()));
       worker.run();
       return;
     }
