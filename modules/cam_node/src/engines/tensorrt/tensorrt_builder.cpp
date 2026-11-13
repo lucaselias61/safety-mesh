@@ -66,7 +66,8 @@ std::string hash_file(const fs::path &path) {
 
 // Everything that makes a plan incompatible. A change to any value selects a
 // different cache entry.
-nlohmann::json fingerprint(const fs::path &model, int input_size) {
+nlohmann::json fingerprint(const fs::path &model, int input_size,
+                           Precision precision) {
   int device = 0;
   handle_cuda_error(cudaGetDevice(&device));
   cudaDeviceProp properties{};
@@ -90,7 +91,7 @@ nlohmann::json fingerprint(const fs::path &model, int input_size) {
       {"tensorrt", getInferLibVersion()},
       {"onnx_parser", getNvOnnxParserVersion()},
       {"input", fmt::format("1x3x{}x{}", input_size, input_size)},
-      {"precision", "fp32"},
+      {"precision", to_string(precision)},
   };
 }
 
@@ -152,7 +153,40 @@ public:
   void phaseFinish(const char * /*phase*/) noexcept override {}
 };
 
-void build_plan(const fs::path &model, int input_size, const fs::path &output) {
+bool has_quantize_layer(const nvinfer1::INetworkDefinition &network) {
+  for (int i = 0; i < network.getNbLayers(); ++i)
+    if (network.getLayer(i)->getType() == nvinfer1::LayerType::kQUANTIZE)
+      return true;
+  return false;
+}
+
+// Allows lower precision kernels. In-/output stays FP32.
+// TensorRT still uses FP32 for a layer if it is faster or the only option.
+void set_precision(nvinfer1::IBuilderConfig &config,
+                   const nvinfer1::INetworkDefinition &network,
+                   Precision precision) {
+  switch (precision) {
+  case Precision::fp32:
+    return;
+  case Precision::int8:
+    // Without Q/DQ nodes no layer would run in INT8.
+    if (!has_quantize_layer(network))
+      throw std::runtime_error(
+          "precision int8 needs an ONNX model with Q/DQ (quantize/dequantize) "
+          "nodes, e.g. from NVIDIA Model Optimizer; calibration is not "
+          "supported");
+    config.setFlag(nvinfer1::BuilderFlag::kINT8);
+    // Unquantized layers run in FP16.
+    config.setFlag(nvinfer1::BuilderFlag::kFP16);
+    return;
+  case Precision::fp16:
+    config.setFlag(nvinfer1::BuilderFlag::kFP16);
+    return;
+  }
+}
+
+void build_plan(const fs::path &model, int input_size, Precision precision,
+                const fs::path &output) {
   // Declaration order matters: objects are destroyed in reverse, so the parser
   // goes before the network, and the logger and monitor outlive everything.
   tensorrt::Logger logger;
@@ -189,6 +223,7 @@ void build_plan(const fs::path &model, int input_size, const fs::path &output) {
       builder->createBuilderConfig()};
   if (!config)
     throw std::runtime_error("Cannot create TensorRT builder config");
+  set_precision(*config, *network, precision);
   const bool dynamic =
       std::any_of(dims.d, dims.d + dims.nbDims, [](auto d) { return d < 0; });
   if (dynamic) {
@@ -244,15 +279,21 @@ bool is_complete(const fs::path &plan, const fs::path &metadata) {
 }
 } // namespace
 
-std::string resolve_tensorrt_plan(const std::string &model_path,
-                                  int input_size) {
+std::string resolve_tensorrt_plan(const std::string &model_path, int input_size,
+                                  Precision precision) {
   const fs::path model(model_path);
-  if (!is_onnx(model))
+  if (!is_onnx(model)) {
+    if (precision != Precision::fp32)
+      std::fprintf(stderr,
+                   "Ignoring precision %s: prebuilt plan %s keeps the "
+                   "precision it was built with\n",
+                   to_string(precision), model.c_str());
     return model_path;
+  }
   if (input_size <= 0)
     throw std::runtime_error("input_size must be positive");
 
-  nlohmann::json metadata = fingerprint(model, input_size);
+  nlohmann::json metadata = fingerprint(model, input_size, precision);
   const std::string identity = metadata.dump();
   const std::string key =
       fmt::format("{:016x}", fnv1a(identity.data(), identity.size()));
@@ -268,15 +309,16 @@ std::string resolve_tensorrt_plan(const std::string &model_path,
   }
 
   std::fprintf(stderr,
-               "Building TensorRT engine for %s on %s. This can take several "
-               "minutes.\n",
-               model.c_str(), metadata["gpu_name"].get<std::string>().c_str());
+               "Building %s TensorRT engine for %s on %s. This can take "
+               "several minutes.\n",
+               to_string(precision), model.c_str(),
+               metadata["gpu_name"].get<std::string>().c_str());
   // The lock makes this process the only writer for this key, so fixed
   // temporary names are safe; leftovers from a crash are overwritten.
   const fs::path temporary_plan = cache / (key + ".engine.tmp");
   const fs::path temporary_metadata = cache / (key + ".json.tmp");
   try {
-    build_plan(model, input_size, temporary_plan);
+    build_plan(model, input_size, precision, temporary_plan);
     metadata["model_path"] = model_path;
     std::ofstream file(temporary_metadata, std::ios::trunc);
     file << metadata.dump(2) << '\n';

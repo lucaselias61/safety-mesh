@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engines/engine_helpers.hpp"
 #include "stream.hpp"
 
 #include <string>
@@ -34,6 +35,7 @@ struct EngineConfig {
   double confidence_threshold;
   double nms_threshold;
   int input_size;
+  Precision precision = Precision::fp32; // Optional. Default fp32.
 };
 
 // Throws std::runtime_error if the file cannot be read or is invalid.

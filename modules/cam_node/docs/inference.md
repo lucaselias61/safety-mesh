@@ -25,9 +25,21 @@ Export a pose model with `yolo export model=yolo11n-pose.pt format=onnx imgsz=64
 
 For a tar installation, add `--tensorrt-root /path/to/TensorRT` to the build command.
 
-Set `backend` to `tensorrt`, `model_path` to the ONNX model, and `input_size` to its square image size. On first run, `cam_node` builds an engine for the current GPU and caches it in `.engines/` next to the model, with a `.json` file describing it. Later runs reuse it. The cache key covers the model contents, input size, GPU, CUDA and TensorRT versions, so changing any of them builds a new engine. The first build can take several minutes; processes sharing the directory wait for each other, so each engine is built once. A shutdown request cancels a build in progress.
+Set `backend` to `tensorrt`, `model_path` to the ONNX model, and `input_size` to its square image size. On first run, `cam_node` builds an engine for the current GPU and caches it in `.engines/` next to the model, with a `.json` file describing it. Later runs reuse it. The cache key covers the model contents, input size, precision, GPU, CUDA and TensorRT versions, so changing any of them builds a new engine. The first build can take several minutes; processes sharing the directory wait for each other, so each engine is built once. A shutdown request cancels a build in progress.
 
 Paths that do not end in `.onnx` are loaded as prebuilt plans and are not cached or checked. Build such plans on the deployment GPU, with the same TensorRT version as `cam_node`.
+
+### Precision
+
+`engine.precision` sets the precision TensorRT computes in when it builds an engine from ONNX. The model's input and output stay FP32 in every mode, so export the ONNX model in FP32 (without `half=True`).
+
+| Value | Build | Notes |
+| --- | --- | --- |
+| `fp32` (default) | No precision flags | Most accurate. TensorRT may still use TF32 on Ampere and newer GPUs. |
+| `fp16` | FP16 allowed | Usually about twice as fast as FP32, with negligible accuracy loss for YOLO. |
+| `int8` | INT8, with FP16 for unquantized layers | Needs an ONNX model with Q/DQ (quantize/dequantize) nodes, for example from [NVIDIA Model Optimizer](https://github.com/NVIDIA/TensorRT-Model-Optimizer). Calibration is not supported, and a model without Q/DQ nodes fails to build. |
+
+TensorRT picks the fastest kernel for each layer from the allowed precisions, so some layers may still run in FP32. Each precision is cached as a separate engine. Prebuilt plans keep the precision they were built with; the setting is ignored for them.
 
 The backend expects one FP32 linear NCHW RGB input and one FP32 output `[1, 84, N]` or `[1, 56, N]`. Dynamic plans use optimization profile 0, which must support the configured input shape. FP16 input/output and data-dependent output shapes are unsupported.
 

@@ -32,6 +32,7 @@ At least one stream must be enabled for an enabled camera. Detection needs an en
 | `engine.confidence_threshold` | Person score threshold, greater than 0 and at most 1. |
 | `engine.nms_threshold` | Overlap threshold for removing duplicate boxes, greater than 0 and at most 1. |
 | `engine.input_size` | Positive integer; square model input size. |
+| `engine.precision` | Optional: `fp32` (default), `fp16` or `int8`. Precision TensorRT computes in when it builds an engine from ONNX; `opencv_dnn` accepts only `fp32`. See [inference](inference.md#precision). |
 
 See [inference](inference.md) for model and backend requirements.
 

@@ -154,6 +154,9 @@ EngineConfig load_engine_config(const std::string &path) {
         engine_json.at("confidence_threshold").get<double>(),
         engine_json.at("nms_threshold").get<double>(),
         positive_int(engine_json, "input_size"),
+        engine_json.contains("precision")
+            ? parse_precision(engine_json.at("precision").get<std::string>())
+            : Precision::fp32,
     };
     if (config.model_path.empty()) {
       throw std::runtime_error("model_path must not be empty");

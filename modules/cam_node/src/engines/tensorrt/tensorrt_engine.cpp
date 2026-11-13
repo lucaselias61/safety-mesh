@@ -97,7 +97,7 @@ struct TensorRTEngine::Impl {
         !std::isfinite(nms_threshold) || nms_threshold < 0 || nms_threshold > 1)
       throw std::invalid_argument("Invalid TensorRT detection configuration");
     const std::string plan_path =
-        resolve_tensorrt_plan(config.model_path, input_size);
+        resolve_tensorrt_plan(config.model_path, input_size, config.precision);
     std::ifstream file(plan_path, std::ios::binary);
     if (!file)
       throw std::runtime_error("Cannot open TensorRT plan: " + plan_path);

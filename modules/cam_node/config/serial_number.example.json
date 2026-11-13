@@ -24,6 +24,7 @@
     "model_path": "models/yolo11n.onnx",
     "confidence_threshold": 0.25,
     "nms_threshold": 0.45,
-    "input_size": 640
+    "input_size": 640,
+    "precision": "fp32"
   }
 }

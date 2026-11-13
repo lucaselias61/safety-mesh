@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 
 namespace {
 
@@ -20,6 +21,10 @@ OpenCVDnnEngine::OpenCVDnnEngine(const EngineConfig &config)
     : net_(cv::dnn::readNetFromONNX(config.model_path)),
       confidence_threshold_(config.confidence_threshold),
       nms_threshold_(config.nms_threshold), input_size_(config.input_size) {
+  if (config.precision != Precision::fp32)
+    throw std::invalid_argument(
+        std::string("opencv_dnn supports only fp32 precision, not ") +
+        to_string(config.precision));
   net_.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
   net_.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 }
