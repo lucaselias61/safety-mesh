@@ -3,7 +3,8 @@ name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
 services:
   cam-node:
     container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
-    image: safety-mesh/cam-node:dev
+    image: safety-mesh-cam-node:dev
+    pull_policy: build
     platform: linux/amd64
     build:
       context: .

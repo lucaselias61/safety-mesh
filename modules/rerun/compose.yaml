@@ -6,7 +6,9 @@ name: rerun
 services:
   rerun:
     container_name: rerun
-    image: safety-mesh/rerun:dev
+    image: safety-mesh-rerun:dev
+    # Always build locally.
+    pull_policy: build
     build:
       context: .
     init: true
