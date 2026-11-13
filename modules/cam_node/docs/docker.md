@@ -75,7 +75,7 @@ CAMERA_SERIAL=discovery CAM_NODE_CONFIG=config/serial_number.example.json \
 Then set the discovered serial and create its configuration as shown above.
 
 Compose accepts `CAMERA_SERIAL`, `GPU_DEVICE` (host GPU index or
-UUID, default `0`), `BUILD_JOBS` (default `4`), `TENSORRT` (`ON` or `OFF`,
+UUID, default `0`), `BUILD_JOBS` (default `2`), `TENSORRT` (`ON` or `OFF`,
 default `ON`; `OFF` builds only the OpenCV DNN backend), `RERUN` (`ON` or
 `OFF`, default `ON`; `OFF` leaves the Rerun SDK out of the build), `LOG_LEVEL` (default `info`, see
 [logging](configuration.md#logging)), and the optional
@@ -83,6 +83,14 @@ default `ON`; `OFF` builds only the OpenCV DNN backend), `RERUN` (`ON` or
 `RERUN_IMAGE_FPS` from the shell or an untracked `.env` file beside
 `compose.yaml`. With the viewer from `modules/rerun` on the same host, use
 `RERUN_URL=rerun+http://host.docker.internal:9876/proxy`.
+
+Each build job can use 1–2 GB of RAM, mostly while compiling librealsense and
+Arrow (used by the Rerun SDK). If the host freezes during the build, lower
+`BUILD_JOBS`; use `1` on hosts with 8 GB or less. The CMake build directory is
+kept in a BuildKit cache between builds, so Arrow and Rerun compile once and
+later builds only recompile changed `cam_node` files. Changing `BUILD_JOBS`
+rebuilds librealsense. Clear the cache with `docker builder prune` if a build
+behaves oddly.
 
 You can also supply the serial for an individual command:
 
