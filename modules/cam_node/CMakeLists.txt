@@ -9,7 +9,7 @@ find_package(CLI11 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(realsense2 2.58 CONFIG REQUIRED)
-find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc highgui dnn)
+find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc dnn)
 
 option(TENSORRT "Enable the TensorRT 10+ GPU backend" OFF)
 option(CAM_NODE_RERUN "Stream to a Rerun viewer when RERUN_URL is set" ON)
@@ -24,8 +24,6 @@ add_executable(cam_node
     src/cli/list.cpp
     src/cli/run.cpp
     src/cli/streams.cpp
-    src/cli/view.cpp
-    src/preview.cpp
     src/stream.cpp
     src/utils.cpp
     src/geometry.cpp

@@ -58,7 +58,7 @@ Rerun connection library) as an extra build context, which needs Docker Compose 
 or newer; build through Compose rather than with a plain `docker build`. The ONNX model is already in `models/`.
 Startup selects the configured camera and starts `cam_node`, which builds an engine
 on the selected GPU before detection starts. Engine compilation can take several
-minutes. Subsequent starts reuse the cached engine. No graphical preview is configured.
+minutes. Subsequent starts reuse the cached engine.
 
 `CAM_NODE_CONFIG` (default `config/${CAMERA_SERIAL}.json`) is mounted read-only
 at the same relative path inside the container and must exist before starting it.

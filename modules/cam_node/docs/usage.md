@@ -19,14 +19,6 @@ Reads device names and serial numbers without starting streams.
 
 Filters: `all`, `color`, `depth`, `infrared`. Sort keys: `all`, `fps`, `width`, `height`, `resolution`. Sorting is within each stream ID.
 
-## Preview
-
-```sh
-./bin/cam_node view --serial 233322245
-```
-
-Displays color and a depth heatmap side by side at 640 × 480, 15 FPS. Requires a display and a camera supporting those profiles. Exit with `q`, Escape, closing the window or Ctrl+C.
-
 ## Run detection
 
 Copy [the example configuration](../config/serial_number.example.json) and set your camera serial:

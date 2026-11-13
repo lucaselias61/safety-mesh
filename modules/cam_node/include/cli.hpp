@@ -22,6 +22,3 @@ void run_cmd(CLI::App &app);
  * \param app The CLI app to which the streams command will be added.
  */
 void streams_cmd(CLI::App &app);
-
-/// Displays color and a depth heatmap side by side in an OpenCV window.
-void view_cmd(CLI::App &app);
