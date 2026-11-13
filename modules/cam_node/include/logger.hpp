@@ -5,6 +5,7 @@
 #include "pipeline.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -18,7 +19,7 @@ struct LoopTimings {
 };
 
 /// Least to most severe.
-enum class LogLevel { debug, info, warn, error };
+enum class LogLevel : std::uint8_t { debug, info, warn, error };
 
 /// @return The matching level, or std::nullopt if unknown.
 std::optional<LogLevel> parse_log_level(std::string_view text);
