@@ -31,6 +31,7 @@ add_executable(cam_node
     src/geometry.cpp
     src/logger.cpp
     src/engines/opencv_dnn_engine.cpp
+    src/engines/yolo_decoder.cpp
 )
 
 set(CAM_NODE_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Executable output directory")

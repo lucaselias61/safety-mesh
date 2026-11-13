@@ -24,7 +24,7 @@ cv::Mat create_preview(const rs2::video_frame &color,
   }
 
   for (const auto &detection : detections) {
-    const auto &b = detection.bbox;
+    const auto &b = detection.bbox.rect;
     if (b.empty())
       continue;
     cv::rectangle(color_bgr, b, cv::Scalar(0, 255, 0), 2);

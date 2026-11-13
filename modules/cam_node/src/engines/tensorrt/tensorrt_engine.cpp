@@ -1,6 +1,7 @@
 #include "engines/tensorrt/tensorrt_engine.hpp"
 
 #include "engines/tensorrt/tensorrt_builder.hpp"
+#include "engines/yolo_decoder.hpp"
 #include "tensorrt_common.hpp"
 
 #include <NvInfer.h>
@@ -81,6 +82,7 @@ struct TensorRTEngine::Impl {
   std::string output_name;
   std::size_t input_bytes = 0;
   std::size_t output_bytes = 0;
+  int channels = 0;
   int candidates = 0;
   int input_size;
   double confidence_threshold;
@@ -132,9 +134,12 @@ struct TensorRTEngine::Impl {
       throw std::runtime_error(
           "TensorRT input shape does not match configuration");
     const auto dims = context->getTensorShape(output_name.c_str());
-    if (dims.nbDims != 3 || dims.d[0] != 1 || dims.d[1] != 84 ||
-        dims.d[2] <= 0 || dims.d[2] > std::numeric_limits<int>::max())
-      throw std::runtime_error("Expected YOLO detection output [1, 84, N]");
+    if (dims.nbDims != 3 || dims.d[0] != 1 ||
+        dims.d[1] > std::numeric_limits<int>::max() ||
+        !is_yolo_output(static_cast<int>(dims.d[1])) || dims.d[2] <= 0 ||
+        dims.d[2] > std::numeric_limits<int>::max())
+      throw std::runtime_error("Expected YOLO output [1, 84, N] or [1, 56, N]");
+    channels = static_cast<int>(dims.d[1]);
     candidates = static_cast<int>(dims.d[2]);
     input_bytes = byte_size(shape);
     output_bytes = byte_size(dims);
@@ -183,40 +188,8 @@ std::vector<Detection> TensorRTEngine::detect(const rs2::video_frame &frame) {
     cudaStreamSynchronize(state.stream.value);
     throw;
   }
-  cv::Mat predictions;
-  cv::transpose(cv::Mat(84, state.candidates, CV_32F, state.predictions.data()),
-                predictions);
-  std::vector<cv::Rect> boxes;
-  std::vector<float> scores;
   const float scale = static_cast<float>(img_size) / state.input_size;
-  for (int i = 0; i < predictions.rows; ++i) {
-    const float *p = predictions.ptr<float>(i);
-    if (!std::all_of(p, p + 5, [](float v) { return std::isfinite(v); }) ||
-        p[4] < state.confidence_threshold || p[2] <= 0 || p[3] <= 0)
-      continue;
-    // Clip in floating point before conversion to avoid overflowing pixel ints.
-    const double left = std::clamp((double(p[0]) - p[2] / 2.0) * scale, 0.0,
-                                   double(image.cols));
-    const double top = std::clamp((double(p[1]) - p[3] / 2.0) * scale, 0.0,
-                                  double(image.rows));
-    const double right = std::clamp((double(p[0]) + p[2] / 2.0) * scale, 0.0,
-                                    double(image.cols));
-    const double bottom = std::clamp((double(p[1]) + p[3] / 2.0) * scale, 0.0,
-                                     double(image.rows));
-    cv::Rect box(cv::Point(cvRound(left), cvRound(top)),
-                 cv::Point(cvRound(right), cvRound(bottom)));
-    if (box.empty())
-      continue;
-    boxes.push_back(box);
-    scores.push_back(p[4]); // COCO class 0: person.
-  }
-  std::vector<int> indices;
-  cv::dnn::NMSBoxes(boxes, scores,
-                    static_cast<float>(state.confidence_threshold),
-                    static_cast<float>(state.nms_threshold), indices);
-  std::vector<Detection> detections;
-  const auto timestamp = std::time(nullptr);
-  for (int i : indices)
-    detections.push_back({{}, boxes[i], timestamp, scores[i]});
-  return detections;
+  return decode_yolo(
+      {state.predictions.data(), state.channels, state.candidates}, scale,
+      image.size(), state.confidence_threshold, state.nms_threshold);
 }

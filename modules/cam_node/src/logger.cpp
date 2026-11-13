@@ -106,10 +106,10 @@ void Logger::frame([[maybe_unused]] const Frames &frames,
   if (!enabled(LogLevel::info))
     return;
   for (const auto &detection : detections) {
-    std::cout << "Detected object with confidence: " << detection.confidence
-              << "\n";
-    std::cout << "Bounding box [x, y, width, height]: [" << detection.bbox.x
-              << ", " << detection.bbox.y << ", " << detection.bbox.width
-              << ", " << detection.bbox.height << "]\n";
+    const auto &box = detection.bbox.rect;
+    std::cout << "Detected object with confidence: "
+              << detection.bbox.confidence << "\n";
+    std::cout << "Bounding box [x, y, width, height]: [" << box.x << ", "
+              << box.y << ", " << box.width << ", " << box.height << "]\n";
   }
 }

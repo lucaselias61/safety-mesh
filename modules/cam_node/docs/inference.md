@@ -10,7 +10,16 @@ Multiple models were tested to compare requirements and results. The models were
 
 Both backends accept `RGB8` or `BGR8` color frames, normalize pixels to 0–1, pad the image to a square and resize to `input_size`.
 
-Use a standard COCO YOLOv8/YOLO11 detection export with output `[1, 84, N]`, without embedded NMS. The engines select people (class 0) and apply the configured confidence and NMS thresholds. Pose models are not supported.
+Use a standard COCO YOLOv8/YOLO11 export without embedded NMS, either detection or pose. The engines pick the model type from the output shape:
+
+| Model | Output | Result |
+| --- | --- | --- |
+| Detection (`yolo11n.onnx`) | `[1, 84, N]` | Person boxes (class 0) |
+| Pose (`yolo11n-pose.onnx`) | `[1, 56, N]` | Person boxes and 17 COCO keypoints each |
+
+Both apply the configured confidence and NMS thresholds to the person score. Pose detections always carry all 17 keypoints in COCO order (nose, eyes, ears, shoulders, elbows, wrists, hips, knees, ankles), each with a confidence. Keypoints below 0.5 confidence were guessed by the model, for example when occluded, and are not shown in the viewer.
+
+Export a pose model with `yolo export model=yolo11n-pose.pt format=onnx imgsz=640`.
 
 ## GPU acceleration
 
@@ -20,7 +29,7 @@ Set `backend` to `tensorrt`, `model_path` to the ONNX model, and `input_size` to
 
 Paths that do not end in `.onnx` are loaded as prebuilt plans and are not cached or checked. Build such plans on the deployment GPU, with the same TensorRT version as `cam_node`.
 
-The backend expects one FP32 linear NCHW RGB input and one FP32 output `[1, 84, N]`. Dynamic plans use optimization profile 0, which must support the configured input shape. FP16 input/output and data-dependent output shapes are unsupported.
+The backend expects one FP32 linear NCHW RGB input and one FP32 output `[1, 84, N]` or `[1, 56, N]`. Dynamic plans use optimization profile 0, which must support the configured input shape. FP16 input/output and data-dependent output shapes are unsupported.
 
 The runtime deserializes a plan, binds reusable device buffers by tensor name and uses `enqueueV3` with a CUDA stream. Only load plans from trusted sources; plans must be compatible with the deployment GPU, platform and TensorRT version. Use a separate engine instance for each worker; concurrent calls to the same instance are unsupported.
 

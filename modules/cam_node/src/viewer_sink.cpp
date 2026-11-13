@@ -84,11 +84,11 @@ rerun::Boxes2D boxes(const std::vector<Detection> &detections) {
   std::vector<rerun::Vec2D> sizes;
   std::vector<rerun::components::Text> labels;
   for (const auto &detection : detections) {
-    mins.push_back({static_cast<float>(detection.bbox.x),
-                    static_cast<float>(detection.bbox.y)});
-    sizes.push_back({static_cast<float>(detection.bbox.width),
-                     static_cast<float>(detection.bbox.height)});
-    labels.emplace_back(fmt::format("{:.2f}", detection.confidence));
+    const auto &box = detection.bbox.rect;
+    mins.push_back({static_cast<float>(box.x), static_cast<float>(box.y)});
+    sizes.push_back(
+        {static_cast<float>(box.width), static_cast<float>(box.height)});
+    labels.emplace_back(fmt::format("{:.2f}", detection.bbox.confidence));
   }
   return rerun::Boxes2D::from_mins_and_sizes(mins, sizes)
       .with_labels(std::move(labels));
@@ -97,9 +97,10 @@ rerun::Boxes2D boxes(const std::vector<Detection> &detections) {
 rerun::Points2D keypoints(const std::vector<Detection> &detections) {
   std::vector<rerun::components::Position2D> points;
   for (const auto &detection : detections)
-    for (const auto &pixel : detection.keypoints)
-      points.emplace_back(static_cast<float>(pixel.x),
-                          static_cast<float>(pixel.y));
+    for (const auto &keypoint : detection.keypoints)
+      if (keypoint.confidence >= keypoint_confidence_threshold)
+        points.emplace_back(static_cast<float>(keypoint.x),
+                            static_cast<float>(keypoint.y));
   return rerun::Points2D(std::move(points));
 }
 
