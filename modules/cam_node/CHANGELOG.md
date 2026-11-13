@@ -2,6 +2,20 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## cam_node-0.4.0 - 2026-11-13
+#### Features
+- (**cam_node**) add TENSORRT and RERUN docker build args - (9895bc2) - lucaselias61
+- (**cam_node**) add engine.precision (fp32, fp16, int8) for TensorRT builds - (c0f9c90) - lucaselias61
+- (**cam_node**) support YOLO pose models with shared decoder - (4c0ced8) - lucaselias61
+#### Bug Fixes
+- (**cam_node**) correct utils 'Precision' import - (1a078d3) - lucaselias61
+#### Performance Improvements
+- (**cam_node**) use uint8_t for Precision and LogLevel enums - (3069a5f) - lucaselias61
+#### Refactoring
+- (**cam_node**) remove view command and OpenCV preview - (6d2c8a7) - lucaselias61
+
+- - -
+
 ## cam_node-0.3.0 - 2026-11-12
 #### Features
 - (**cam_node**) add Logger with LOG_LEVEL and Rerun ViewerSink - (9392b66) - lucaselias61
