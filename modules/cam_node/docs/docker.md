@@ -60,21 +60,24 @@ Startup selects the configured camera and starts `cam_node`, which builds an eng
 on the selected GPU before detection starts. Engine compilation can take several
 minutes. Subsequent starts reuse the cached engine. No graphical preview is configured.
 
-`config/${CAMERA_SERIAL}.json` is mounted read-only at `/config/camera.json`
-and must exist before starting the container. `CAMERA_SERIAL` overrides its camera
-serial. Each camera uses its own configuration file. If you do not know the serial,
-build the image and list cameras using the example as a temporary config mount:
+`CAM_NODE_CONFIG` (default `config/${CAMERA_SERIAL}.json`) is mounted read-only
+at the same relative path inside the container and must exist before starting it.
+`CAMERA_SERIAL` overrides its camera serial. Each camera uses its own configuration
+file. If you do not know the serial, build the image and list cameras using the
+example config:
 
 ```sh
 CAMERA_SERIAL=discovery docker compose build
-CAMERA_SERIAL=discovery docker compose run --rm \
-  --volume "./config/serial_number.example.json:/config/camera.json:ro" cam-node list
+CAMERA_SERIAL=discovery CAM_NODE_CONFIG=config/serial_number.example.json \
+  docker compose run --rm cam-node list
 ```
 
 Then set the discovered serial and create its configuration as shown above.
 
 Compose accepts `CAMERA_SERIAL`, `GPU_DEVICE` (host GPU index or
-UUID, default `0`), `BUILD_JOBS` (default `4`), `LOG_LEVEL` (default `info`, see
+UUID, default `0`), `BUILD_JOBS` (default `4`), `TENSORRT` (`ON` or `OFF`,
+default `ON`; `OFF` builds only the OpenCV DNN backend), `RERUN` (`ON` or
+`OFF`, default `ON`; `OFF` leaves the Rerun SDK out of the build), `LOG_LEVEL` (default `info`, see
 [logging](configuration.md#logging)), and the optional
 [Rerun settings](configuration.md#rerun-live-debugging) `RERUN_URL` and
 `RERUN_IMAGE_FPS` from the shell or an untracked `.env` file beside

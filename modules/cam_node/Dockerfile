@@ -2,6 +2,10 @@ FROM nvcr.io/nvidia/tensorrt:26.05-py3
 
 ARG REALSENSE_VERSION=2.58.4
 ARG BUILD_JOBS=4
+# ON builds the TensorRT backend; OFF leaves only OpenCV DNN.
+ARG TENSORRT=ON
+# ON links the Rerun SDK (used when RERUN_URL is set); OFF leaves it out.
+ARG RERUN=ON
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Build dependencies pinned in the file shared with the native installer.
@@ -37,7 +41,8 @@ COPY include/ ./include/
 COPY src/ ./src/
 # Context from compose.yaml; same relative path as in the repo.
 COPY --from=rerun . /src/rerun/
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=ON \
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT="${TENSORRT}" \
+        -DCAM_NODE_RERUN="${RERUN}" \
         -DCAM_NODE_OUTPUT_DIR=/opt/cam_node/bin \
     && cmake --build build --parallel "${BUILD_JOBS}" \
     && rm -rf /src

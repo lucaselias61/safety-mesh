@@ -69,6 +69,7 @@ void run_cmd(CLI::App &app) {
   auto *run_command = app.add_subcommand("run", "Run a connected camera");
   run_command
       ->add_option("--config", *config, "Path to the camera configuration file")
+      ->envname("CAM_NODE_CONFIG")
       ->required()
       ->check(CLI::ExistingFile);
 

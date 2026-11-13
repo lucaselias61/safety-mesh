@@ -37,7 +37,10 @@ def main():
     # Diagnostic commands bypass automatic camera selection.
     if len(sys.argv) > 1:
         os.execv(CAM_NODE, [CAM_NODE, *sys.argv[1:]])
-    config = load_config("/config/camera.json")
+    config_path = os.environ.get("CAM_NODE_CONFIG")
+    if not config_path:
+        raise ValueError("Set CAM_NODE_CONFIG to the camera configuration file.")
+    config = load_config(config_path)
     if not config["camera"]["enabled"]:
         print("Camera disabled; exiting.", flush=True)
         return
