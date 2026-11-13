@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engines/engine_helpers.hpp"
+#include "engines/tensorrt/tensorrt_builder.hpp"
 #include "stream.hpp"
 
 #include <string>
