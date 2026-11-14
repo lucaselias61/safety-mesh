@@ -28,8 +28,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
       CAMERA_SERIAL: ${CAMERA_SERIAL:-}
-      # resolved from WORKDIR /opt/cam_node.
-      CAM_NODE_CONFIG: ${CAM_NODE_CONFIG:-config/${CAMERA_SERIAL}.json}
       # Rerun viewer (modules/rerun); empty RERUN_URL = off.
       RERUN_URL: ${RERUN_URL:-}
       RERUN_IMAGE_FPS: ${RERUN_IMAGE_FPS:-5}
@@ -61,8 +59,9 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./${CAM_NODE_CONFIG:-config/${CAMERA_SERIAL}.json}
-        target: /opt/cam_node/${CAM_NODE_CONFIG:-config/${CAMERA_SERIAL}.json}
+        source: ${CAM_NODE_CONFIG_PATH:-config/${CAMERA_SERIAL}.json}
+        # Fixed path read by docker/entrypoint.py.
+        target: /opt/cam_node/config.json
         read_only: true
         bind:
           create_host_path: false

@@ -60,15 +60,16 @@ Startup selects the configured camera and starts `cam_node`, which builds an eng
 on the selected GPU before detection starts. Engine compilation can take several
 minutes. Subsequent starts reuse the cached engine.
 
-`CAM_NODE_CONFIG` (default `config/${CAMERA_SERIAL}.json`) is mounted read-only
-at the same relative path inside the container and must exist before starting it.
+`CAM_NODE_CONFIG_PATH` (default `config/${CAMERA_SERIAL}.json`) is the host
+config file, absolute or relative to this directory. It is mounted read-only at
+`/opt/cam_node/config.json` and must exist before starting it.
 `CAMERA_SERIAL` overrides its camera serial. Each camera uses its own configuration
 file. If you do not know the serial, build the image and list cameras using the
 example config:
 
 ```sh
 CAMERA_SERIAL=discovery docker compose build
-CAMERA_SERIAL=discovery CAM_NODE_CONFIG=config/serial_number.example.json \
+CAMERA_SERIAL=discovery CAM_NODE_CONFIG_PATH=config/serial_number.example.json \
   docker compose run --rm cam-node list
 ```
 
