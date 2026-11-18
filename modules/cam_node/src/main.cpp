@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) try {
   list_cmd(app);
   run_cmd(app);
   streams_cmd(app);
+  calibrate_cmd(app);
 
   try {
     // CLI11 expects the arguments in reverse order, without the program name.

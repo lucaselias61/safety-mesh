@@ -3,6 +3,7 @@
 #include "stream.hpp"
 #include <librealsense2/rs.hpp>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -32,3 +33,6 @@ private:
 
 // Returns connected cameras; SDK failures propagate to the caller.
 std::vector<Camera> discover_cameras();
+
+/// @return The connected camera with this serial, or std::nullopt.
+std::optional<Camera> find_camera(const std::string &serial);

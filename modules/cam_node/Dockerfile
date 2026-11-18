@@ -51,6 +51,11 @@ RUN git clone --depth 1 --branch "v${REALSENSE_VERSION}" \
     && ldconfig \
     && rm -rf /tmp/librealsense
 
+# The runtime images copy /usr/local/lib. aruco only ships in the large
+# libopencv-contrib package (Qt, Tesseract, HDF5), so its one library goes
+# along this way. It needs only core, imgproc and calib3d.
+RUN cp -L "/usr/lib/$(gcc -dumpmachine)/libopencv_aruco.so.406" /usr/local/lib/
+
 WORKDIR /src/cam_node
 
 
@@ -166,6 +171,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates python3 \
         libopencv-core406t64 libopencv-imgproc406t64 libopencv-dnn406t64 \
+        libopencv-calib3d406t64 \
         libfmt9 libusb-1.0-0 libudev1 libssl3t64 \
     && rm -rf /var/lib/apt/lists/*
 

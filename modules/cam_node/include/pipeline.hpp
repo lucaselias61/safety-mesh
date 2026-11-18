@@ -14,6 +14,11 @@
 
 class PipelineProfile {
 public:
+  /// @brief Profile with one matching stream per configured stream.
+  /// @throws std::runtime_error if the device offers no match for a stream.
+  static PipelineProfile from_streams(const rs2::device &device,
+                                      const std::vector<StreamConfig> &streams);
+
   void add(const StreamProfile &profile) {
     profiles_[profile.id()].push_back(profile);
   }

@@ -60,3 +60,10 @@ services:
         read_only: true
         bind:
           create_host_path: false
+      # ChArUco board shared by all cameras, for the calibrate command.
+      - type: bind
+        source: ./config/charuco.json
+        target: /opt/cam_node/charuco.json
+        read_only: true
+        bind:
+          create_host_path: false

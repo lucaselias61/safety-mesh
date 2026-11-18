@@ -35,9 +35,20 @@ target_link_libraries(cam_node_core PUBLIC
     opencv_core
 )
 
+# Camera pose from a ChArUco board. Shared by cam_node and its unit test.
+add_library(cam_node_world_pose STATIC src/world_pose.cpp)
+target_compile_features(cam_node_world_pose PUBLIC cxx_std_17)
+set_target_properties(cam_node_world_pose PROPERTIES CXX_EXTENSIONS OFF)
+target_include_directories(cam_node_world_pose PUBLIC include ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(cam_node_world_pose
+    PUBLIC realsense2::realsense2 opencv_core
+    PRIVATE nlohmann_json::nlohmann_json opencv_calib3d opencv_aruco
+)
+
 add_executable(cam_node
     src/main.cpp
     src/worker.cpp
+    src/cli/calibrate.cpp
     src/cli/list.cpp
     src/cli/run.cpp
     src/cli/streams.cpp
@@ -52,10 +63,10 @@ set_target_properties(cam_node PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CAM_NODE_O
 set_target_properties(cam_node PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(cam_node PRIVATE
     cam_node_core
+    cam_node_world_pose
     CLI11::CLI11
     fmt::fmt
-    # Only what cam_node uses. ${OpenCV_LIBS} would also link calib3d and aruco,
-    # which the runtime images don't install.
+    # Only what cam_node uses. ${OpenCV_LIBS} would link every OpenCV module.
     opencv_imgproc opencv_dnn
 )
 

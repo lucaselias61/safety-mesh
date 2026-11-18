@@ -85,3 +85,10 @@ std::vector<Camera> discover_cameras() {
   }
   return cameras;
 }
+
+std::optional<Camera> find_camera(const std::string &serial) {
+  for (const auto &camera : discover_cameras())
+    if (camera.get_serial() == serial)
+      return camera;
+  return std::nullopt;
+}

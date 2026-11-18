@@ -44,6 +44,15 @@ void wait_for_global_time(rs2::pipeline &pipeline) {
 
 } // namespace
 
+PipelineProfile
+PipelineProfile::from_streams(const rs2::device &device,
+                              const std::vector<StreamConfig> &streams) {
+  PipelineProfile profile;
+  for (const auto &stream : streams)
+    profile.add(StreamProfile(device, stream));
+  return profile;
+}
+
 Pipeline::Pipeline(const Camera &camera,
                    const PipelineProfile &pipeline_profile)
     : cam_(camera), pipeline_profile_(pipeline_profile) {

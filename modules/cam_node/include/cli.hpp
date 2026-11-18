@@ -22,3 +22,10 @@ void run_cmd(CLI::App &app);
  * \param app The CLI app to which the streams command will be added.
  */
 void streams_cmd(CLI::App &app);
+
+/**
+ * \brief Finds a camera's pose in the world frame from the ChArUco board in
+ * view, and prints the result.
+ * \param app The CLI app to which the calibrate command will be added.
+ */
+void calibrate_cmd(CLI::App &app);

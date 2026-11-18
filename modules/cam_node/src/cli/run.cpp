@@ -29,36 +29,30 @@ void run(const std::shared_ptr<std::string> &config) {
   if (camera_config.streams.empty()) {
     throw std::runtime_error("No streams enabled in camera configuration");
   }
-  for (const auto &camera : discover_cameras()) {
-    if (camera.get_serial() == camera_config.serial) {
-      PipelineProfile profile;
-      for (const auto &stream : camera_config.streams) {
-        profile.add(StreamProfile(camera.get_device(), stream));
-      };
-      std::unique_ptr<Engine> engine;
-      if (engine_config.backend == "opencv_dnn") {
-        engine = std::make_unique<OpenCVDnnEngine>(engine_config);
-      } else if (engine_config.backend == "tensorrt") {
+  const auto camera = find_camera(camera_config.serial);
+  if (!camera)
+    throw std::runtime_error("No RealSense device connected with serial " +
+                             camera_config.serial);
+  const auto profile = PipelineProfile::from_streams(camera->get_device(),
+                                                     camera_config.streams);
+  std::unique_ptr<Engine> engine;
+  if (engine_config.backend == "opencv_dnn") {
+    engine = std::make_unique<OpenCVDnnEngine>(engine_config);
+  } else if (engine_config.backend == "tensorrt") {
 #ifdef CAM_NODE_WITH_TENSORRT
-        engine = std::make_unique<TensorRTEngine>(engine_config);
+    engine = std::make_unique<TensorRTEngine>(engine_config);
 #else
-        throw std::runtime_error(
-            "TensorRT backend requires a build with -DTENSORRT=ON");
+    throw std::runtime_error(
+        "TensorRT backend requires a build with -DTENSORRT=ON");
 #endif
-      } else {
-        throw std::runtime_error("Unsupported engine backend: " +
-                                 engine_config.backend);
-      }
-      // Pass the unique_ptr to the worker using std::move. Now engine ==
-      // nullptr.
-      Worker worker(camera, profile, std::move(engine),
-                    Logger::from_env(camera.get_serial()));
-      worker.run();
-      return;
-    }
+  } else {
+    throw std::runtime_error("Unsupported engine backend: " +
+                             engine_config.backend);
   }
-  throw std::runtime_error("No RealSense device connected with serial " +
-                           camera_config.serial);
+  // Pass the unique_ptr to the worker using std::move. Now engine == nullptr.
+  Worker worker(*camera, profile, std::move(engine),
+                Logger::from_env(camera->get_serial()));
+  worker.run();
 }
 
 } // namespace
