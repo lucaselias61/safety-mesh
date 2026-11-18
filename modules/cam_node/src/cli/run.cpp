@@ -29,12 +29,9 @@ void run(const std::shared_ptr<std::string> &config) {
   if (camera_config.streams.empty()) {
     throw std::runtime_error("No streams enabled in camera configuration");
   }
-  const auto camera = find_camera(camera_config.serial);
-  if (!camera)
-    throw std::runtime_error("No RealSense device connected with serial " +
-                             camera_config.serial);
-  const auto profile = PipelineProfile::from_streams(camera->get_device(),
-                                                     camera_config.streams);
+  const auto camera = require_camera(camera_config.serial);
+  const auto profile =
+      PipelineProfile::from_streams(camera.get_device(), camera_config.streams);
   std::unique_ptr<Engine> engine;
   if (engine_config.backend == "opencv_dnn") {
     engine = std::make_unique<OpenCVDnnEngine>(engine_config);
@@ -50,8 +47,8 @@ void run(const std::shared_ptr<std::string> &config) {
                              engine_config.backend);
   }
   // Pass the unique_ptr to the worker using std::move. Now engine == nullptr.
-  Worker worker(*camera, profile, std::move(engine),
-                Logger::from_env(camera->get_serial()));
+  Worker worker(camera, profile, std::move(engine),
+                Logger::from_env(camera.get_serial()));
   worker.run();
 }
 

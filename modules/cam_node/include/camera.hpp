@@ -31,8 +31,18 @@ private:
   rs2::device device_;
 };
 
-// Returns connected cameras; SDK failures propagate to the caller.
-std::vector<Camera> discover_cameras();
+/// Result of one device scan.
+struct Discovery {
+  std::vector<Camera> cameras;
+  // One SDK message per device that could not be opened.
+  std::vector<std::string> unavailable;
+};
 
-/// @return The connected camera with this serial, or std::nullopt.
-std::optional<Camera> find_camera(const std::string &serial);
+// Returns plugged-in cameras.
+// - A device that cannot be opened is skipped and listed in unavailable.
+Discovery discover_cameras();
+
+// Returns the connected camera with this serial.
+// Throws std::runtime_error if it is not found. The message names devices that
+// could not be opened, since the camera may be one of them.
+Camera require_camera(const std::string &serial);

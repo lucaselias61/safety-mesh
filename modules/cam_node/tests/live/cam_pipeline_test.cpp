@@ -388,7 +388,7 @@ int main() {
 
   std::vector<Camera> cameras;
   if (!step("cameras connected", [&] {
-        cameras = discover_cameras();
+        cameras = discover_cameras().cameras;
         require(!cameras.empty(), "no RealSense camera connected");
       }))
     return finish();

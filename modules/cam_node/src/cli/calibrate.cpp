@@ -51,12 +51,9 @@ world_pose::Result calibrate(const Options &options) {
   if (!has_color)
     throw std::runtime_error("Calibration needs an enabled color stream");
 
-  const auto camera = find_camera(camera_config.serial);
-  if (!camera)
-    throw std::runtime_error("No RealSense device connected with serial " +
-                             camera_config.serial);
-  Pipeline pipeline(*camera, PipelineProfile::from_streams(
-                                 camera->get_device(), camera_config.streams));
+  const auto camera = require_camera(camera_config.serial);
+  Pipeline pipeline(camera, PipelineProfile::from_streams(
+                                camera.get_device(), camera_config.streams));
   pipeline.start();
 
   // Built from the first color frame, which carries the active intrinsics.
@@ -97,7 +94,7 @@ world_pose::Result calibrate(const Options &options) {
   }
   fmt::print("\n");
   pipeline.stop();
-  return estimator->solve(camera->get_serial());
+  return estimator->solve(camera.get_serial());
 }
 
 void print_result(const world_pose::Result &result) {

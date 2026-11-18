@@ -18,26 +18,20 @@ struct StreamsOptions {
 };
 
 void streams(const StreamsOptions &options) {
-  for (const auto &camera : discover_cameras()) {
-    if (camera.get_serial() == options.serial) {
-      const auto streams = sort_stream_profiles_by_key(
-          filter_stream_profiles(camera.get_supported_stream_profiles(),
-                                 options.filter),
-          options.sort_key);
+  const auto camera = require_camera(options.serial);
+  const auto streams = sort_stream_profiles_by_key(
+      filter_stream_profiles(camera.get_supported_stream_profiles(),
+                             options.filter),
+      options.sort_key);
 
-      if (streams.empty()) {
-        std::cout << "No supported stream profiles found.\n";
-        return;
-      }
-
-      for (const auto &stream : streams) {
-        std::cout << stream.to_string();
-      }
-      return;
-    } // Exit the callback after processing the matching camera
+  if (streams.empty()) {
+    std::cout << "No supported stream profiles found.\n";
+    return;
   }
-  throw std::runtime_error("No RealSense device connected with serial " +
-                           options.serial);
+
+  for (const auto &stream : streams) {
+    std::cout << stream.to_string();
+  }
 }
 
 } // namespace

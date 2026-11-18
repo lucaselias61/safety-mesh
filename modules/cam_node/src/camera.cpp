@@ -3,6 +3,7 @@
 #include "stream.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <librealsense2/rs.hpp>
@@ -77,18 +78,32 @@ bool Camera::is_ready() const {
 /// @brief Resets the camera device.
 void Camera::reset() { device_.hardware_reset(); }
 
-std::vector<Camera> discover_cameras() {
+Discovery discover_cameras() {
   rs2::context context;
-  std::vector<Camera> cameras;
-  for (const auto &device : context.query_devices()) {
-    cameras.push_back(Camera(device));
+  const auto devices = context.query_devices();
+  Discovery discovery;
+  // Devices opened on access. Busy must not hide the others.
+  for (std::uint32_t i = 0; i < devices.size(); ++i) {
+    try {
+      discovery.cameras.push_back(Camera(devices[i]));
+    } catch (const rs2::error &error) {
+      discovery.unavailable.push_back("device " + std::to_string(i) + ": " +
+                                      error.what());
+    }
   }
-  return cameras;
+  return discovery;
 }
 
-std::optional<Camera> find_camera(const std::string &serial) {
-  for (const auto &camera : discover_cameras())
+Camera require_camera(const std::string &serial) {
+  const auto discovery = discover_cameras();
+  for (const auto &camera : discovery.cameras)
     if (camera.get_serial() == serial)
       return camera;
-  return std::nullopt;
+  std::string message = "No RealSense device connected with serial " + serial;
+  if (!discovery.unavailable.empty()) {
+    message += ". Devices that could not be connected:";
+    for (const auto &device : discovery.unavailable)
+      message += "\n  " + device;
+  }
+  throw std::runtime_error(message);
 }
