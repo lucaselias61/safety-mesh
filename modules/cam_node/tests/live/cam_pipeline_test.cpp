@@ -8,7 +8,7 @@
 // Exit code 1 if any step failed or no camera is connected.
 
 #include "camera.hpp"
-#include "frame_time.hpp"
+#include "frames.hpp"
 #include "pipeline.hpp"
 #include "stream.hpp"
 #include "utils.hpp"

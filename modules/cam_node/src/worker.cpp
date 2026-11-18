@@ -1,6 +1,6 @@
 #include "worker.hpp"
 #include "camera.hpp"
-#include "frame_time.hpp"
+#include "frames.hpp"
 #include "pipeline.hpp"
 #include "shutdown.hpp"
 

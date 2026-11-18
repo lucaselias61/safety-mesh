@@ -22,7 +22,7 @@ add_library(cam_node_core STATIC
     src/camera.cpp
     src/stream.cpp
     src/pipeline.cpp
-    src/frame_time.cpp
+    src/frames.cpp
     src/geometry.cpp
     src/utils.cpp
 )

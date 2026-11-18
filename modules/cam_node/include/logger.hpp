@@ -1,8 +1,8 @@
 #pragma once
 
 #include "engines/engine.hpp"
+#include "frames.hpp"
 #include "geometry.hpp"
-#include "pipeline.hpp"
 
 #include <chrono>
 #include <cstdint>

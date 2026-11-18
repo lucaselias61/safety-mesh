@@ -1,7 +1,22 @@
-#include "frame_time.hpp"
+#include "frames.hpp"
 
 #include <stdexcept>
 #include <string>
+
+Frames::Frames(const rs2::frameset &f) : frames_(f) {}
+
+rs2::video_frame Frames::get_color_frame() const {
+  return frames_.get_color_frame();
+}
+rs2::depth_frame Frames::get_depth_frame() const {
+  return frames_.get_depth_frame();
+}
+rs2::motion_frame Frames::get_accel_frame() const {
+  return frames_.first_or_default(RS2_STREAM_ACCEL).as<rs2::motion_frame>();
+}
+rs2::motion_frame Frames::get_gyro_frame() const {
+  return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();
+}
 
 bool in_global_time(const rs2::frameset &frames) {
   for (const auto &frame : frames)

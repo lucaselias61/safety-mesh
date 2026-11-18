@@ -1,5 +1,5 @@
 #include "pipeline.hpp"
-#include "frame_time.hpp"
+#include "frames.hpp"
 
 #include <iostream>
 #include <librealsense2/rs.hpp>
@@ -43,21 +43,6 @@ void wait_for_global_time(rs2::pipeline &pipeline) {
 }
 
 } // namespace
-
-Frames::Frames(const rs2::frameset &f) : frames_(f) {}
-
-rs2::video_frame Frames::get_color_frame() const {
-  return frames_.get_color_frame();
-}
-rs2::depth_frame Frames::get_depth_frame() const {
-  return frames_.get_depth_frame();
-}
-rs2::motion_frame Frames::get_accel_frame() const {
-  return frames_.first_or_default(RS2_STREAM_ACCEL).as<rs2::motion_frame>();
-}
-rs2::motion_frame Frames::get_gyro_frame() const {
-  return frames_.first_or_default(RS2_STREAM_GYRO).as<rs2::motion_frame>();
-}
 
 Pipeline::Pipeline(const Camera &camera,
                    const PipelineProfile &pipeline_profile)

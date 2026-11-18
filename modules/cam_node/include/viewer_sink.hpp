@@ -3,9 +3,9 @@
 // Rerun builds only (CAM_NODE_WITH_RERUN).
 
 #include "engines/engine.hpp"
+#include "frames.hpp"
 #include "geometry.hpp"
 #include "logger.hpp"
-#include "pipeline.hpp"
 
 #include <viewer_connection.hpp>
 
