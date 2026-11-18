@@ -40,6 +40,9 @@ bool is_packed(const rs2::video_frame &frame);
 rerun::Image color_image(const rs2::video_frame &frame,
                          rerun::ColorModel model);
 
+/// Far end of the depth colormap, in meters. D455 ideal range ends near 6 m.
+inline constexpr double depth_color_range_m = 6.0;
+
 /// @brief Borrows the pixels: log before releasing the frame.
 /// @pre Packed Z16.
 rerun::DepthImage depth_image(const rs2::depth_frame &frame);

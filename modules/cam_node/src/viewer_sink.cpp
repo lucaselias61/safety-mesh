@@ -71,9 +71,13 @@ rerun::DepthImage depth_image(const rs2::depth_frame &frame) {
   const auto width = static_cast<std::uint32_t>(frame.get_width());
   const auto height = static_cast<std::uint32_t>(frame.get_height());
   // get_units() is meters per unit; Rerun wants units per meter.
+  const double units_per_meter = 1.0 / frame.get_units();
+  // Fixed colormap range, in raw depth units for Rerun.
   return rerun::DepthImage(static_cast<const std::uint16_t *>(frame.get_data()),
                            {width, height})
-      .with_meter(1.0f / frame.get_units());
+      .with_meter(static_cast<float>(units_per_meter))
+      .with_depth_range(rerun::components::ValueRange(
+          {0.0, depth_color_range_m * units_per_meter}));
 }
 
 rerun::Boxes2D boxes(const std::vector<Detection> &detections) {
