@@ -21,6 +21,7 @@ add_executable(cam_node
     src/worker.cpp
     src/camera.cpp
     src/pipeline.cpp
+    src/frame_time.cpp
     src/cli/list.cpp
     src/cli/run.cpp
     src/cli/streams.cpp

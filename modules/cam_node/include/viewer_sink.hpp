@@ -25,8 +25,8 @@ rerun::Pinhole pinhole(const rs2_intrinsics &intrinsics);
 /// Pose of one stream relative to another.
 rerun::Transform3D transform(const rs2_extrinsics &extrinsics);
 
-/// @return Capture time in ns since the epoch. Uses the host clock (time of
-/// logging) if the frame isn't timestamped in host time.
+/// @return Capture time in ns since the epoch, from global time.
+/// @throws std::runtime_error if the frame isn't in global time.
 std::int64_t capture_time_ns(const rs2::frame &frame);
 
 /// @return Color model for 8-bit RGB(A)/BGR(A), else std::nullopt.

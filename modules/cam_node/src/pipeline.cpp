@@ -1,7 +1,9 @@
 #include "pipeline.hpp"
+#include "frame_time.hpp"
 
 #include <iostream>
 #include <librealsense2/rs.hpp>
+#include <stdexcept>
 
 namespace {
 
@@ -25,6 +27,19 @@ read_calibration(const rs2::pipeline_profile &active) {
   return geometry::Calibration{
       {depth->get_intrinsics(), color->get_intrinsics()},
       {color->get_extrinsics_to(*depth), depth->get_extrinsics_to(*color)}};
+}
+
+/// @brief Drops frames until a whole frameset is in global time.
+/// @details Frames queued before enable_global_time() can be in another domain.
+/// @throws std::runtime_error if none is within max_framesets.
+void wait_for_global_time(rs2::pipeline &pipeline) {
+  constexpr int max_framesets = 30;
+  for (int i = 0; i < max_framesets; ++i) {
+    rs2::frameset frames;
+    if (pipeline.try_wait_for_frames(&frames) && in_global_time(frames))
+      return;
+  }
+  throw std::runtime_error("Frames are not in global time");
 }
 
 } // namespace
@@ -81,6 +96,13 @@ void Pipeline::start() {
   }
 
   const auto active_profile = pipeline_.start(config_);
+  try {
+    enable_global_time(active_profile.get_device());
+    wait_for_global_time(pipeline_);
+  } catch (...) {
+    pipeline_.stop();
+    throw;
+  }
   calibration_ = read_calibration(active_profile);
   std::cout << "Enabled streams for camera " << cam_.get_serial() << ":\n"
             << "\n";

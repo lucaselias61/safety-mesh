@@ -60,5 +60,10 @@ without logging.
 Everything is logged under `cams/<serial>/` on the `capture_time` and
 `frame` timelines: `color` (image, detections, keypoints), `depth` (depth
 image placed relative to color, shown as a point cloud) and `health`
-(`wait_ms`, `detect_ms`, `fps`). Build with `-DCAM_NODE_RERUN=OFF` to leave
+(`wait_ms`, `detect_ms`, `log_ms`, `age_ms`, `fps`). `wait_ms` is time blocked
+waiting for frames, `log_ms` is output time of the previous frame and `age_ms` is
+color capture to detections ready. Global time is mandatory. cam_node turns
+it on for every streaming sensor at start and stops if a sensor does not support
+it, if frames do not arrive in global time, or if a later frame is in another
+domain. Build with `-DCAM_NODE_RERUN=OFF` to leave
 the Rerun SDK out entirely.

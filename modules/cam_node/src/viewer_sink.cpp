@@ -1,4 +1,5 @@
 #include "viewer_sink.hpp"
+#include "frame_time.hpp"
 
 #include <fmt/format.h>
 
@@ -29,12 +30,8 @@ rerun::Transform3D transform(const rs2_extrinsics &extrinsics) {
 }
 
 std::int64_t capture_time_ns(const rs2::frame &frame) {
-  const auto domain = frame.get_frame_timestamp_domain();
-  if (domain == RS2_TIMESTAMP_DOMAIN_GLOBAL_TIME ||
-      domain == RS2_TIMESTAMP_DOMAIN_SYSTEM_TIME)
-    return static_cast<std::int64_t>(frame.get_timestamp() * 1e6);
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
-             std::chrono::system_clock::now().time_since_epoch())
+             capture_time(frame).time_since_epoch())
       .count();
 }
 
@@ -110,8 +107,9 @@ namespace {
 
 using Clock = std::chrono::steady_clock;
 
-double to_ms(Clock::duration duration) {
-  return std::chrono::duration<double, std::milli>(duration).count();
+// Any clock's duration converts implicitly to floating-point milliseconds.
+double to_ms(std::chrono::duration<double, std::milli> duration) {
+  return duration.count();
 }
 
 } // namespace
@@ -158,6 +156,8 @@ void ViewerSink::timings(const LoopTimings &loop_timings) {
   const auto now = Clock::now();
   viewer_->log("health/wait_ms", rerun::Scalars(to_ms(loop_timings.wait)));
   viewer_->log("health/detect_ms", rerun::Scalars(to_ms(loop_timings.detect)));
+  viewer_->log("health/log_ms", rerun::Scalars(to_ms(loop_timings.log)));
+  viewer_->log("health/age_ms", rerun::Scalars(to_ms(loop_timings.age)));
   if (last_frame_ != Clock::time_point{})
     viewer_->log("health/fps",
                  rerun::Scalars(1000.0 / to_ms(now - last_frame_)));

@@ -16,6 +16,8 @@
 struct LoopTimings {
   std::chrono::steady_clock::duration wait;   // Waiting for the frameset.
   std::chrono::steady_clock::duration detect; // Engine inference.
+  std::chrono::steady_clock::duration log;    // Logger output duration.
+  std::chrono::system_clock::duration age;    // From capture to detections.
 };
 
 /// Least to most severe.

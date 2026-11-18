@@ -1,5 +1,6 @@
 #include "worker.hpp"
 #include "camera.hpp"
+#include "frame_time.hpp"
 #include "pipeline.hpp"
 #include "shutdown.hpp"
 
@@ -13,6 +14,8 @@ void Worker::run() {
   if (pipeline_.calibration())
     logger_.calibration(*pipeline_.calibration());
   int retry_count = 0;
+  // logger_.frame() can't time itself, so each frame reports the previous one.
+  auto log_time = std::chrono::steady_clock::duration::zero();
 
   try {
     while (running_ && !shutdown_requested) {
@@ -27,11 +30,14 @@ void Worker::run() {
         }
         continue;
       }
-      std::vector<Detection> detections =
-          engine_->detect(frames.get_color_frame());
-      logger_.frame(frames, detections,
-                    {frames_ready - wait_start,
-                     std::chrono::steady_clock::now() - frames_ready});
+      const auto color = frames.get_color_frame();
+      std::vector<Detection> detections = engine_->detect(color);
+      const auto detected = std::chrono::steady_clock::now();
+      const LoopTimings timings{frames_ready - wait_start,
+                                detected - frames_ready, log_time,
+                                frame_age(color)};
+      logger_.frame(frames, detections, timings);
+      log_time = std::chrono::steady_clock::now() - detected;
       retry_count = 0; // Reset retry count on successful detection
     }
   } catch (...) {
