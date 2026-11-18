@@ -1,0 +1,45 @@
+# Unit and live tests on the target machine. Both run in the test-runner image.
+#   docker compose -f compose.test.yaml run --rm test-cam-node-unit
+#   docker compose -f compose.test.yaml run --rm test-cam-node-live
+# - No CAMERA_SERIAL needed. The live test checks every connected camera.
+# - Needs no GPU: the tests check the camera pipeline, not inference.
+
+name: cam-node-test
+
+# Shared by both services, so the image is built once.
+x-test-runner: &test-runner
+  build:
+    context: .
+    target: test-runner
+    # Shared Rerun library, outside this directory.
+    additional_contexts:
+      rerun: ../rerun
+    args:
+      BUILD_JOBS: ${BUILD_JOBS:-2}
+  image: safety-mesh-cam-node:test
+  pull_policy: build
+
+services:
+  # No camera needed.
+  test-cam-node-unit:
+    <<: *test-runner
+    command: ["ctest", "--test-dir", "build", "-LE", "live", "--output-on-failure"]
+
+  # Needs the cameras. Stop the cam-node service first: a camera opens only once.
+  test-cam-node-live:
+    <<: *test-runner
+    command: ["ctest", "--test-dir", "build", "-L", "live", "--output-on-failure"]
+    # Same USB access as compose.cpu.yaml.
+    device_cgroup_rules:
+      - 'c 189:* rwm'
+    volumes:
+      - type: bind
+        source: /dev/bus/usb
+        target: /dev/bus/usb
+        bind:
+          create_host_path: false
+      # Every camera config. Each camera uses <serial>.json.
+      - type: bind
+        source: ./config
+        target: /opt/cam_node/config
+        read_only: true

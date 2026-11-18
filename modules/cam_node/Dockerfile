@@ -2,7 +2,7 @@
 # the final stage with build.target. BuildKit builds only the stages it needs.
 # - build-base: compilers and RealSense from source. Shared by both backends.
 # - build-cpu, build-gpu: cam_node with or without TensorRT.
-# - test: unit tests on build-base. Not part of any image.
+# - test-src, test, test-runner: unit and live tests. Not part of any image.
 # - runtime-base: runtime libraries. Shared by both backends.
 # - cpu, gpu: final images. gpu adds the CUDA and TensorRT runtime.
 # - The GPU driver comes from the host through the NVIDIA Container Toolkit.
@@ -118,12 +118,10 @@ RUN --mount=type=cache,id=cam-node-build-gpu,target=/src/cam_node/build,sharing=
     && cmake --build build --parallel "${BUILD_JOBS}"
 
 
-# Unit tests. Not part of any image. A failing test fails the build.
-# Run with scripts/test.sh. docker compose build never builds this stage.
+# Sources for the test stages. Not part of any image.
 # - Built on build-base, not build-cpu: no Rerun, so Arrow is not compiled.
-# - Builds every target, so cam_node gets a compile check too.
-# - Unchanged inputs skip the step as CACHED, which means it passed before.
-FROM build-base AS test
+# - Live tests are compiled too, as a compile check. Only test-runner runs them.
+FROM build-base AS test-src
 
 COPY CMakeLists.txt ./
 COPY include/ ./include/
@@ -132,11 +130,32 @@ COPY tests/ ./tests/
 # Only the board file. Per-camera configs are not needed.
 COPY config/charuco.json ./config/
 ARG BUILD_JOBS=2
+
+
+# Unit tests during the build. A failing test fails the build.
+# Run with scripts/test.sh. docker compose build never builds this stage.
+# - Builds every target, so cam_node gets a compile check too.
+# - Unchanged inputs skip the step as CACHED, which means it passed before.
+FROM test-src AS test
+
 RUN --mount=type=cache,id=cam-node-build-test,target=/src/cam_node/build,sharing=locked \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=OFF \
-        -DCAM_NODE_RERUN=OFF -DCAM_NODE_BUILD_TESTS=ON \
+        -DCAM_NODE_RERUN=OFF -DCAM_NODE_BUILD_TESTS=ON -DCAM_NODE_LIVE_TESTS=ON \
     && cmake --build build --parallel "${BUILD_JOBS}" \
-    && ctest --test-dir build --output-on-failure
+    && ctest --test-dir build -LE live --output-on-failure
+
+
+# Unit and live tests when the container runs. Used by compose.test.yaml.
+# - The build stays in the image, unlike the test stage's cache mount.
+# - Each compose service picks its tests with a ctest label filter.
+# - The default runs unit tests only, so it is safe without a camera.
+FROM test-src AS test-runner
+
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=OFF \
+        -DCAM_NODE_RERUN=OFF -DCAM_NODE_BUILD_TESTS=ON -DCAM_NODE_LIVE_TESTS=ON \
+    && cmake --build build --parallel "${BUILD_JOBS}"
+CMD ["ctest", "--test-dir", "build", "-LE", "live", "--output-on-failure"]
+
 
 # Runtime libraries of the build dependencies. python3 runs the entrypoint.
 FROM ubuntu:24.04 AS runtime-base

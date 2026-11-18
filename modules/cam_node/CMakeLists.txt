@@ -16,18 +16,31 @@ option(CAM_NODE_RERUN "Stream to a Rerun viewer when RERUN_URL is set" ON)
 set(CAM_NODE_RERUN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../rerun" CACHE PATH
     "Shared Rerun connection library")
 
+# Camera side: discovery, config, streams, pipeline, timing, geometry.
+# Shared by cam_node and the live tests, so they run the same code.
+add_library(cam_node_core STATIC
+    src/camera.cpp
+    src/stream.cpp
+    src/pipeline.cpp
+    src/frame_time.cpp
+    src/geometry.cpp
+    src/utils.cpp
+)
+target_compile_features(cam_node_core PUBLIC cxx_std_17)
+set_target_properties(cam_node_core PROPERTIES CXX_EXTENSIONS OFF)
+target_include_directories(cam_node_core PUBLIC include ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(cam_node_core PUBLIC
+    nlohmann_json::nlohmann_json
+    realsense2::realsense2
+    opencv_core
+)
+
 add_executable(cam_node
     src/main.cpp
     src/worker.cpp
-    src/camera.cpp
-    src/pipeline.cpp
-    src/frame_time.cpp
     src/cli/list.cpp
     src/cli/run.cpp
     src/cli/streams.cpp
-    src/stream.cpp
-    src/utils.cpp
-    src/geometry.cpp
     src/logger.cpp
     src/engines/opencv_dnn_engine.cpp
     src/engines/yolo_decoder.cpp
@@ -36,17 +49,14 @@ add_executable(cam_node
 set(CAM_NODE_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Executable output directory")
 set_target_properties(cam_node PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CAM_NODE_OUTPUT_DIR}")
 
-target_compile_features(cam_node PRIVATE cxx_std_17)
 set_target_properties(cam_node PROPERTIES CXX_EXTENSIONS OFF)
-target_include_directories(cam_node PRIVATE include ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(cam_node PRIVATE
+    cam_node_core
     CLI11::CLI11
-    nlohmann_json::nlohmann_json
     fmt::fmt
-    realsense2::realsense2
     # Only what cam_node uses. ${OpenCV_LIBS} would also link calib3d and aruco,
     # which the runtime images don't install.
-    opencv_core opencv_imgproc opencv_dnn
+    opencv_imgproc opencv_dnn
 )
 
 if(CAM_NODE_RERUN)
@@ -79,18 +89,15 @@ if(TENSORRT)
     target_compile_definitions(cam_node PRIVATE CAM_NODE_WITH_TENSORRT=1)
 endif()
 
-option(CAM_NODE_BUILD_TESTS "Build cam_node tests" ON)
-if(CAM_NODE_BUILD_TESTS)
+option(CAM_NODE_BUILD_TESTS "Build cam_node unit tests" ON)
+# Live tests need the configured RealSense camera to run, so they are opt-in.
+option(CAM_NODE_LIVE_TESTS "Build cam_node live tests (ctest label: live)" OFF)
+if(CAM_NODE_BUILD_TESTS OR CAM_NODE_LIVE_TESTS)
     enable_testing()
-    # Needs no camera. Renders its own test board.
-    # world_pose.cpp is built only here until a command uses it. Adding it to
-    # cam_node also needs the calib3d and aruco runtime packages in the images.
-    add_executable(cam_node_world_pose_test tests/world_pose_test.cpp src/world_pose.cpp)
-    target_compile_features(cam_node_world_pose_test PRIVATE cxx_std_17)
-    target_include_directories(cam_node_world_pose_test PRIVATE include ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(cam_node_world_pose_test PRIVATE
-        nlohmann_json::nlohmann_json realsense2::realsense2 ${OpenCV_LIBS})
-    target_compile_definitions(cam_node_world_pose_test PRIVATE
-        CAM_NODE_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
-    add_test(NAME cam_node_world_pose COMMAND cam_node_world_pose_test)
+endif()
+if(CAM_NODE_BUILD_TESTS)
+    add_subdirectory(tests/unit)
+endif()
+if(CAM_NODE_LIVE_TESTS)
+    add_subdirectory(tests/live)
 endif()

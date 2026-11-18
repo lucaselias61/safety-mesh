@@ -196,25 +196,84 @@ restart, detection, and shutdown on the target PC before deployment. Python star
 tests can run without Docker or a GPU:
 
 ```sh
-python3 -m unittest discover -s tests -p 'test_docker_entrypoint.py'
+python3 -m unittest discover -s tests/unit -p 'test_docker_entrypoint.py'
 ```
 
 ## C++ tests
 
-The C++ unit tests run in the `Dockerfile`'s `test` stage, on the same Ubuntu
-24.04 toolchain and OpenCV 4.6 as the images. They need no camera or GPU and work
-on any host with Docker, including macOS:
+Tests live in `tests/unit/` (no camera, no GPU) and `tests/live/` (need the
+configured camera). Live tests carry the ctest label `live` and are only built
+with `-DCAM_NODE_LIVE_TESTS=ON`.
+
+### Unit tests
+
+The unit tests run in the `Dockerfile`'s `test` stage, on the same Ubuntu
+24.04 toolchain and OpenCV 4.6 as the images. They work on any host with
+Docker, including macOS:
 
 ```sh
 ./scripts/test.sh
 ```
 
 - The stage builds on `build-base` without Rerun, so Arrow is not compiled. It
-  builds every target, so `cam_node` also gets a compile check.
-- A failing test fails the build. The stage is never part of an image, and
+  builds every target, live tests included, so everything gets a compile check.
+  It runs `ctest -LE live`.
+- A failing test fails the build. The stage is never saved as an image, and
   `docker compose build` skips it.
 - Changed files recompile incrementally from a BuildKit cache.
 - With unchanged sources the test step shows `CACHED`, meaning it passed before.
   Run `./scripts/test.sh --no-cache-filter test` to run it again.
 - `BUILD_JOBS` comes from the shell or `.env`, as for Compose, so the shared
   build layers stay cached.
+
+### Tests on the target machine
+
+`compose.test.yaml` runs both kinds in one `test-runner` image, built from the
+`Dockerfile` stage of that name. Each service picks its tests with a ctest label.
+Neither needs `CAMERA_SERIAL`:
+
+```sh
+docker compose -f compose.test.yaml run --rm test-cam-node-unit   # ctest -LE live
+docker compose -f compose.test.yaml run --rm test-cam-node-live   # ctest -L live
+```
+
+`scripts/test.sh` runs the same unit tests during the build and leaves no image
+behind, so it suits development and CI.
+
+### Live tests
+
+`cam_pipeline_test` checks every connected camera, one after another. Each camera
+uses its own `config/<serial>.json`. A camera without one is checked with the
+streams of `config/serial_number.example.json`, and the output names the file
+used. A camera disabled in its config is skipped. The service gets the same USB
+access as `cam-node` and the `config/` directory read-only. Stop the `cam-node`
+service first, since a camera can be opened only once:
+
+```sh
+docker compose down
+docker compose -f compose.test.yaml run --rm test-cam-node-live
+```
+
+The test runs cam_node's own config loading and `Pipeline`, and reports each
+step as PASS or FAIL with the camera's serial:
+
+- at least one camera is connected
+- the config loads, the camera is ready and on USB 3
+- the configured streams are offered by the camera
+- every streaming sensor supports global time, and the pipeline starts in it
+- depth and color calibration is available, if both are configured
+- over 5 s, every stream reaches 90% of its fps, drops at most 5% of frames,
+  has increasing timestamps, stays in global time, and has a frame age under
+  three frame periods
+- the color image is not flat and at least 5% of depth pixels have a distance
+- the pipeline stops
+
+Point the cameras at a normal scene. A covered lens or an empty view beyond depth
+range fails the content checks.
+
+Natively on Ubuntu, build with `-DCAM_NODE_LIVE_TESTS=ON` and pass the config
+directory:
+
+```sh
+CAM_NODE_CONFIG_DIR="$PWD/config" ctest --test-dir build/cpu -L live --output-on-failure
+```

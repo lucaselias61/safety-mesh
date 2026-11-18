@@ -18,6 +18,11 @@ CLI → configuration → Camera → Pipeline → Worker → Engine → detectio
 
 Declarations are in `include/`, implementations in `src/`, and commands in `src/cli/`.
 
+The camera side (camera, streams, pipeline, frame timing, geometry and config
+loading) builds as the `cam_node_core` library. `cam_node` and the live tests in
+`tests/live/` link it, so the tests run the same code. Unit tests are in
+`tests/unit/`.
+
 ## Intended behavior
 
 - **Stream parsing:** receives the camera stream and prepares it for inference.

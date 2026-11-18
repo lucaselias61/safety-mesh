@@ -44,6 +44,9 @@ public:
   rs2::motion_frame get_accel_frame() const;
   rs2::motion_frame get_gyro_frame() const;
 
+  /// Every frame of the set, for checks across all streams.
+  const rs2::frameset &frameset() const noexcept { return frames_; }
+
 private:
   rs2::frameset frames_;
 };
