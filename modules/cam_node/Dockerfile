@@ -70,6 +70,7 @@ ARG RERUN=ON
 RUN --mount=type=cache,id=cam-node-build-cpu,target=/src/cam_node/build,sharing=locked \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=OFF \
         -DCAM_NODE_RERUN="${RERUN}" \
+        -DCAM_NODE_BUILD_TESTS=OFF \
         -DCAM_NODE_OUTPUT_DIR=/opt/cam_node/bin \
     && cmake --build build --parallel "${BUILD_JOBS}"
 
@@ -111,6 +112,7 @@ ARG RERUN=ON
 RUN --mount=type=cache,id=cam-node-build-gpu,target=/src/cam_node/build,sharing=locked \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=ON \
         -DCAM_NODE_RERUN="${RERUN}" \
+        -DCAM_NODE_BUILD_TESTS=OFF \
         -DCAM_NODE_OUTPUT_DIR=/opt/cam_node/bin \
     && cmake --build build --parallel "${BUILD_JOBS}"
 

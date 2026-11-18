@@ -14,6 +14,8 @@ CLI → configuration → Camera → Pipeline → Worker → Engine → detectio
 - **Engine** detects people using OpenCV DNN or TensorRT through a common interface.
 - **Logger** decides what is logged and where: text at `LOG_LEVEL`, and, with `RERUN_URL`, the Rerun viewer through `ViewerSink`, which converts camera types to Rerun archetypes and sends them over the shared `ViewerConnection` from `modules/rerun`.
 
+`world_pose` (`src/world_pose.cpp`) estimates the camera's pose in the world frame from a fixed ChArUco board. It takes color frames one at a time and returns the 4×4 camera-to-world matrix in meters, the reprojection error in pixels, the camera serial, a timestamp and the frames and corners used. The world frame is the board frame: origin at the board's top-left corner, X along the columns, Y along the rows, Z into the board. No command uses it yet, so it is only built into its test. The board is set in [configuration](configuration.md#charuco-board).
+
 Declarations are in `include/`, implementations in `src/`, and commands in `src/cli/`.
 
 ## Intended behavior

@@ -36,6 +36,24 @@ At least one stream must be enabled for an enabled camera. Detection needs an en
 
 See [inference](inference.md) for model and backend requirements.
 
+## ChArUco board
+
+[`charuco.json`](../config/charuco.json) describes the printed board used to find a camera's pose in the world frame. One file serves all cameras. All fields are required.
+
+| Field | Meaning |
+| --- | --- |
+| `rows` | Squares along the board's Y axis, at least 2. |
+| `columns` | Squares along the board's X axis, at least 2. |
+| `square_size_m` | Side of one square, in meters. |
+| `marker_size_m` | Side of one ArUco marker, in meters. Smaller than the square. |
+| `dictionary` | ArUco dictionary, `DICT_<N>X<N>_<count>` with N from 4 to 7 and count 50, 100, 250 or 1000. |
+
+- The file must match the real board exactly. Accurately measure the squares.
+- Generate the board with OpenCV 4.6 or newer. Older versions lay out boards with an even number of rows differently. An odd number of rows avoids the difference.
+- The values in the repository are placeholders until the real board is printed.
+
+The board frame is the world frame: origin at the board's top-left corner, X along the columns, Y along the rows, Z into the board.
+
 ## Logging
 
 `LOG_LEVEL` sets the text log verbosity: `debug`, `info` (default), `warn`

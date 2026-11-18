@@ -9,7 +9,7 @@ find_package(CLI11 CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(realsense2 2.58 CONFIG REQUIRED)
-find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc dnn)
+find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc dnn calib3d aruco)
 
 option(TENSORRT "Enable the TensorRT 10+ GPU backend" OFF)
 option(CAM_NODE_RERUN "Stream to a Rerun viewer when RERUN_URL is set" ON)
@@ -44,7 +44,9 @@ target_link_libraries(cam_node PRIVATE
     nlohmann_json::nlohmann_json
     fmt::fmt
     realsense2::realsense2
-    ${OpenCV_LIBS}
+    # Only what cam_node uses. ${OpenCV_LIBS} would also link calib3d and aruco,
+    # which the runtime images don't install.
+    opencv_core opencv_imgproc opencv_dnn
 )
 
 if(CAM_NODE_RERUN)
@@ -75,4 +77,20 @@ if(TENSORRT)
     target_link_libraries(cam_node PRIVATE
         ${TENSORRT_LIBRARY} ${TENSORRT_ONNX_PARSER_LIBRARY} CUDA::cudart)
     target_compile_definitions(cam_node PRIVATE CAM_NODE_WITH_TENSORRT=1)
+endif()
+
+option(CAM_NODE_BUILD_TESTS "Build cam_node tests" ON)
+if(CAM_NODE_BUILD_TESTS)
+    enable_testing()
+    # Needs no camera. Renders its own test board.
+    # world_pose.cpp is built only here until a command uses it. Adding it to
+    # cam_node also needs the calib3d and aruco runtime packages in the images.
+    add_executable(cam_node_world_pose_test tests/world_pose_test.cpp src/world_pose.cpp)
+    target_compile_features(cam_node_world_pose_test PRIVATE cxx_std_17)
+    target_include_directories(cam_node_world_pose_test PRIVATE include ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(cam_node_world_pose_test PRIVATE
+        nlohmann_json::nlohmann_json realsense2::realsense2 ${OpenCV_LIBS})
+    target_compile_definitions(cam_node_world_pose_test PRIVATE
+        CAM_NODE_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
+    add_test(NAME cam_node_world_pose COMMAND cam_node_world_pose_test)
 endif()
