@@ -1,6 +1,8 @@
 # Docker deployment
 
-Run these commands from `modules/cam_node/` on a native x86-64 Linux PC.
+Run these commands from `modules/cam_node/` on a native Linux PC. The default
+TensorRT setup needs x86-64 and an NVIDIA GPU. The CPU-only setup (`INFERENCE=cpu`)
+builds for the host's own architecture, including arm64.
 The image contains CUDA, TensorRT, OpenCV, RealSense, and the compiled camera node.
 It does not run the native installation scripts.
 
@@ -27,14 +29,40 @@ running containers. Rootless Docker and Docker Desktop
 camera passthrough are not covered by this configuration. Use `sudo docker compose`
 if your account cannot access Docker.
 
-The image uses NVIDIA's `tensorrt:26.05-py3` (TensorRT 10, Ubuntu 24.04 userspace)
-on the Linux host, including Ubuntu 26.04. Host CUDA/TensorRT packages are not required.
-The host NVIDIA driver must still satisfy the container's requirements.
+The image is built on `ubuntu:24.04` from one multi-stage `Dockerfile`. Each compose
+file picks its final stage with `build.target`: `cpu` or `gpu`. BuildKit builds only
+the stages that target needs. The final image holds only runtime libraries: OpenCV,
+RealSense and the compiled camera node, plus TensorRT 10.16.1 and the CUDA 13.2
+runtime from NVIDIA's APT repository in `gpu`. Compilers and headers stay in the
+build stages. `INFERENCE=cpu` never touches NVIDIA's repository. The versions are the
+`CUDA_VERSION` and `TENSORRT_VERSION` arguments at the top of the `Dockerfile`.
+Host CUDA/TensorRT packages are not required. The host NVIDIA driver must support
+CUDA 13.2.
 
 ## Start
 
-`compose.yaml` contains the application, GPU, USB access, model, and configuration
-settings. In each new terminal, set your camera serial and create its configuration:
+The Compose setup is split in two files:
+
+- `compose.cpu.yaml`: OpenCV DNN on the CPU. Holds the application, USB access, model
+  and configuration settings. Builds for the host's own architecture.
+- `compose.gpu.yaml`: TensorRT on an NVIDIA GPU. Extends the `cam-node` service of
+  `compose.cpu.yaml` and adds the TensorRT build, the GPU reservation and the
+  `linux/amd64` platform.
+
+`.env` picks one through `INFERENCE`. Its `COMPOSE_FILE` line loads
+`compose.${INFERENCE}.yaml`, so plain `docker compose` commands use the right file.
+Create `.env` once:
+
+```sh
+cp .env.example .env
+```
+
+Set `INFERENCE=gpu` or `INFERENCE=cpu` there, in lowercase. There is no
+`compose.yaml`, so without `.env` plain `docker compose` finds no file. Use
+`docker compose -f compose.gpu.yaml` or `-f compose.cpu.yaml` then. A `-f` option or an
+exported `COMPOSE_FILE` replaces the `.env` selection.
+
+In each new terminal, set your camera serial and create its configuration:
 
 ```sh
 export CAMERA_SERIAL=123456789
@@ -42,9 +70,9 @@ cp config/serial_number.example.json "config/${CAMERA_SERIAL}.json"
 ```
 
 Edit `config/123456789.json`: set `camera.serial` to `123456789`,
-`engine.backend` to `tensorrt`, and `engine.model_path` to `/models/yolo11n.onnx`.
-The example uses native execution defaults, so these engine settings must be changed
-for Docker. Compose uses the serial to name both the project and container
+`engine.backend` to `tensorrt` (keep `opencv_dnn` with `INFERENCE=cpu`), and
+`engine.model_path` to `/models/yolo11n.onnx`. The example uses native execution
+defaults, so these engine settings must be changed for Docker. Compose uses the serial to name both the project and container
 `cam-123456789`. Connect the selected RealSense camera to USB 3, then:
 
 ```sh
@@ -56,8 +84,8 @@ The first image build downloads dependencies and compiles RealSense and `cam_nod
 it needs internet access but no GPU. Compose also passes `../rerun` (the shared
 Rerun connection library) as an extra build context, which needs Docker Compose 2.17
 or newer; build through Compose rather than with a plain `docker build`. The ONNX model is already in `models/`.
-Startup selects the configured camera and starts `cam_node`, which builds an engine
-on the selected GPU before detection starts. Engine compilation can take several
+Startup selects the configured camera and starts `cam_node`. With `tensorrt` it builds
+an engine on the selected GPU before detection starts. Engine compilation can take several
 minutes. Subsequent starts reuse the cached engine.
 
 `CAM_NODE_CONFIG_PATH` (default `config/${CAMERA_SERIAL}.json`) is the host
@@ -76,21 +104,23 @@ CAMERA_SERIAL=discovery CAM_NODE_CONFIG_PATH=config/serial_number.example.json \
 Then set the discovered serial and create its configuration as shown above.
 
 Compose accepts `CAMERA_SERIAL`, `GPU_DEVICE` (host GPU index or
-UUID, default `0`), `BUILD_JOBS` (default `2`), `TENSORRT` (`ON` or `OFF`,
-default `ON`; `OFF` builds only the OpenCV DNN backend), `RERUN` (`ON` or
-`OFF`, default `ON`; `OFF` leaves the Rerun SDK out of the build), `LOG_LEVEL` (default `info`, see
+UUID, default `0`, `INFERENCE=gpu` only), `BUILD_JOBS` (default `2`), `INFERENCE` (`gpu` or
+`cpu`, default `gpu` in `.env.example`, selects the compose file as described above),
+`RERUN` (`ON` or `OFF`, default `ON`; `OFF` leaves the Rerun SDK out of the build),
+`LOG_LEVEL` (default `info`, see
 [logging](configuration.md#logging)), and the optional
 [Rerun settings](configuration.md#rerun-live-debugging) `RERUN_URL` and
-`RERUN_IMAGE_FPS` from the shell or an untracked `.env` file beside
-`compose.yaml`. With the viewer from `modules/rerun` on the same host, use
+`RERUN_IMAGE_FPS` from the shell or the untracked `.env` file beside the compose
+files. With the viewer from `modules/rerun` on the same host, use
 `RERUN_URL=rerun+http://host.docker.internal:9876/proxy`.
 
 Each build job can use 1–2 GB of RAM, mostly while compiling librealsense and
 Arrow (used by the Rerun SDK). If the host freezes during the build, lower
 `BUILD_JOBS`; use `1` on hosts with 8 GB or less. The CMake build directory is
 kept in a BuildKit cache between builds, so Arrow and Rerun compile once and
-later builds only recompile changed `cam_node` files. Changing `BUILD_JOBS`
-rebuilds librealsense. Clear the cache with `docker builder prune` if a build
+later builds only recompile changed `cam_node` files. CPU and GPU builds keep
+separate caches, so switching `INFERENCE` does not recompile the other. Changing
+`BUILD_JOBS` rebuilds librealsense. Clear the cache with `docker builder prune` if a build
 behaves oddly.
 
 You can also supply the serial for an individual command:
@@ -99,9 +129,9 @@ You can also supply the serial for an individual command:
 CAMERA_SERIAL=123456789 docker compose up --build -d
 ```
 
-Relative paths resolve from `compose.yaml`'s directory. All commands below
+Relative paths resolve from the compose files' directory. All commands below
 assume `CAMERA_SERIAL` is exported as shown above. If you previously exported
-`COMPOSE_FILE` for the split configuration, run `unset COMPOSE_FILE` first.
+`COMPOSE_FILE`, run `unset COMPOSE_FILE` first so the `.env` selection applies.
 
 Edit camera stream settings to match the connected camera's supported profiles.
 To inspect them, use the existing CLI through Compose, for example
@@ -125,8 +155,9 @@ Files created by the default container user may be owned by root on the host.
 
 ## Camera access and permissions
 
-Compose grants GPU access using an NVIDIA device reservation, mounts `/dev/bus/usb`,
-and allows USB device major `189`. It does not use privileged mode. RealSense is
+With `INFERENCE=gpu`, Compose grants GPU access using an NVIDIA device reservation.
+Both setups mount `/dev/bus/usb` and allow USB device major `189`. Neither uses
+privileged mode. RealSense is
 built with `FORCE_RSUSB_BACKEND=ON`, so it uses userspace USB rather than requiring
 RealSense-specific kernel patches. Validate capture stability and frame rates on
 your camera and host.
@@ -149,7 +180,7 @@ be installed by an ordinary Dockerfile build.
 ## Stop and verify
 
 ```sh
-docker compose exec cam-node nvidia-smi
+docker compose exec cam-node nvidia-smi   # INFERENCE=gpu only
 docker compose logs --tail=100 cam-node
 docker compose down
 ```

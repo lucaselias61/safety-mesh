@@ -3,17 +3,20 @@ name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
 services:
   cam-node:
     container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
-    image: safety-mesh-cam-node:dev
+    # OpenCV DNN on the CPU. Selected with INFERENCE=cpu in .env.
+    # - Builds for the host's own architecture, including arm64.
+    # - compose.gpu.yaml extends this service, so shared settings live here.
+    image: safety-mesh-cam-node:dev-cpu
     pull_policy: build
-    platform: linux/amd64
     build:
       context: .
+      # Final Dockerfile stage. compose.gpu.yaml sets gpu.
+      target: cpu
       # Shared Rerun library, outside this directory.
       additional_contexts:
         rerun: ../rerun
       args:
         BUILD_JOBS: ${BUILD_JOBS:-2}
-        TENSORRT: ${TENSORRT:-ON}
         RERUN: ${RERUN:-ON}
     init: true
     restart: unless-stopped
@@ -26,7 +29,6 @@ services:
         max-file: "5"
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
       CAMERA_SERIAL: ${CAMERA_SERIAL:-}
       # Rerun viewer (modules/rerun); empty RERUN_URL = off.
       RERUN_URL: ${RERUN_URL:-}
@@ -34,13 +36,6 @@ services:
     # Makes host.docker.internal work on Linux (viewer on this host).
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids: ["${GPU_DEVICE:-0}"]
-              capabilities: [gpu]
     # RSUSB needs USB access, including devices connected after container start.
     # This grants container access; host udev rules are configured separately.
     device_cgroup_rules:

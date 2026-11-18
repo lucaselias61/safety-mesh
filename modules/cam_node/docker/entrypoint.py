@@ -9,7 +9,7 @@ import tempfile
 
 
 CAM_NODE = "/opt/cam_node/bin/cam_node"
-# Mount target of the host config file (compose.yaml).
+# Mount target of the host config file (compose.cpu.yaml).
 CONFIG_PATH = "/opt/cam_node/config.json"
 
 
