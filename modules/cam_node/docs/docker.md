@@ -198,3 +198,23 @@ tests can run without Docker or a GPU:
 ```sh
 python3 -m unittest discover -s tests -p 'test_docker_entrypoint.py'
 ```
+
+## C++ tests
+
+The C++ unit tests run in the `Dockerfile`'s `test` stage, on the same Ubuntu
+24.04 toolchain and OpenCV 4.6 as the images. They need no camera or GPU and work
+on any host with Docker, including macOS:
+
+```sh
+./scripts/test.sh
+```
+
+- The stage builds on `build-base` without Rerun, so Arrow is not compiled. It
+  builds every target, so `cam_node` also gets a compile check.
+- A failing test fails the build. The stage is never part of an image, and
+  `docker compose build` skips it.
+- Changed files recompile incrementally from a BuildKit cache.
+- With unchanged sources the test step shows `CACHED`, meaning it passed before.
+  Run `./scripts/test.sh --no-cache-filter test` to run it again.
+- `BUILD_JOBS` comes from the shell or `.env`, as for Compose, so the shared
+  build layers stay cached.

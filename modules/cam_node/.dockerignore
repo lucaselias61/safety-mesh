@@ -8,3 +8,6 @@
 !docker/
 !docker/entrypoint.py
 !scripts/ubuntu-24.04-packages.txt
+# test stage only
+!tests/*.cpp
+!config/charuco.json
