@@ -13,6 +13,11 @@ services:
       context: .
     init: true
     restart: unless-stopped
+    environment:
+      # Camera serials for the viewer layout, comma separated. Empty: default layout.
+      RERUN_CAMERAS: ${RERUN_CAMERAS:-}
+      # The entrypoint sends the layout to this port.
+      RERUN_PORT: ${RERUN_PORT:-9876}
     command:
       - --serve-web
       - --bind=0.0.0.0

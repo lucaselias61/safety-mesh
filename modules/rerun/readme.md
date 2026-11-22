@@ -23,6 +23,31 @@ docker compose up -d --build
   network, `rerun+http://<host>:9876/proxy` from other machines
 - Native viewer: `rerun --connect rerun+http://<host>:9876/proxy`
 
+### Layout
+
+`tools/blueprint.py` builds a tabbed layout: Color (image, detections,
+keypoints), Depth and Health (latency and fps), with one view per camera.
+The container sends it on every start, for the cameras on this host listed in
+`.env`:
+
+```sh
+RERUN_CAMERAS=233322245,233322246
+```
+
+Empty, the viewer picks its own layout. After changing the list, run
+`docker compose up -d`, which restarts the viewer and drops its buffered data.
+To keep the data, also send the layout by hand:
+
+```sh
+pip install rerun-sdk==0.43.1   # same as RERUN_VERSION
+python3 tools/blueprint.py <serial> [<serial> ...] --url rerun+http://<host>:9876/proxy
+python3 tools/blueprint.py <serial> [<serial> ...] --out layout.rbl   # for `rerun layout.rbl`
+```
+
+`--url` makes it the default layout of the `safety_mesh` app on the running
+viewer, so viewers that connect later get it too. A layout sent by hand lasts
+until the viewer restarts.
+
 `RERUN_MEMORY_LIMIT` (default `2GB`) caps the data buffered for late viewers;
 the oldest data is dropped past it. Keep `RERUN_VERSION` in
 `Dockerfile` equal to `RERUN_SDK_VERSION` in `cmake/Rerun.cmake`.
