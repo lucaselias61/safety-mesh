@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ctime>
 #include <librealsense2/rs.hpp>
 #include <opencv2/core.hpp>
 #include <vector>
@@ -24,7 +23,6 @@ struct BBox {
 struct Detection2D {
   std::vector<Keypoint> keypoints; // COCO order; empty for detection models.
   BBox bbox;
-  std::time_t timestamp;
 };
 
 /// @brief Abstract base class for vision engines that perform object detection.

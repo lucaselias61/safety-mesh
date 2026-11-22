@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <ctime>
 #include <stdexcept>
 
 bool is_yolo_output(int channels) {
@@ -74,9 +73,7 @@ std::vector<Detection2D> decode_yolo(const YoloOutput &output, float scale,
                     static_cast<float>(nms_threshold), indices);
   std::vector<Detection2D> detections;
   detections.reserve(indices.size());
-  const auto timestamp = std::time(nullptr);
   for (int i : indices)
-    detections.push_back(
-        {std::move(keypoints[i]), {boxes[i], scores[i]}, timestamp});
+    detections.push_back({std::move(keypoints[i]), {boxes[i], scores[i]}});
   return detections;
 }

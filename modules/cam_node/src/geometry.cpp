@@ -61,7 +61,7 @@ std::optional<cv::Point2f> color_to_depth_pixel(const rs2::depth_frame &depth,
   return cv::Point2f(to[0], to[1]);
 }
 
-std::optional<PoseCamFrame>
+std::optional<cv::Point3f>
 color_pixel_to_point(const rs2::depth_frame &depth,
                      const cv::Point2f &color_pixel,
                      const Calibration &calibration) {
@@ -81,8 +81,25 @@ color_pixel_to_point(const rs2::depth_frame &depth,
   const cv::Point3f in_depth =
       deproject(calibration.intrinsics.depth,
                 {static_cast<float>(x), static_cast<float>(y)}, z);
-  return PoseCamFrame(
-      transform(calibration.extrinsics.depth_to_color, in_depth));
+  return transform(calibration.extrinsics.depth_to_color, in_depth);
+}
+
+Detection3D detection_in_3d(const Detection2D &detection,
+                            const rs2::depth_frame &depth,
+                            const Calibration &calibration,
+                            std::chrono::system_clock::time_point timestamp) {
+  Detection3D result{{}, detection.bbox.confidence, timestamp};
+  result.keypoints.reserve(detection.keypoints.size());
+  for (const auto &keypoint : detection.keypoints) {
+    Keypoint3D lifted{std::nullopt, keypoint.confidence};
+    if (keypoint.confidence >= keypoint_confidence_threshold)
+      lifted.point = color_pixel_to_point(
+          depth,
+          {static_cast<float>(keypoint.x), static_cast<float>(keypoint.y)},
+          calibration);
+    result.keypoints.push_back(lifted);
+  }
+  return result;
 }
 
 } // namespace geometry

@@ -1,9 +1,13 @@
 #pragma once
 
+#include "engines/engine.hpp"
+
 #include <librealsense2/rs.hpp>
 #include <opencv2/core.hpp>
 
+#include <chrono>
 #include <optional>
+#include <vector>
 
 /// Camera geometry helpers: thin wrappers around librealsense's rsutil.h.
 /// Points are in meters, in the frame of the camera whose intrinsics are used.
@@ -27,10 +31,19 @@ struct Calibration {
   Extrinsics extrinsics;
 };
 
-/// 3D point in the camera frame, in meters.
-struct PoseCamFrame : cv::Point3f {
-  using cv::Point3f::Point3f;
-  explicit PoseCamFrame(const cv::Point3f &point) : cv::Point3f(point) {}
+/// 3D keypoint and its model confidence in [0, 1].
+struct Keypoint3D {
+  // Color camera frame, in meters.
+  // Empty if low confidence, no depth or outside the depth frame.
+  std::optional<cv::Point3f> point;
+  float confidence;
+};
+
+/// Person pose in 3D, from a Detection2D and the depth frame.
+struct Detection3D {
+  std::vector<Keypoint3D> keypoints; // COCO order, as in Detection2D.
+  float confidence;                  // Person score in [0, 1].
+  std::chrono::system_clock::time_point timestamp; // Color capture time.
 };
 
 /// @brief Deprojects a pixel and its depth to a 3D point.
@@ -79,9 +92,17 @@ std::optional<cv::Point2f> color_to_depth_pixel(const rs2::depth_frame &depth,
 /// - Reads the nearest depth pixel from color_to_depth_pixel(). No filtering.
 /// @return std::nullopt if no depth pixel matches or it has no depth.
 /// @throws std::invalid_argument as color_to_depth_pixel().
-std::optional<PoseCamFrame>
-color_pixel_to_point(const rs2::depth_frame &depth,
-                     const cv::Point2f &color_pixel,
-                     const Calibration &calibration);
+std::optional<cv::Point3f> color_pixel_to_point(const rs2::depth_frame &depth,
+                                                const cv::Point2f &color_pixel,
+                                                const Calibration &calibration);
+
+/// @brief 3D pose of a detection, keypoints in the color camera frame.
+/// - Keypoints below keypoint_confidence_threshold get no point.
+/// @param timestamp Capture time of the color frame the detection is from.
+/// @throws std::invalid_argument as color_to_depth_pixel().
+Detection3D detection_in_3d(const Detection2D &detection,
+                            const rs2::depth_frame &depth,
+                            const Calibration &calibration,
+                            std::chrono::system_clock::time_point timestamp);
 
 } // namespace geometry
