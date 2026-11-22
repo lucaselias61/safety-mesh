@@ -25,6 +25,7 @@ struct Options {
   std::string board;
   int frames = 30;
   int timeout_s = 30;
+  std::string out; // Empty: print only.
 };
 
 /// @brief Wraps the color frame's pixels. No copy: use before the frame ends.
@@ -172,6 +173,15 @@ void calibrate_cmd(CLI::App &app) {
                    "Seconds to wait for enough frames")
       ->capture_default_str()
       ->check(CLI::PositiveNumber);
+  command->add_option("--out", options->out,
+                      "Also write the result as JSON to this file");
 
-  command->callback([options] { print_result(calibrate(*options)); });
+  command->callback([options] {
+    const auto result = calibrate(*options);
+    print_result(result);
+    if (options->out.empty())
+      return;
+    world_pose::save_result(result, options->out);
+    fmt::print("Saved to {}\n", options->out);
+  });
 }

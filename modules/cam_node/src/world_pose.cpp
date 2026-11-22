@@ -6,9 +6,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <map>
 #include <stdexcept>
+#include <utility>
 
 namespace world_pose {
 namespace {
@@ -86,6 +88,37 @@ Board load_board(const std::string &path) {
     throw std::runtime_error("Invalid board file " + path + ": " +
                              error.what());
   }
+}
+
+void save_result(const Result &result, const std::string &path) {
+  const std::time_t seconds =
+      std::chrono::system_clock::to_time_t(result.timestamp);
+  std::tm utc{};
+  gmtime_r(&seconds, &utc);
+  char estimated_at[32];
+  std::strftime(estimated_at, sizeof estimated_at, "%Y-%m-%dT%H:%M:%SZ", &utc);
+
+  auto rows = nlohmann::ordered_json::array();
+  for (int row = 0; row < 4; ++row) {
+    auto values = nlohmann::ordered_json::array();
+    for (int column = 0; column < 4; ++column)
+      values.push_back(result.camera_to_world(row, column));
+    rows.push_back(std::move(values));
+  }
+  // ordered_json keeps this key order in the file.
+  const nlohmann::ordered_json json = {
+      {"serial", result.serial},
+      {"estimated_at", estimated_at},
+      {"frames", result.frames},
+      {"corners", result.corners},
+      {"reprojection_error_px", result.reprojection_error},
+      {"camera_to_world", std::move(rows)},
+  };
+
+  std::ofstream file(path);
+  file << json.dump(2) << '\n';
+  if (!file)
+    throw std::runtime_error("Cannot write " + path);
 }
 
 Estimator::Estimator(const Board &board, const rs2_intrinsics &color,

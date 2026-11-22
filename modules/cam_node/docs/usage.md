@@ -40,6 +40,7 @@ The board file is described in [configuration](configuration.md#charuco-board).
 ```sh
 ./bin/cam_node calibrate --config config/233322245.json --board config/charuco.json
 ./bin/cam_node calibrate --config config/233322245.json --board config/charuco.json --frames 60 --timeout 60
+./bin/cam_node calibrate --config config/233322245.json --board config/charuco.json --out config/233322245.pose.json
 ```
 
 - Streams only color, at the camera's highest resolution in RGB8 or BGR8, at
@@ -66,6 +67,27 @@ Camera 233322245 pose in the board frame
     [  0.97570  -0.10900   0.19020   0.27300]
     ...
 ```
+
+`--out` also writes it as JSON, for the manager's camera extrinsics. Content,
+shortened:
+
+```json
+{
+  "serial": "233322245",
+  "estimated_at": "2026-11-18T03:12:45Z",
+  "frames": 30,
+  "corners": 24,
+  "reprojection_error_px": 0.185,
+  "camera_to_world": [
+    [0.9757, -0.109, 0.1902, 0.273],
+    ...
+  ]
+}
+```
+
+- `camera_to_world` is 4x4, as rows, in meters. It maps a point in the color
+  camera frame (x right, y down, z forward) to the board frame.
+- An existing file is replaced.
 
 `position` is the camera's position in the board frame. `camera_to_world` maps a
 point in the color camera frame to the board frame. A reprojection error well

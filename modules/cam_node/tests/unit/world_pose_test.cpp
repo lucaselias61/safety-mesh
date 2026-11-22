@@ -3,10 +3,12 @@
 
 #include "world_pose.hpp"
 
+#include <nlohmann/json.hpp>
 #include <opencv2/aruco/charuco.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
@@ -242,6 +244,36 @@ void test_motion() {
   CHECK(throws<std::runtime_error>([&] { tight.add(shifted(image, 0.3, 0)); }));
 }
 
+void test_save_result() {
+  const world_pose::Result result{
+      cv::Matx44d(0, -1, 0, 0.1, 1, 0, 0, 0.2, 0, 0, 1, 0.3, 0, 0, 0, 1),
+      0.25,
+      "1234",
+      std::chrono::system_clock::time_point(std::chrono::seconds(1763435565)),
+      30,
+      24};
+  const std::string path = temp_path("world_pose_test_result.json");
+  world_pose::save_result(result, path);
+
+  std::ifstream file(path);
+  const auto json = nlohmann::json::parse(file);
+  CHECK(json.at("serial") == "1234");
+  CHECK(json.at("estimated_at") == "2025-11-18T03:12:45Z");
+  CHECK(json.at("frames") == 30);
+  CHECK(json.at("corners") == 24);
+  CHECK(json.at("reprojection_error_px") == 0.25);
+  // Rows of the matrix, as written.
+  const auto &rows = json.at("camera_to_world");
+  CHECK(rows.size() == 4);
+  for (int row = 0; row < 4 && rows.size() == 4; ++row)
+    for (int column = 0; column < 4; ++column)
+      CHECK(rows.at(row).at(column).get<double>() ==
+            result.camera_to_world(row, column));
+
+  CHECK(throws<std::runtime_error>(
+      [&] { world_pose::save_result(result, "/nonexistent/pose.json"); }));
+}
+
 } // namespace
 
 int main() {
@@ -249,6 +281,7 @@ int main() {
   test_setup_and_frames();
   test_known_pose();
   test_motion();
+  test_save_result();
   if (failures > 0) {
     std::printf("%d check(s) failed\n", failures);
     return 1;

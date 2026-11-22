@@ -58,6 +58,12 @@ struct Result {
   int corners; // Corners used.
 };
 
+/// @brief Writes a result as JSON, for the manager's camera extrinsics.
+/// @details Keys: serial, estimated_at (UTC, ISO 8601), frames, corners,
+/// reprojection_error_px, camera_to_world (4x4 as rows, meters).
+/// @throws std::runtime_error if the file cannot be written.
+void save_result(const Result &result, const std::string &path);
+
 /// Collects board corners frame by frame, then solves the pose once.
 class Estimator {
 public:
