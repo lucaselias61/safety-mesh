@@ -8,6 +8,7 @@
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
@@ -15,6 +16,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -38,22 +40,48 @@ cv::Mat color_image(const rs2::video_frame &frame) {
                  static_cast<std::size_t>(frame.get_stride_in_bytes()));
 }
 
+/// @brief Color stream at the camera's highest resolution, at the lowest fps.
+/// Lowest fps allows the longest exposure, so less gain and noise in dim light.
+/// @throws std::runtime_error if the camera has no color stream in these
+/// formats.
+StreamConfig highest_resolution_color(const Camera &camera) {
+  auto profiles =
+      filter_stream_profiles(camera.get_supported_stream_profiles(), "color");
+  profiles.erase(std::remove_if(profiles.begin(), profiles.end(),
+                                [](const StreamProfile &profile) {
+                                  return profile.format() != RS2_FORMAT_RGB8 &&
+                                         profile.format() != RS2_FORMAT_BGR8;
+                                }),
+                 profiles.end());
+  if (profiles.empty())
+    throw std::runtime_error("Camera has no color stream in RGB8 or BGR8");
+
+  // Stable sorts: by resolution, then by fps.
+  profiles = sort_stream_profiles_by_key(profiles, "fps");
+  profiles = sort_stream_profiles_by_key(profiles, "resolution");
+  // Highest resolution at highest fps is last.
+  const auto &highest = profiles.back();
+  // The first matching profile has the lowest fps.
+  const auto &best = *std::find_if(
+      profiles.begin(), profiles.end(), [&highest](const StreamProfile &p) {
+        return p.width() == highest.width() && p.height() == highest.height();
+      });
+  return {rs2_stream_to_string(best.stream_type()), best.width(), best.height(),
+          best.fps(), rs2_format_to_string(best.format())};
+}
+
 /// @brief Feeds color frames to the estimator until enough are used, then
 /// solves the pose.
+/// @details Streams only color, at the lowest fps for the highest resolution
 /// @throws std::runtime_error if the camera or a color stream is missing, the
 /// time runs out, shutdown is requested or the estimate fails.
 world_pose::Result calibrate(const Options &options) {
   const auto camera_config = load_camera_config(options.config);
   const auto board = world_pose::load_board(options.board);
-  bool has_color = false;
-  for (const auto &stream : camera_config.streams)
-    has_color = has_color || stream.name == "Color";
-  if (!has_color)
-    throw std::runtime_error("Calibration needs an enabled color stream");
-
   const auto camera = require_camera(camera_config.serial);
-  Pipeline pipeline(camera, PipelineProfile::from_streams(
-                                camera.get_device(), camera_config.streams));
+  const auto color_config = highest_resolution_color(camera);
+  Pipeline pipeline(camera, PipelineProfile::from_streams(camera.get_device(),
+                                                          {color_config}));
   pipeline.start();
 
   // Built from the first color frame, which carries the active intrinsics.

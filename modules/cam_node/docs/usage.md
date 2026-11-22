@@ -42,7 +42,9 @@ The board file is described in [configuration](configuration.md#charuco-board).
 ./bin/cam_node calibrate --config config/233322245.json --board config/charuco.json --frames 60 --timeout 60
 ```
 
-- The camera config must enable a color stream in RGB8 or BGR8.
+- Streams only color, at the camera's highest resolution in RGB8 or BGR8, at
+  the lowest fps for it. That allows the longest exposure, so less noise in dim
+  light. From the camera config only the serial is used.
 - `--frames` (default 30) is how many frames with enough of the board are
   averaged. Frames that show too little of the board are skipped.
 - `--timeout` (default 30 s) stops with an error if not enough frames show the
