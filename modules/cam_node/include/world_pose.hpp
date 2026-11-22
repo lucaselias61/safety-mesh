@@ -42,6 +42,9 @@ struct Thresholds {
   double min_frame_share_per_corner = 0.9;
   // Share of corners needed to solve.
   double min_corners_share_to_solve = 0.9;
+  // RMS pixels a frame's corners may be from their mean over earlier frames.
+  // More means the camera or board moved.
+  double max_corner_shift_px = 1.0;
 };
 
 struct Result {
@@ -68,6 +71,8 @@ public:
   /// @param image 8-bit gray or color image at the intrinsics resolution.
   /// @return false if frame skipped for having few corners.
   /// @throws std::invalid_argument if invalid image format or size.
+  /// @throws std::runtime_error if the corners moved more than
+  /// max_corner_shift_px. The frame is not added.
   bool add(const cv::Mat &image);
 
   /// Frames used so far.
@@ -79,6 +84,11 @@ public:
   Result solve(const std::string &serial) const;
 
 private:
+  /// @return RMS pixels from the corners to their mean over earlier frames.
+  /// Corners not seen before are left out. 0 if none was seen before.
+  double shift(const std::vector<cv::Point2f> &corners,
+               const std::vector<int> &ids) const;
+
   Thresholds thresholds_;
   cv::Size size_;
   cv::Matx33d camera_matrix_;

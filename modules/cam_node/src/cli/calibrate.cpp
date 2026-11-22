@@ -74,7 +74,8 @@ StreamConfig highest_resolution_color(const Camera &camera) {
 /// solves the pose.
 /// @details Streams only color, at the lowest fps for the highest resolution
 /// @throws std::runtime_error if the camera or a color stream is missing, the
-/// time runs out, shutdown is requested or the estimate fails.
+/// time runs out, shutdown is requested, the camera or board moves or the
+/// estimate fails.
 world_pose::Result calibrate(const Options &options) {
   const auto camera_config = load_camera_config(options.config);
   const auto board = world_pose::load_board(options.board);

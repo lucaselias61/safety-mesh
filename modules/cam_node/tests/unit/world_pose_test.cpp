@@ -203,12 +203,52 @@ void test_known_pose() {
               result.reprojection_error);
 }
 
+// Moves the image by dx, dy pixels, like a small camera or board shift.
+cv::Mat shifted(const cv::Mat &image, double dx, double dy) {
+  const cv::Matx23d move(1, 0, dx, 0, 1, dy);
+  cv::Mat result;
+  cv::warpAffine(image, result, move, image.size(), cv::INTER_LINEAR,
+                 cv::BORDER_CONSTANT, cv::Scalar(255));
+  return result;
+}
+
+void test_motion() {
+  const auto board = test_board();
+  const auto color = intrinsics();
+  const cv::Mat image = render(board, color);
+
+  world_pose::Estimator estimator(board, color);
+  for (int i = 0; i < 3; ++i)
+    CHECK(estimator.add(image));
+
+  // Below max_corner_shift_px, as from detection noise.
+  CHECK(estimator.add(shifted(image, 0.3, 0)));
+  CHECK(estimator.frames() == 4);
+
+  // Above it. Throws and leaves the frame out.
+  CHECK(throws<std::runtime_error>(
+      [&] { estimator.add(shifted(image, 2.0, 1.0)); }));
+  CHECK(estimator.frames() == 4);
+
+  // The first frame has nothing to compare to.
+  world_pose::Estimator fresh(board, color);
+  CHECK(fresh.add(shifted(image, 5.0, 0)));
+
+  // Tighter limit from Thresholds.
+  world_pose::Thresholds strict;
+  strict.max_corner_shift_px = 0.1;
+  world_pose::Estimator tight(board, color, strict);
+  CHECK(tight.add(image));
+  CHECK(throws<std::runtime_error>([&] { tight.add(shifted(image, 0.3, 0)); }));
+}
+
 } // namespace
 
 int main() {
   test_load_board();
   test_setup_and_frames();
   test_known_pose();
+  test_motion();
   if (failures > 0) {
     std::printf("%d check(s) failed\n", failures);
     return 1;

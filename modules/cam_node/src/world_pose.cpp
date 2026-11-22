@@ -126,12 +126,34 @@ bool Estimator::add(const cv::Mat &image) {
                                             static_cast<double>(counts_.size()))
     return false;
 
+  const double moved = shift(corners, ids);
+  if (moved > thresholds_.max_corner_shift_px)
+    throw std::runtime_error(
+        cv::format("Board corners moved %.2f px from earlier frames, more than "
+                   "%.2f px. Keep the camera and board still",
+                   moved, thresholds_.max_corner_shift_px));
+
   for (std::size_t i = 0; i < ids.size(); ++i) {
     sums_[ids[i]] += cv::Point2d(corners[i]);
     ++counts_[ids[i]];
   }
   ++frames_;
   return true;
+}
+
+double Estimator::shift(const std::vector<cv::Point2f> &corners,
+                        const std::vector<int> &ids) const {
+  double squared = 0;
+  int compared = 0;
+  for (std::size_t i = 0; i < ids.size(); ++i) {
+    const int count = counts_[ids[i]];
+    if (count == 0)
+      continue;
+    const cv::Point2d delta = cv::Point2d(corners[i]) - sums_[ids[i]] / count;
+    squared += delta.dot(delta);
+    ++compared;
+  }
+  return compared > 0 ? std::sqrt(squared / compared) : 0.0;
 }
 
 Result Estimator::solve(const std::string &serial) const {

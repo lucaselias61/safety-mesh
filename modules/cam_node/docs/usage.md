@@ -49,7 +49,9 @@ The board file is described in [configuration](configuration.md#charuco-board).
   averaged. Frames that show too little of the board are skipped.
 - `--timeout` (default 30 s) stops with an error if not enough frames show the
   board in time.
-- Keep the camera and board still while it runs.
+- Keep the camera and board still while it runs. It stops with an error if a
+  frame's board corners are more than 1 px (RMS) from their mean over the
+  earlier frames.
 
 It prints the result, for example:
 
