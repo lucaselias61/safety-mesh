@@ -29,4 +29,4 @@ loading) builds as the `cam_node_core` library. `cam_node` and the live tests in
 - **AI pose detection:** detects human pose keypoints in the camera image.
 - **Camera frame output:** uses depth to locate detections in 3D and broadcasts them.
 
-Person bounding box detection and, with a pose model, 2D keypoints are implemented. Broadcasting is planned. Camera geometry helpers (deproject, project, transform, color-to-depth pixel) exist in `src/geometry.cpp`, but are not connected to the worker yet. See [outputs](outputs.md).
+Person bounding box detection and, with a pose model, 2D keypoints are implemented. With depth enabled, the worker also places keypoints in 3D in the color camera frame (`src/geometry.cpp`) and shows them in the viewer. Broadcasting is planned. See [outputs](outputs.md).

@@ -53,6 +53,12 @@ rerun::Boxes2D boxes(const std::vector<Detection2D> &detections);
 /// Keypoints of all detections.
 rerun::Points2D keypoints(const std::vector<Detection2D> &detections);
 
+/// Radius of a 3D keypoint, in meters.
+inline constexpr float keypoint_3d_radius_m = 0.02f;
+
+/// 3D keypoints of all poses that have a point, in the color camera frame.
+rerun::Points3D keypoints_3d(const std::vector<geometry::Detection3D> &poses);
+
 } // namespace viewer
 
 /// @brief Rerun output for one camera, under cams/<serial>/.
@@ -69,6 +75,7 @@ public:
   void calibration(const geometry::Calibration &calibration);
 
   void frame(const Frames &frames, const std::vector<Detection2D> &detections,
+             const std::vector<geometry::Detection3D> &poses,
              const LoopTimings &timings);
 
 private:

@@ -14,10 +14,11 @@
 
 /// Durations of one Worker loop iteration.
 struct LoopTimings {
-  std::chrono::steady_clock::duration wait;   // Waiting for the frameset.
-  std::chrono::steady_clock::duration detect; // Engine inference.
-  std::chrono::steady_clock::duration log;    // Logger output duration.
-  std::chrono::system_clock::duration age;    // From capture to detections.
+  std::chrono::steady_clock::duration wait;      // Waiting for the frameset.
+  std::chrono::steady_clock::duration detect;    // Engine inference.
+  std::chrono::steady_clock::duration deproject; // 3D keypoints from depth.
+  std::chrono::steady_clock::duration log;       // Logger output duration.
+  std::chrono::system_clock::duration age;       // Capture to 3D keypoints.
 };
 
 /// Least to most severe.
@@ -58,8 +59,9 @@ public:
   /// Logs camera models. Call after each pipeline start.
   void calibration(const geometry::Calibration &calibration);
 
-  /// Logs a frameset with its detections and timings.
+  /// Logs a frameset with its detections, their 3D poses and timings.
   void frame(const Frames &frames, const std::vector<Detection2D> &detections,
+             const std::vector<geometry::Detection3D> &poses,
              const LoopTimings &timings);
 
 private:

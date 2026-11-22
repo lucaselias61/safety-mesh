@@ -105,6 +105,16 @@ rerun::Points2D keypoints(const std::vector<Detection2D> &detections) {
   return rerun::Points2D(std::move(points));
 }
 
+rerun::Points3D keypoints_3d(const std::vector<geometry::Detection3D> &poses) {
+  std::vector<rerun::components::Position3D> points;
+  for (const auto &pose : poses)
+    for (const auto &keypoint : pose.keypoints)
+      if (keypoint.point)
+        points.emplace_back(keypoint.point->x, keypoint.point->y,
+                            keypoint.point->z);
+  return rerun::Points3D(std::move(points)).with_radii({keypoint_3d_radius_m});
+}
+
 } // namespace viewer
 
 namespace {
@@ -132,6 +142,7 @@ void ViewerSink::calibration(const geometry::Calibration &calibration) {
 
 void ViewerSink::frame(const Frames &frames,
                        const std::vector<Detection2D> &detections,
+                       const std::vector<geometry::Detection3D> &poses,
                        const LoopTimings &loop_timings) {
   const auto color_frame = frames.get_color_frame();
   const auto depth_frame = frames.get_depth_frame();
@@ -146,6 +157,7 @@ void ViewerSink::frame(const Frames &frames,
     // Log even when empty, to clear stale boxes.
     viewer_->log("color/detections", viewer::boxes(detections));
     viewer_->log("color/keypoints", viewer::keypoints(detections));
+    viewer_->log("space/keypoints", viewer::keypoints_3d(poses));
   }
 
   if (viewer_->image_due()) {
@@ -160,6 +172,8 @@ void ViewerSink::timings(const LoopTimings &loop_timings) {
   const auto now = Clock::now();
   viewer_->log("health/wait_ms", rerun::Scalars(to_ms(loop_timings.wait)));
   viewer_->log("health/detect_ms", rerun::Scalars(to_ms(loop_timings.detect)));
+  viewer_->log("health/deproject_ms",
+               rerun::Scalars(to_ms(loop_timings.deproject)));
   viewer_->log("health/log_ms", rerun::Scalars(to_ms(loop_timings.log)));
   viewer_->log("health/age_ms", rerun::Scalars(to_ms(loop_timings.age)));
   if (last_frame_ != Clock::time_point{})

@@ -96,12 +96,14 @@ void Logger::calibration(
 #endif
 }
 
-void Logger::frame([[maybe_unused]] const Frames &frames,
-                   const std::vector<Detection2D> &detections,
-                   [[maybe_unused]] const LoopTimings &timings) {
+void Logger::frame(
+    [[maybe_unused]] const Frames &frames,
+    const std::vector<Detection2D> &detections,
+    [[maybe_unused]] const std::vector<geometry::Detection3D> &poses,
+    [[maybe_unused]] const LoopTimings &timings) {
 #ifdef CAM_NODE_WITH_RERUN
   if (viewer_)
-    viewer_->frame(frames, detections, timings);
+    viewer_->frame(frames, detections, poses, timings);
 #endif
   if (!enabled(LogLevel::info))
     return;

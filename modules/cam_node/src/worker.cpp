@@ -1,12 +1,39 @@
 #include "worker.hpp"
 #include "camera.hpp"
 #include "frames.hpp"
+#include "geometry.hpp"
 #include "pipeline.hpp"
 #include "shutdown.hpp"
 
 #include <chrono>
 #include <memory>
+#include <optional>
 #include <utility>
+#include <vector>
+
+namespace {
+
+/// @return 3D poses of the detections. Empty without depth or calibration.
+/// @throws std::invalid_argument if the depth frame is not Z16.
+std::vector<geometry::Detection3D>
+poses_in_3d(const Frames &frames, const std::vector<Detection2D> &detections,
+            const std::optional<geometry::Calibration> &calibration) {
+  std::vector<geometry::Detection3D> poses;
+  if (!calibration)
+    return poses;
+  const geometry::Calibration &streams = *calibration;
+  const auto depth = frames.get_depth_frame();
+  if (!depth)
+    return poses;
+  const auto timestamp = capture_time(frames.get_color_frame());
+  poses.reserve(detections.size());
+  for (const auto &detection : detections)
+    poses.push_back(
+        geometry::detection_in_3d(detection, depth, streams, timestamp));
+  return poses;
+}
+
+} // namespace
 
 void Worker::run() {
   pipeline_.start();
@@ -33,11 +60,14 @@ void Worker::run() {
       const auto color = frames.get_color_frame();
       std::vector<Detection2D> detections = engine_->detect(color);
       const auto detected = std::chrono::steady_clock::now();
+      const auto poses =
+          poses_in_3d(frames, detections, pipeline_.calibration());
+      const auto deprojected = std::chrono::steady_clock::now();
       const LoopTimings timings{frames_ready - wait_start,
-                                detected - frames_ready, log_time,
-                                frame_age(color)};
-      logger_.frame(frames, detections, timings);
-      log_time = std::chrono::steady_clock::now() - detected;
+                                detected - frames_ready, deprojected - detected,
+                                log_time, frame_age(color)};
+      logger_.frame(frames, detections, poses, timings);
+      log_time = std::chrono::steady_clock::now() - deprojected;
       retry_count = 0; // Reset retry count on successful detection
     }
   } catch (...) {

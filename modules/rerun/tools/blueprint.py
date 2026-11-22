@@ -27,7 +27,7 @@ import rerun.blueprint as rrb
 APP_ID = "safety_mesh"
 RECORDING_ID = "safety_mesh"
 
-LATENCY_PATHS = ["wait_ms", "detect_ms", "log_ms", "age_ms"]
+LATENCY_PATHS = ["wait_ms", "detect_ms", "deproject_ms", "log_ms", "age_ms"]
 
 
 def color_tab(serials):
@@ -39,6 +39,12 @@ def color_tab(serials):
 def depth_tab(serials):
     views = [rrb.Spatial2DView(name=s, origin=f"/cams/{s}/depth") for s in serials]
     return rrb.Grid(*views, name="Depth")
+
+
+def space_tab(serials):
+    """Depth point cloud and 3D keypoints, in each color camera's frame."""
+    views = [rrb.Spatial3DView(name=s, origin=f"/cams/{s}") for s in serials]
+    return rrb.Grid(*views, name="3D")
 
 
 def health_tab(serials):
@@ -60,7 +66,12 @@ def health_tab(serials):
 
 def blueprint(serials):
     return rrb.Blueprint(
-        rrb.Tabs(color_tab(serials), depth_tab(serials), health_tab(serials)),
+        rrb.Tabs(
+            color_tab(serials),
+            depth_tab(serials),
+            space_tab(serials),
+            health_tab(serials),
+        ),
         collapse_panels=False,
     )
 
