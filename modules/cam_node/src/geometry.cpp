@@ -2,6 +2,8 @@
 
 #include <librealsense2/rsutil.h>
 
+#include <algorithm>
+#include <cmath>
 #include <stdexcept>
 
 namespace geometry {
@@ -57,6 +59,30 @@ std::optional<cv::Point2f> color_to_depth_pixel(const rs2::depth_frame &depth,
       to[1] >= static_cast<float>(depth.get_height()))
     return std::nullopt;
   return cv::Point2f(to[0], to[1]);
+}
+
+std::optional<PoseCamFrame>
+color_pixel_to_point(const rs2::depth_frame &depth,
+                     const cv::Point2f &color_pixel,
+                     const Calibration &calibration) {
+  const auto depth_pixel =
+      color_to_depth_pixel(depth, color_pixel, calibration);
+  if (!depth_pixel)
+    return std::nullopt;
+  // Nearest pixel. Rounding can step one past the last row or column.
+  const int x = std::min(static_cast<int>(std::lround(depth_pixel->x)),
+                         depth.get_width() - 1);
+  const int y = std::min(static_cast<int>(std::lround(depth_pixel->y)),
+                         depth.get_height() - 1);
+  // 0 means no depth at this pixel.
+  const float z = depth.get_distance(x, y);
+  if (z <= 0.0f)
+    return std::nullopt;
+  const cv::Point3f in_depth =
+      deproject(calibration.intrinsics.depth,
+                {static_cast<float>(x), static_cast<float>(y)}, z);
+  return PoseCamFrame(
+      transform(calibration.extrinsics.depth_to_color, in_depth));
 }
 
 } // namespace geometry

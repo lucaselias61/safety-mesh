@@ -27,6 +27,12 @@ struct Calibration {
   Extrinsics extrinsics;
 };
 
+/// 3D point in the camera frame, in meters.
+struct PoseCamFrame : cv::Point3f {
+  using cv::Point3f::Point3f;
+  explicit PoseCamFrame(const cv::Point3f &point) : cv::Point3f(point) {}
+};
+
 /// @brief Deprojects a pixel and its depth to a 3D point.
 /// @param intrinsics Intrinsics of the camera that produced the depth (use the
 /// color intrinsics if the depth frame is aligned to color).
@@ -68,5 +74,14 @@ std::optional<cv::Point2f> color_to_depth_pixel(const rs2::depth_frame &depth,
                                                 const Calibration &calibration,
                                                 float depth_min = 0.1f,
                                                 float depth_max = 10.0f);
+
+/// @brief 3D point a color pixel sees, in the color camera frame, in meters.
+/// - Reads the nearest depth pixel from color_to_depth_pixel(). No filtering.
+/// @return std::nullopt if no depth pixel matches or it has no depth.
+/// @throws std::invalid_argument as color_to_depth_pixel().
+std::optional<PoseCamFrame>
+color_pixel_to_point(const rs2::depth_frame &depth,
+                     const cv::Point2f &color_pixel,
+                     const Calibration &calibration);
 
 } // namespace geometry
