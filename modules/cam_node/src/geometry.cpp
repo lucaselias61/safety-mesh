@@ -5,8 +5,36 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <vector>
 
 namespace geometry {
+namespace {
+
+// Side of the square window read around a depth pixel. Odd.
+constexpr int depth_window = 5;
+
+/// @return Median depth in meters of the window around pixel, zeros skipped.
+/// 0 if the whole window has no depth.
+float median_depth(const rs2::depth_frame &depth, const cv::Point &pixel) {
+  constexpr int half = depth_window / 2;
+  const int x_first = std::max(pixel.x - half, 0);
+  const int x_last = std::min(pixel.x + half, depth.get_width() - 1);
+  const int y_first = std::max(pixel.y - half, 0);
+  const int y_last = std::min(pixel.y + half, depth.get_height() - 1);
+
+  std::vector<float> depths;
+  depths.reserve(std::size_t{depth_window} * depth_window);
+  for (int v = y_first; v <= y_last; ++v)
+    for (int u = x_first; u <= x_last; ++u)
+      if (const float z = depth.get_distance(u, v); z > 0.0f)
+        depths.push_back(z);
+  if (depths.empty())
+    return 0.0f;
+  std::sort(depths.begin(), depths.end());
+  return depths[depths.size() / 2];
+}
+
+} // namespace
 
 cv::Point3f deproject(const rs2_intrinsics &intrinsics,
                       const cv::Point2f &pixel, float depth) {
@@ -74,8 +102,7 @@ color_pixel_to_point(const rs2::depth_frame &depth,
                          depth.get_width() - 1);
   const int y = std::min(static_cast<int>(std::lround(depth_pixel->y)),
                          depth.get_height() - 1);
-  // 0 means no depth at this pixel.
-  const float z = depth.get_distance(x, y);
+  const float z = median_depth(depth, {x, y});
   if (z <= 0.0f)
     return std::nullopt;
   const cv::Point3f in_depth =

@@ -89,8 +89,9 @@ std::optional<cv::Point2f> color_to_depth_pixel(const rs2::depth_frame &depth,
                                                 float depth_max = 10.0f);
 
 /// @brief 3D point a color pixel sees, in the color camera frame, in meters.
-/// - Reads the nearest depth pixel from color_to_depth_pixel(). No filtering.
-/// @return std::nullopt if no depth pixel matches or it has no depth.
+/// - Depth is the median of the 5x5 window around the depth pixel from
+/// color_to_depth_pixel(), zeros skipped.
+/// @return std::nullopt if no depth pixel matches or the window has no depth.
 /// @throws std::invalid_argument as color_to_depth_pixel().
 std::optional<cv::Point3f> color_pixel_to_point(const rs2::depth_frame &depth,
                                                 const cv::Point2f &color_pixel,
