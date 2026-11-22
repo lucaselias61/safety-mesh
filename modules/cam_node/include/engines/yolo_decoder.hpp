@@ -9,7 +9,7 @@
 // Detection: 4 for box + 80 COCO class scores (0 = person).
 inline constexpr int yolo_detect_channels = 84;
 // Pose: 4 box + 1 person score + 17 COCO keypoints x 3 (x, y, confidence).
-inline constexpr int yolo_pose_keypoints = 17;
+inline constexpr int yolo_pose_keypoints = coco_keypoints;
 inline constexpr int yolo_pose_channels = 5 + 3 * yolo_pose_keypoints;
 
 /// @brief True if supported YOLO output.

@@ -31,7 +31,7 @@ LATENCY_PATHS = ["wait_ms", "detect_ms", "deproject_ms", "log_ms", "age_ms"]
 
 
 def color_tab(serials):
-    """Color image with detections and keypoints."""
+    """Color image with detections, keypoints and skeletons."""
     views = [rrb.Spatial2DView(name=s, origin=f"/cams/{s}/color") for s in serials]
     return rrb.Grid(*views, name="Color")
 
@@ -42,7 +42,7 @@ def depth_tab(serials):
 
 
 def space_tab(serials):
-    """Depth point cloud and 3D keypoints, in each color camera's frame."""
+    """Depth point cloud, 3D keypoints and skeletons, in each color camera's frame."""
     views = [rrb.Spatial3DView(name=s, origin=f"/cams/{s}") for s in serials]
     return rrb.Grid(*views, name="3D")
 

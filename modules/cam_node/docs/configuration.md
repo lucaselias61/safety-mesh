@@ -76,9 +76,9 @@ without logging.
 | `RERUN_IMAGE_FPS` | Optional. Maximum rate of color and depth images, default `5`; `0` logs no images. Detections and timings are logged every frame. |
 
 Everything is logged under `cams/<serial>/` on the `capture_time` and
-`frame` timelines: `color` (image, detections, keypoints), `depth`
+`frame` timelines: `color` (image, detections, keypoints, skeleton), `depth`
 (depth image placed relative to color, shown as a point cloud), `space` (3D
-keypoints in the color camera frame, when depth is enabled) and
+keypoints and skeleton in the color camera frame, when depth is enabled) and
 `health` (`wait_ms`, `detect_ms`, `deproject_ms`, `log_ms`, `age_ms`, `fps`). `wait_ms`
 is time blocked waiting for frames, `detect_ms` is inference, `deproject_ms` is
 placing keypoints in 3D from depth, `log_ms` is output time of the previous

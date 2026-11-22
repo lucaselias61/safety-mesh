@@ -115,6 +115,46 @@ rerun::Points3D keypoints_3d(const std::vector<geometry::Detection3D> &poses) {
   return rerun::Points3D(std::move(points)).with_radii({keypoint_3d_radius_m});
 }
 
+rerun::LineStrips2D skeletons(const std::vector<Detection2D> &detections) {
+  std::vector<rerun::components::LineStrip2D> limbs;
+  for (const auto &detection : detections) {
+    const auto &keypoints = detection.keypoints;
+    // Detection models have no keypoints.
+    if (keypoints.size() != static_cast<std::size_t>(coco_keypoints))
+      continue;
+    for (const auto &[a, b] : coco_skeleton) {
+      const auto &p = keypoints[a];
+      const auto &q = keypoints[b];
+      if (p.confidence < keypoint_confidence_threshold ||
+          q.confidence < keypoint_confidence_threshold)
+        continue;
+      limbs.emplace_back(rerun::Collection<rerun::encodings::Vec2D>{
+          {static_cast<float>(p.x), static_cast<float>(p.y)},
+          {static_cast<float>(q.x), static_cast<float>(q.y)}});
+    }
+  }
+  return rerun::LineStrips2D(std::move(limbs));
+}
+
+rerun::LineStrips3D
+skeletons_3d(const std::vector<geometry::Detection3D> &poses) {
+  std::vector<rerun::components::LineStrip3D> limbs;
+  for (const auto &pose : poses) {
+    const auto &keypoints = pose.keypoints;
+    if (keypoints.size() != static_cast<std::size_t>(coco_keypoints))
+      continue;
+    for (const auto &[a, b] : coco_skeleton) {
+      const auto &p = keypoints[a].point;
+      const auto &q = keypoints[b].point;
+      if (!p || !q)
+        continue;
+      limbs.emplace_back(rerun::Collection<rerun::encodings::Vec3D>{
+          {p->x, p->y, p->z}, {q->x, q->y, q->z}});
+    }
+  }
+  return rerun::LineStrips3D(std::move(limbs)).with_radii({limb_3d_radius_m});
+}
+
 } // namespace viewer
 
 namespace {
@@ -157,7 +197,9 @@ void ViewerSink::frame(const Frames &frames,
     // Log even when empty, to clear stale boxes.
     viewer_->log("color/detections", viewer::boxes(detections));
     viewer_->log("color/keypoints", viewer::keypoints(detections));
+    viewer_->log("color/skeleton", viewer::skeletons(detections));
     viewer_->log("space/keypoints", viewer::keypoints_3d(poses));
+    viewer_->log("space/skeleton", viewer::skeletons_3d(poses));
   }
 
   if (viewer_->image_due()) {
