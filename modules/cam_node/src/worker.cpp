@@ -31,7 +31,7 @@ void Worker::run() {
         continue;
       }
       const auto color = frames.get_color_frame();
-      std::vector<Detection> detections = engine_->detect(color);
+      std::vector<Detection2D> detections = engine_->detect(color);
       const auto detected = std::chrono::steady_clock::now();
       const LoopTimings timings{frames_ready - wait_start,
                                 detected - frames_ready, log_time,

@@ -11,9 +11,10 @@ bool is_yolo_output(int channels) {
   return channels == yolo_detect_channels || channels == yolo_pose_channels;
 }
 
-std::vector<Detection> decode_yolo(const YoloOutput &output, float scale,
-                                   cv::Size image, double confidence_threshold,
-                                   double nms_threshold) {
+std::vector<Detection2D> decode_yolo(const YoloOutput &output, float scale,
+                                     cv::Size image,
+                                     double confidence_threshold,
+                                     double nms_threshold) {
   const int channels = output.channels;
   const int candidates = output.candidates;
   if (!is_yolo_output(channels))
@@ -71,7 +72,7 @@ std::vector<Detection> decode_yolo(const YoloOutput &output, float scale,
   std::vector<int> indices;
   cv::dnn::NMSBoxes(boxes, scores, static_cast<float>(confidence_threshold),
                     static_cast<float>(nms_threshold), indices);
-  std::vector<Detection> detections;
+  std::vector<Detection2D> detections;
   detections.reserve(indices.size());
   const auto timestamp = std::time(nullptr);
   for (int i : indices)

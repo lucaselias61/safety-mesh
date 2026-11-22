@@ -10,7 +10,7 @@ class OpenCVDnnEngine : public Engine {
 public:
   explicit OpenCVDnnEngine(const EngineConfig &config);
 
-  std::vector<Detection> detect(const rs2::video_frame &frame) override;
+  std::vector<Detection2D> detect(const rs2::video_frame &frame) override;
 
 private:
   cv::dnn::Net net_;

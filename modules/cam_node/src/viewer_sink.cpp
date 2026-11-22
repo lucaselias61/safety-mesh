@@ -80,7 +80,7 @@ rerun::DepthImage depth_image(const rs2::depth_frame &frame) {
           {0.0, depth_color_range_m * units_per_meter}));
 }
 
-rerun::Boxes2D boxes(const std::vector<Detection> &detections) {
+rerun::Boxes2D boxes(const std::vector<Detection2D> &detections) {
   std::vector<rerun::Vec2D> mins;
   std::vector<rerun::Vec2D> sizes;
   std::vector<rerun::components::Text> labels;
@@ -95,7 +95,7 @@ rerun::Boxes2D boxes(const std::vector<Detection> &detections) {
       .with_labels(std::move(labels));
 }
 
-rerun::Points2D keypoints(const std::vector<Detection> &detections) {
+rerun::Points2D keypoints(const std::vector<Detection2D> &detections) {
   std::vector<rerun::components::Position2D> points;
   for (const auto &detection : detections)
     for (const auto &keypoint : detection.keypoints)
@@ -131,7 +131,7 @@ void ViewerSink::calibration(const geometry::Calibration &calibration) {
 }
 
 void ViewerSink::frame(const Frames &frames,
-                       const std::vector<Detection> &detections,
+                       const std::vector<Detection2D> &detections,
                        const LoopTimings &loop_timings) {
   const auto color_frame = frames.get_color_frame();
   const auto depth_frame = frames.get_depth_frame();

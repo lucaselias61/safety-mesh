@@ -21,7 +21,7 @@ struct BBox {
   float confidence;
 };
 
-struct Detection {
+struct Detection2D {
   std::vector<Keypoint> keypoints; // COCO order; empty for detection models.
   BBox bbox;
   std::time_t timestamp;
@@ -33,5 +33,5 @@ struct Detection {
 class Engine {
 public:
   virtual ~Engine() = default;
-  virtual std::vector<Detection> detect(const rs2::video_frame &frame) = 0;
+  virtual std::vector<Detection2D> detect(const rs2::video_frame &frame) = 0;
 };

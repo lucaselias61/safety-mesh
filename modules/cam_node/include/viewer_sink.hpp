@@ -48,10 +48,10 @@ inline constexpr double depth_color_range_m = 6.0;
 rerun::DepthImage depth_image(const rs2::depth_frame &frame);
 
 /// Boxes labelled with confidence.
-rerun::Boxes2D boxes(const std::vector<Detection> &detections);
+rerun::Boxes2D boxes(const std::vector<Detection2D> &detections);
 
 /// Keypoints of all detections.
-rerun::Points2D keypoints(const std::vector<Detection> &detections);
+rerun::Points2D keypoints(const std::vector<Detection2D> &detections);
 
 } // namespace viewer
 
@@ -68,7 +68,7 @@ public:
   /// Logs camera models, so depth renders as a point cloud in color's frame.
   void calibration(const geometry::Calibration &calibration);
 
-  void frame(const Frames &frames, const std::vector<Detection> &detections,
+  void frame(const Frames &frames, const std::vector<Detection2D> &detections,
              const LoopTimings &timings);
 
 private:

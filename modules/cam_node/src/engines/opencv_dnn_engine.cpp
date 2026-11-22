@@ -29,7 +29,8 @@ OpenCVDnnEngine::OpenCVDnnEngine(const EngineConfig &config)
   net_.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 }
 
-std::vector<Detection> OpenCVDnnEngine::detect(const rs2::video_frame &frame) {
+std::vector<Detection2D>
+OpenCVDnnEngine::detect(const rs2::video_frame &frame) {
   if (!frame)
     return {};
   const auto format = frame.get_profile().format();

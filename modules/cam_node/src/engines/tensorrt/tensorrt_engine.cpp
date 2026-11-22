@@ -156,7 +156,7 @@ TensorRTEngine::TensorRTEngine(const EngineConfig &config)
     : impl_(std::make_unique<Impl>(config)) {}
 TensorRTEngine::~TensorRTEngine() = default;
 
-std::vector<Detection> TensorRTEngine::detect(const rs2::video_frame &frame) {
+std::vector<Detection2D> TensorRTEngine::detect(const rs2::video_frame &frame) {
   if (!frame)
     return {};
   auto &state = *impl_;

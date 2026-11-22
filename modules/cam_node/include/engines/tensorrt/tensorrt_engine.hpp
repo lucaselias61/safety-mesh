@@ -20,7 +20,7 @@ public:
   TensorRTEngine(const TensorRTEngine &) = delete;
   TensorRTEngine &operator=(const TensorRTEngine &) = delete;
 
-  std::vector<Detection> detect(const rs2::video_frame &frame) override;
+  std::vector<Detection2D> detect(const rs2::video_frame &frame) override;
 
 private:
   struct Impl;

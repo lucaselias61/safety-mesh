@@ -59,7 +59,7 @@ public:
   void calibration(const geometry::Calibration &calibration);
 
   /// Logs a frameset with its detections and timings.
-  void frame(const Frames &frames, const std::vector<Detection> &detections,
+  void frame(const Frames &frames, const std::vector<Detection2D> &detections,
              const LoopTimings &timings);
 
 private:

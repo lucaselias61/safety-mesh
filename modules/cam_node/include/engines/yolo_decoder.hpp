@@ -30,6 +30,7 @@ struct YoloOutput {
 /// @param scale      Padded square image size / model input size.
 /// @param image      Original image size, used to clip boxes and keypoints.
 /// @throws std::invalid_argument if unsupported channels or candidates,
-std::vector<Detection> decode_yolo(const YoloOutput &output, float scale,
-                                   cv::Size image, double confidence_threshold,
-                                   double nms_threshold);
+std::vector<Detection2D> decode_yolo(const YoloOutput &output, float scale,
+                                     cv::Size image,
+                                     double confidence_threshold,
+                                     double nms_threshold);
