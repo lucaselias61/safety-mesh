@@ -35,9 +35,14 @@ target_link_libraries(manager_config
     PRIVATE nlohmann_json::nlohmann_json
 )
 
+option(MANAGER_RERUN "Stream to a Rerun viewer when RERUN_URL is set" ON)
+set(MANAGER_RERUN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../rerun" CACHE PATH
+    "Shared Rerun connection library")
+
 add_executable(manager
     src/main.cpp
-    src/manager.cpp
+    src/run.cpp
+    src/logger.cpp
 )
 
 set(MANAGER_OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Executable output directory")
@@ -53,6 +58,15 @@ target_link_libraries(manager PRIVATE
     manager_robot
     manager_config
 )
+
+if(MANAGER_RERUN)
+    if(NOT TARGET rerun_logger) # May already be added by cam_node.
+        add_subdirectory("${MANAGER_RERUN_DIR}" "${CMAKE_BINARY_DIR}/rerun_logger")
+    endif()
+    target_sources(manager PRIVATE src/viewer_sink.cpp)
+    target_link_libraries(manager PRIVATE rerun_logger)
+    target_compile_definitions(manager PRIVATE MANAGER_WITH_RERUN=1)
+endif()
 
 # Prints the robot pose read from the PLC: bin/ads_pose_probe --symbol ...
 add_executable(ads_pose_probe tools/ads_pose_probe.cpp)

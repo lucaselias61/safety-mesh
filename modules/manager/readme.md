@@ -60,3 +60,32 @@ Written in C++ because the Manager needs reliable state handling, safe concurren
 			  "orchestrator_status": "OK",
 			  "latency_ms": 20,
 		}
+
+# Run
+
+```sh
+./scripts/build.sh                 # RERUN=OFF builds without the viewer
+set -a; . ./.env; set +a           # LOG_LEVEL, RERUN_URL
+./bin/manager run --config config/manager.json
+```
+
+`run` loads the config, logs the camera poses once, then polls every robot's
+PLC (`--rate`, default 10 per second) until Ctrl+C. ADS errors warn once and
+retry every poll.
+
+`config/manager.json`:
+
+- `cameras`: `{id, serial}`. Each loads `config/cameras/<serial>.json`, written
+  by `cam_node calibrate --out` (or cam_node's `compose.calibrate.yaml`). A
+  listed camera without a valid file stops the start.
+- `robots`: `{id, model, base_to_world, plc}`. `base_to_world` is the robot
+  base pose in the world (board) frame, 4x4 as rows, meters. `model` loads
+  `config/robots/<model>.json`.
+- The PLC sends the TCP in millimeters and joints in degrees.
+- Joint positions need every DH value in the model file. While any is `null`,
+  only the TCP is logged.
+
+With `RERUN_URL` set, the camera poses go to `cams/<serial>` in the shared
+recording, so cam_node's images, point clouds and keypoints appear in the world
+frame. Robots go to `robots/<id>` (`joints`, `links`, `tcp`). The viewer layout's
+World tab shows both.

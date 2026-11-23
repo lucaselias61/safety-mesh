@@ -1,3 +1,4 @@
+#include "run.hpp"
 #include "shutdown.hpp"
 #include "version.hpp"
 
@@ -17,6 +18,7 @@ int main(int argc, char *argv[]) try {
 
   CLI::App app{"Manager", "manager"};
   app.set_version_flag("--version", MANAGER_VERSION);
+  run_cmd(app);
 
   try {
     // CLI11 expects the arguments in reverse order, without the program name.
