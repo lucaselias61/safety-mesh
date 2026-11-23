@@ -47,6 +47,11 @@ def space_tab(serials):
     return rrb.Grid(*views, name="3D")
 
 
+def world_tab():
+    """All cameras and robots, placed by the manager's poses."""
+    return rrb.Spatial3DView(name="World", origin="/")
+
+
 def health_tab(serials):
     """Latency and fps per camera, in separate plots since units differ."""
     cameras = []
@@ -67,6 +72,7 @@ def health_tab(serials):
 def blueprint(serials):
     return rrb.Blueprint(
         rrb.Tabs(
+            world_tab(),
             color_tab(serials),
             depth_tab(serials),
             space_tab(serials),

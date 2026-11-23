@@ -25,7 +25,8 @@ docker compose up -d --build
 
 ### Layout
 
-`tools/blueprint.py` builds a tabbed layout: Color (image, detections,
+`tools/blueprint.py` builds a tabbed layout: World (all cameras and robots,
+placed by the manager), Color (image, detections,
 keypoints, skeletons), Depth, 3D (depth point cloud, 3D keypoints and
 skeletons) and Health (latency and fps), with one view per camera.
 The container sends it on every start, for the cameras on this host listed in
