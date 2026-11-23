@@ -1,8 +1,48 @@
-#include "robot_pose.hpp"
+#include "kinematics.hpp"
 
+#include <cmath>
 #include <cstring>
 #include <stdexcept>
 #include <utility>
+
+namespace {
+
+constexpr double pi = 3.14159265358979323846;
+
+double radians(double degrees) { return degrees * pi / 180.0; }
+
+Transform link(const DhJoint &joint, double angle_deg) {
+  const double theta = radians(angle_deg + joint.theta_offset_deg);
+  const double alpha = radians(joint.alpha_deg);
+  const double ct = std::cos(theta);
+  const double st = std::sin(theta);
+  const double ca = std::cos(alpha);
+  const double sa = std::sin(alpha);
+  return {{{ct, -st * ca, st * sa, joint.a_m * ct},
+           {st, ct * ca, -ct * sa, joint.a_m * st},
+           {0, sa, ca, joint.d_m},
+           {0, 0, 0, 1}}};
+}
+
+} // namespace
+
+std::vector<Point3> joint_positions(const std::vector<DhJoint> &dh,
+                                    const std::vector<double> &joints_deg,
+                                    const Transform &base_to_world) {
+  if (joints_deg.size() < dh.size())
+    throw std::invalid_argument("Need " + std::to_string(dh.size()) +
+                                " joint angles, got " +
+                                std::to_string(joints_deg.size()));
+  std::vector<Point3> positions;
+  positions.reserve(dh.size() + 1);
+  Transform frame = base_to_world;
+  positions.push_back(apply(frame, {0, 0, 0}));
+  for (std::size_t i = 0; i < dh.size(); ++i) {
+    frame = compose(frame, link(dh[i], joints_deg[i]));
+    positions.push_back(apply(frame, {0, 0, 0}));
+  }
+  return positions;
+}
 
 namespace {
 

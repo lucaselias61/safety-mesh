@@ -1,5 +1,7 @@
 #pragma once
 
+#include "transform.hpp"
+
 #include <comm/ads.hpp>
 
 #include <array>
@@ -9,6 +11,25 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+/// One joint in standard Denavit-Hartenberg form.
+/// - Link transform: Rot_z(theta) Trans_z(d) Trans_x(a) Rot_x(alpha).
+/// - theta = joint angle + theta_offset_deg.
+struct DhJoint {
+  std::string name;
+  double a_m;
+  double alpha_deg;
+  double d_m;
+  double theta_offset_deg;
+};
+
+/// @brief Positions of the joint frames in the world.
+/// @param joints_deg Joint angles in degrees. Extra angles are ignored.
+/// @return Robot base origin, then the frame origin at the end of each link.
+/// @throws std::invalid_argument if there are fewer angles than DH joints.
+std::vector<Point3> joint_positions(const std::vector<DhJoint> &dh,
+                                    const std::vector<double> &joints_deg,
+                                    const Transform &base_to_world);
 
 /// Mirrors ST_RobotPose in modules/plc/DUTs/ST_RobotPose.st.
 /// Units are whatever the PLC sends.
@@ -24,8 +45,8 @@ struct RobotPose {
 
 /// @brief Decodes the raw bytes sent by the PLC.
 /// @details PLC layouts:
-/// - packed (100 bytes, pack_mode 1)
-/// - 8-byte aligned (104 bytes, 4 bytes of padding after nCycle).
+/// - packed (101 bytes, pack_mode 1)
+/// - 8-byte aligned (104 bytes, 3 bytes of padding after nJointCount).
 /// @throws std::invalid_argument for any other size.
 RobotPose decode_robot_pose(const void *data, std::size_t size);
 

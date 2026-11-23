@@ -4,7 +4,7 @@
 //
 // Needs a static AMS route on the PLC for this machine (local Net ID + IP).
 
-#include "robot_pose.hpp"
+#include "kinematics.hpp"
 #include "shutdown.hpp"
 
 #include <comm/ads.hpp>

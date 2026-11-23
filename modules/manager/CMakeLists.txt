@@ -14,21 +14,26 @@ if(NOT TARGET comm_protobuf)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../comm" "${CMAKE_CURRENT_BINARY_DIR}/comm")
 endif()
 
-# Robot PLC input, shared by the manager, tools and tests.
+# Robot PLC input and forward kinematics, shared by the manager, tools and tests.
 add_library(manager_robot STATIC
-    src/robot_pose.cpp
+    src/kinematics.cpp
 )
 target_compile_features(manager_robot PUBLIC cxx_std_17)
 target_include_directories(manager_robot PUBLIC include)
 target_link_libraries(manager_robot PUBLIC comm_ads)
 
-# Camera poses in the world frame, from cam_node calibrate --out.
-add_library(manager_cameras STATIC
-    src/camera_extrinsics.cpp
+# manager.json, transforms and camera poses from cam_node calibrate --out.
+add_library(manager_config STATIC
+    src/transform.cpp
+    src/json_transform.cpp
+    src/config.cpp
 )
-target_compile_features(manager_cameras PUBLIC cxx_std_17)
-target_include_directories(manager_cameras PUBLIC include)
-target_link_libraries(manager_cameras PRIVATE nlohmann_json::nlohmann_json)
+target_compile_features(manager_config PUBLIC cxx_std_17)
+target_include_directories(manager_config PUBLIC include)
+target_link_libraries(manager_config
+    PUBLIC manager_robot # config.hpp uses DhJoint.
+    PRIVATE nlohmann_json::nlohmann_json
+)
 
 add_executable(manager
     src/main.cpp
@@ -46,6 +51,7 @@ target_link_libraries(manager PRIVATE
     fmt::fmt
     comm_protobuf
     manager_robot
+    manager_config
 )
 
 # Prints the robot pose read from the PLC: bin/ads_pose_probe --symbol ...
@@ -59,7 +65,13 @@ if(MANAGER_BUILD_TESTS)
     add_executable(manager_robot_pose_test tests/robot_pose_test.cpp)
     target_link_libraries(manager_robot_pose_test PRIVATE manager_robot)
     add_test(NAME manager_robot_pose COMMAND manager_robot_pose_test)
-    add_executable(manager_camera_extrinsics_test tests/camera_extrinsics_test.cpp)
-    target_link_libraries(manager_camera_extrinsics_test PRIVATE manager_cameras)
-    add_test(NAME manager_camera_extrinsics COMMAND manager_camera_extrinsics_test)
+    add_executable(manager_transform_test tests/transform_test.cpp)
+    target_link_libraries(manager_transform_test PRIVATE manager_config)
+    add_test(NAME manager_transform COMMAND manager_transform_test)
+    add_executable(manager_kinematics_test tests/kinematics_test.cpp)
+    target_link_libraries(manager_kinematics_test PRIVATE manager_robot)
+    add_test(NAME manager_kinematics COMMAND manager_kinematics_test)
+    add_executable(manager_config_test tests/config_test.cpp)
+    target_link_libraries(manager_config_test PRIVATE manager_config)
+    add_test(NAME manager_config COMMAND manager_config_test)
 endif()

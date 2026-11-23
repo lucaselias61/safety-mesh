@@ -2,11 +2,26 @@
 
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
 #include <string>
 
+/// 3D point, meters.
+using Point3 = std::array<double, 3>;
+
 /// 4x4 rigid transform as rows, meters.
 using Transform = std::array<std::array<double, 4>, 4>;
+
+inline constexpr Transform identity_transform{
+    {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}}};
+
+/// @return a * b. Applies b first, then a.
+// Same types by nature: the order is the matrix product.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+Transform compose(const Transform &a, const Transform &b);
+
+/// @return The point moved by the transform.
+Point3 apply(const Transform &t, const Point3 &p);
 
 /// Pose of one camera in the world (board) frame, from cam_node calibrate.
 struct CameraExtrinsics {

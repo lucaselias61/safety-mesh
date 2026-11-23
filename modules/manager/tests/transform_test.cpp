@@ -1,7 +1,7 @@
 // Checks load_camera_extrinsics on pose files in cam_node calibrate's format.
 // Needs no camera.
 
-#include "camera_extrinsics.hpp"
+#include "transform.hpp"
 
 #include <chrono>
 #include <cstdio>
@@ -36,9 +36,9 @@ pose_json(const std::string &rows, const std::string &serial = "1234",
 }
 
 std::string write(const std::string &json) {
-  auto path = (std::filesystem::temp_directory_path() /
-               "manager_camera_extrinsics_test.json")
-                  .string();
+  auto path =
+      (std::filesystem::temp_directory_path() / "manager_transform_test.json")
+          .string();
   std::ofstream(path) << json;
   return path;
 }
@@ -98,6 +98,6 @@ int main() {
     std::printf("%d check(s) failed\n", failures);
     return 1;
   }
-  std::printf("camera_extrinsics tests passed\n");
+  std::printf("transform tests passed\n");
   return 0;
 }
