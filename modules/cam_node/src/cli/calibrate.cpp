@@ -21,7 +21,7 @@
 namespace {
 
 struct Options {
-  std::string config;
+  std::string serial;
   std::string board;
   int frames = 30;
   int timeout_s = 30;
@@ -78,9 +78,8 @@ StreamConfig highest_resolution_color(const Camera &camera) {
 /// time runs out, shutdown is requested, the camera or board moves or the
 /// estimate fails.
 world_pose::Result calibrate(const Options &options) {
-  const auto camera_config = load_camera_config(options.config);
   const auto board = world_pose::load_board(options.board);
-  const auto camera = require_camera(camera_config.serial);
+  const auto camera = require_camera(options.serial);
   const auto color_config = highest_resolution_color(camera);
   Pipeline pipeline(camera, PipelineProfile::from_streams(camera.get_device(),
                                                           {color_config}));
@@ -155,10 +154,11 @@ void calibrate_cmd(CLI::App &app) {
   auto *command = app.add_subcommand(
       "calibrate", "Find the camera's pose from the ChArUco board in view");
   command
-      ->add_option("--config", options->config,
-                   "Path to the camera configuration file")
+      ->add_option("--serial", options->serial, "Serial number of the camera")
       ->required()
-      ->check(CLI::ExistingFile);
+      ->check([](const std::string &value) {
+        return value.empty() ? "Serial number cannot be empty" : "";
+      });
   command
       ->add_option("--board", options->board, "Path to the ChArUco board file")
       ->required()

@@ -5,3 +5,6 @@ bin/
 camera.json
 models/.engines/
 __pycache__/
+
+# Pose files from compose.calibrate.yaml.
+calibration/

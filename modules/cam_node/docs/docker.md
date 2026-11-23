@@ -177,6 +177,25 @@ sudo udevadm control --reload-rules
 Unplug and reconnect the camera, then restart the service. Host udev rules cannot
 be installed by an ordinary Dockerfile build.
 
+## Calibrate camera poses
+
+`compose.calibrate.yaml` runs [calibrate](usage.md#calibrate-the-camera-pose)
+for `CAMERA_SERIAL` and writes `<serial>.json` to `CALIBRATION_DIR` (default
+`./calibration`). With the manager on the same host, set
+`CALIBRATION_DIR=../manager/config/cameras` so it loads them directly.
+
+```sh
+docker compose -f compose.calibrate.yaml run --rm calibrate   # CAMERA_SERIAL from .env
+CAMERA_SERIAL=233322245 docker compose -f compose.calibrate.yaml run --rm calibrate --frames 60
+./scripts/calibrate-all.sh   # every camera with a config/<serial>.json
+```
+
+- Stop the cam-node containers first. A camera opens only once.
+- Keep the board still until every camera is done, so all share one world frame.
+- A camera that fails keeps its older file. `calibrate-all.sh` lists failed
+  serials and exits non-zero.
+- Files are owned by root on the host.
+
 ## Stop and verify
 
 ```sh
