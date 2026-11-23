@@ -22,6 +22,14 @@ target_compile_features(manager_robot PUBLIC cxx_std_17)
 target_include_directories(manager_robot PUBLIC include)
 target_link_libraries(manager_robot PUBLIC comm_ads)
 
+# Camera poses in the world frame, from cam_node calibrate --out.
+add_library(manager_cameras STATIC
+    src/camera_extrinsics.cpp
+)
+target_compile_features(manager_cameras PUBLIC cxx_std_17)
+target_include_directories(manager_cameras PUBLIC include)
+target_link_libraries(manager_cameras PRIVATE nlohmann_json::nlohmann_json)
+
 add_executable(manager
     src/main.cpp
     src/manager.cpp
@@ -51,4 +59,7 @@ if(MANAGER_BUILD_TESTS)
     add_executable(manager_robot_pose_test tests/robot_pose_test.cpp)
     target_link_libraries(manager_robot_pose_test PRIVATE manager_robot)
     add_test(NAME manager_robot_pose COMMAND manager_robot_pose_test)
+    add_executable(manager_camera_extrinsics_test tests/camera_extrinsics_test.cpp)
+    target_link_libraries(manager_camera_extrinsics_test PRIVATE manager_cameras)
+    add_test(NAME manager_camera_extrinsics COMMAND manager_camera_extrinsics_test)
 endif()
