@@ -5,8 +5,6 @@
 !include/**
 !src/
 !src/**
-!docker/
-!docker/entrypoint.py
 !scripts/ubuntu-24.04-packages.txt
 # test-src stage only
 !tests/

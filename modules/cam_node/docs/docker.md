@@ -47,7 +47,7 @@ The Compose setup is split in two files:
   service builds OpenCV DNN for the host's own architecture. Its `gpu` service adds the
   TensorRT build, the GPU reservation and the `linux/amd64` platform.
 - `compose.yaml`: one camera. Extends the `${INFERENCE}` service of `compose.inference.yaml`
-  (default `cpu`) and adds the serial, environment and configuration file.
+  (default `cpu`) and adds the serial and the settings from `.env`.
 
 `INFERENCE` in `.env` picks cpu or gpu. Create `.env` once:
 
@@ -58,17 +58,16 @@ cp .env.example .env
 Set `INFERENCE=gpu` or `INFERENCE=cpu` there, in lowercase. Without `.env` it is
 `cpu`. A shell variable overrides it, e.g. `INFERENCE=gpu docker compose up`.
 
-In each new terminal, set your camera serial and create its configuration:
+Set `CAMERA_SERIAL` in `.env`, or export it in each new terminal:
 
 ```sh
 export CAMERA_SERIAL=123456789
-cp config/serial_number.example.json "config/${CAMERA_SERIAL}.json"
 ```
 
-Edit `config/123456789.json`: set `camera.serial` to `123456789`,
-`engine.backend` to `tensorrt` (keep `opencv_dnn` with `INFERENCE=cpu`), and
-`engine.model_path` to `/models/yolo11n.onnx`. The example uses native execution
-defaults, so these engine settings must be changed for Docker. Compose uses the serial to name both the project and container
+All camera and engine settings are in `.env`, see [configuration](configuration.md).
+Compose passes the file to the container, where `cam_node run` reads them as env
+vars. The backend follows the image: `opencv_dnn` with `INFERENCE=cpu`, `tensorrt`
+with `INFERENCE=gpu`. Compose uses the serial to name both the project and container
 `cam-123456789`. Connect the selected RealSense camera to USB 3, then:
 
 ```sh
@@ -80,24 +79,19 @@ The first image build downloads dependencies and compiles RealSense and `cam_nod
 it needs internet access but no GPU. Compose also passes `../rerun` (the shared
 Rerun connection library) as an extra build context, which needs Docker Compose 2.17
 or newer; build through Compose rather than with a plain `docker build`. The ONNX model is already in `models/`.
-Startup selects the configured camera and starts `cam_node`. With `tensorrt` it builds
+The container runs `cam_node run` directly, no wrapper script. With `tensorrt` it builds
 an engine on the selected GPU before detection starts. Engine compilation can take several
 minutes. Subsequent starts reuse the cached engine.
 
-`CAM_NODE_CONFIG_PATH` (default `config/${CAMERA_SERIAL}.json`) is the host
-config file, absolute or relative to this directory. It is mounted read-only at
-`/opt/cam_node/config.json` and must exist before starting it.
-`CAMERA_SERIAL` overrides its camera serial. Each camera uses its own configuration
-file. If you do not know the serial, build the image and list cameras using the
-example config:
+An exported `CAMERA_SERIAL` wins over `.env`. Other settings come from `.env`
+only. If you do not know the serial, build the image and list cameras:
 
 ```sh
 CAMERA_SERIAL=discovery docker compose build
-CAMERA_SERIAL=discovery CAM_NODE_CONFIG_PATH=config/serial_number.example.json \
-  docker compose run --rm cam-node list
+CAMERA_SERIAL=discovery docker compose run --rm cam-node list
 ```
 
-Then set the discovered serial and create its configuration as shown above.
+Then set the discovered serial as shown above.
 
 Compose accepts `CAMERA_SERIAL`, `GPU_DEVICE` (host GPU index or
 UUID, default `0`, `INFERENCE=gpu` only), `BUILD_JOBS` (default `2`), `INFERENCE` (`gpu` or
@@ -129,14 +123,14 @@ Relative paths resolve from the compose files' directory. All commands below
 assume `CAMERA_SERIAL` is exported as shown above. An older `.env` must drop its
 `COMPOSE_FILE` line, the files it names are gone.
 
-Edit camera stream settings to match the connected camera's supported profiles.
-To inspect them, use the existing CLI through Compose, for example
-`docker compose run --rm cam-node --help`. Diagnostic commands bypass camera selection and do not build engines.
+Set `WIDTH`, `HEIGHT` and `FPS` to a profile the camera supports. To inspect them,
+use the CLI through Compose, e.g. `docker compose run --rm cam-node streams`.
+Arguments after the service name replace the default `run` command.
 
 ## Model and engine storage
 
 The host `models/` directory is mounted at `/models` and must be writable by the
-container. With `tensorrt`, the Docker configuration's `engine.model_path` names the
+container. With `tensorrt`, `MODEL_PATH` names the
 **ONNX source**, and `cam_node` builds and caches the engine as in native execution
 ([GPU acceleration](inference.md#gpu-acceleration)).
 Use the [documented YOLO model layout](inference.md#model-requirements).
@@ -183,7 +177,7 @@ for `CAMERA_SERIAL` and writes `<serial>.json` to `CALIBRATION_DIR` (default
 ```sh
 docker compose -f compose.calibrate.yaml run --rm calibrate   # CAMERA_SERIAL from .env
 CAMERA_SERIAL=233322245 docker compose -f compose.calibrate.yaml run --rm calibrate --frames 60
-./scripts/calibrate-all.sh   # every camera with a config/<serial>.json
+./scripts/calibrate-all.sh   # every connected camera
 ```
 
 - Stop the cam-node containers first. A camera opens only once.
@@ -204,15 +198,10 @@ docker compose down
 enabled at boot. A missing camera or invalid configuration produces a startup error;
 inspect logs if the service keeps restarting. Docker keeps the newest five 10 MB
 log files per container and discards older output. SIGTERM reaches the application through
-the startup wrapper and Compose's init process.
+Compose's init process.
 
 Validate image compilation, camera enumeration, first engine generation, cached
-restart, detection, and shutdown on the target PC before deployment. Python startup
-tests can run without Docker or a GPU:
-
-```sh
-python3 -m unittest discover -s tests/unit -p 'test_docker_entrypoint.py'
-```
+restart, detection, and shutdown on the target PC before deployment.
 
 ## C++ tests
 
@@ -257,23 +246,21 @@ behind, so it suits development and CI.
 
 ### Live tests
 
-`cam_pipeline_test` checks every connected camera, one after another. Each camera
-uses its own `config/<serial>.json`. A camera without one is checked with the
-streams of `config/serial_number.example.json`, and the output names the file
-used. A camera disabled in its config is skipped. The service gets the same USB
-access as `cam-node` and the `config/` directory read-only. Stop the `cam-node`
-service first, since a camera can be opened only once:
+`cam_pipeline_test` checks every connected camera, one after another, with the
+stream settings from `.env` (`WIDTH`, `HEIGHT`, `FPS`, `COLOR_*`, `DEPTH_*`). The
+service gets the same USB access as `cam-node`. Stop the `cam-node` service first,
+since a camera can be opened only once:
 
 ```sh
 docker compose down
 docker compose -f compose.test.yaml run --rm test-cam-node-live
 ```
 
-The test runs cam_node's own config loading and `Pipeline`, and reports each
+The test runs cam_node's own settings loading and `Pipeline`, and reports each
 step as PASS or FAIL with the camera's serial:
 
 - at least one camera is connected
-- the config loads, the camera is ready and on USB 3
+- the stream settings load, the camera is ready and on USB 3
 - the configured streams are offered by the camera
 - every streaming sensor supports global time, and the pipeline starts in it
 - depth and color calibration is available, if both are configured
@@ -286,9 +273,9 @@ step as PASS or FAIL with the camera's serial:
 Point the cameras at a normal scene. A covered lens or an empty view beyond depth
 range fails the content checks.
 
-Natively on Ubuntu, build with `-DCAM_NODE_LIVE_TESTS=ON` and pass the config
-directory:
+Natively on Ubuntu, build with `-DCAM_NODE_LIVE_TESTS=ON` and load `.env` first:
 
 ```sh
-CAM_NODE_CONFIG_DIR="$PWD/config" ctest --test-dir build/cpu -L live --output-on-failure
+set -a; . ./.env; set +a
+ctest --test-dir build/cpu -L live --output-on-failure
 ```

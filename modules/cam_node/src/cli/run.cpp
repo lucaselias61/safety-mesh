@@ -12,6 +12,7 @@
 #include "worker.hpp"
 
 #include <CLI/CLI.hpp>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -19,17 +20,38 @@
 
 namespace {
 
-void run(const std::shared_ptr<std::string> &config) {
+// Backend when ENGINE_BACKEND is unset: the one this build has.
+#ifdef CAM_NODE_WITH_TENSORRT
+constexpr const char *default_backend = "tensorrt";
+#else
+constexpr const char *default_backend = "opencv_dnn";
+#endif
 
-  const auto camera_config = load_camera_config(*config);
-  const auto engine_config = load_engine_config(*config);
+/// The camera with this serial, else the only connected camera.
+Camera select_camera(const std::string &serial) {
+  if (!serial.empty())
+    return require_camera(serial);
+  auto cameras = discover_cameras().cameras;
+  if (cameras.size() != 1)
+    throw std::runtime_error("Found " + std::to_string(cameras.size()) +
+                             " cameras. Connect one camera or set "
+                             "CAMERA_SERIAL.");
+  return std::move(cameras.front());
+}
+
+void run() {
+  const auto camera_config = camera_config_from_env();
   if (!camera_config.enabled) {
+    std::cout << "Camera disabled with CAMERA_ENABLED, exiting\n";
     return;
   }
   if (camera_config.streams.empty()) {
-    throw std::runtime_error("No streams enabled in camera configuration");
+    throw std::runtime_error(
+        "No streams enabled. Set COLOR_ENABLED or DEPTH_ENABLED.");
   }
-  const auto camera = require_camera(camera_config.serial);
+  const auto engine_config = engine_config_from_env(default_backend);
+  const auto camera = select_camera(camera_config.serial);
+  std::cout << "Starting camera " << camera.get_serial() << '\n';
   const auto profile =
       PipelineProfile::from_streams(camera.get_device(), camera_config.streams);
   std::unique_ptr<Engine> engine;
@@ -55,13 +77,7 @@ void run(const std::shared_ptr<std::string> &config) {
 } // namespace
 
 void run_cmd(CLI::App &app) {
-  // The callback owns these objects beyond command registration.
-  auto config = std::make_shared<std::string>();
-  auto *run_command = app.add_subcommand("run", "Run a connected camera");
-  run_command
-      ->add_option("--config", *config, "Path to the camera configuration file")
-      ->required()
-      ->check(CLI::ExistingFile);
-
-  run_command->callback([config] { run(config); });
+  // Settings come from env vars, see .env.example.
+  app.add_subcommand("run", "Run a connected camera, set up by env vars")
+      ->callback(run);
 }

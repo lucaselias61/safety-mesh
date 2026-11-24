@@ -21,14 +21,17 @@ Filters: `all`, `color`, `depth`, `infrared`. Sort keys: `all`, `fps`, `width`, 
 
 ## Run detection
 
-Copy [the example configuration](../config/serial_number.example.json) and set your camera serial:
+`run` reads its settings from env vars, see [configuration](configuration.md).
+Copy [`.env.example`](../.env.example), set `CAMERA_SERIAL` and `MODEL_PATH`
+(e.g. `models/yolo11n.onnx` natively), then load it into the shell:
 
 ```sh
-cp config/serial_number.example.json config/233322245.json
-./bin/cam_node run --config config/233322245.json
+cp .env.example .env
+set -a; . ./.env; set +a
+./bin/cam_node run
 ```
 
-`run` requires `--config`; it has no `--serial` option. Stop with Ctrl+C. SIGTERM also requests shutdown.
+`run` has no options. An empty `CAMERA_SERIAL` uses the only connected camera. Stop with Ctrl+C. SIGTERM also requests shutdown.
 
 Missing cameras, invalid configuration and initialization failures return a nonzero exit code. See [outputs](outputs.md) for detection results.
 
@@ -99,8 +102,7 @@ Compose mounts `config/charuco.json` at `/opt/cam_node/charuco.json`:
 
 ```sh
 docker compose down
-docker compose run --rm cam-node calibrate \
-  --config /opt/cam_node/config.json --board /opt/cam_node/charuco.json
+docker compose run --rm cam-node calibrate --board /opt/cam_node/charuco.json
 ```
 
 ## Record depth and color
@@ -112,7 +114,7 @@ RealSense recording file. It runs on the host in a Python venv, not in the image
 python3 -m venv .venv && . .venv/bin/activate
 pip install "pyrealsense2==2.58.*"   # match REALSENSE_VERSION in the Dockerfile
 python3 tools/rec_stream.py --out recordings/
-python3 tools/rec_stream.py --out recordings/ --config config/233322245.json --duration 30
+python3 tools/rec_stream.py --out recordings/ --env .env --duration 30
 python3 tools/rec_stream.py --out take1.db3 --serial 233322245
 ```
 
@@ -121,9 +123,10 @@ python3 tools/rec_stream.py --out take1.db3 --serial 233322245
   `233322245_20261124T154210Z.db3`. An existing file is not overwritten.
 - `.db3` is rosbag2. The PyPI wheels are built with rosbag2 and record only
   to `.db3`. `.bag` (rosbag1) is for SDK builds without rosbag2.
-- `--config` takes the stream settings from the camera config used by `run`.
-  Without it, depth Z16 and color RGB8 at 640x480 and 15 fps are recorded.
-- The camera is `--serial`, else the serial in `--config`, else the only
+- `--env` (default `modules/cam_node/.env`) gives the stream settings `run`
+  uses: `WIDTH`, `HEIGHT`, `FPS`, `COLOR_*` and `DEPTH_*`. Without the file,
+  depth Z16 and color RGB8 at 640x480 and 15 fps are recorded.
+- The camera is `--serial`, else `CAMERA_SERIAL` in `--env`, else the only
   connected camera.
 - `--duration` (default 0) stops after that many seconds. 0 records until
   Ctrl+C. SIGTERM also stops it.

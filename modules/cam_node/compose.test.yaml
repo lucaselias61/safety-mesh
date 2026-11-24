@@ -29,6 +29,10 @@ services:
   test-cam-node-live:
     <<: *test-runner
     command: ["ctest", "--test-dir", "build", "-L", "live", "--output-on-failure"]
+    # Stream settings, the same env vars cam_node run reads.
+    env_file:
+      - path: .env
+        required: false
     # Same USB access as compose.inference.yaml.
     device_cgroup_rules:
       - 'c 189:* rwm'

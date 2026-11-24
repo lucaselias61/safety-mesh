@@ -8,17 +8,8 @@ services:
       file: compose.inference.yaml
       service: ${INFERENCE:-cpu}
     container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
+    # Camera, engine and viewer settings. cam_node reads them as env vars.
+    env_file: .env
+    # Here too, so an exported CAMERA_SERIAL wins over .env.
     environment:
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CAMERA_SERIAL: ${CAMERA_SERIAL:-}
-      # Rerun viewer (modules/rerun); empty RERUN_URL = off.
-      RERUN_URL: ${RERUN_URL:-}
-      RERUN_IMAGE_FPS: ${RERUN_IMAGE_FPS:-5}
-    volumes:
-      - type: bind
-        source: ${CAM_NODE_CONFIG_PATH:-config/${CAMERA_SERIAL}.json}
-        # Fixed path read by docker/entrypoint.py.
-        target: /opt/cam_node/config.json
-        read_only: true
-        bind:
-          create_host_path: false
+      CAMERA_SERIAL: ${CAMERA_SERIAL}

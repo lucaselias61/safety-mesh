@@ -19,11 +19,12 @@ List connected cameras:
 ./bin/cam_node list
 ```
 
-Copy the configuration, set `camera.serial` to your camera's serial number, then run:
+Copy the settings, set `CAMERA_SERIAL` and `MODEL_PATH`, load them as env vars, then run:
 
 ```sh
-cp config/serial_number.example.json config/233322245.json
-./bin/cam_node run --config config/233322245.json
+cp .env.example .env
+set -a; . ./.env; set +a
+./bin/cam_node run
 ```
 
 Ubuntu 24.04 LTS is supported by the setup scripts, which install pinned dependency versions, including RealSense 2.58.4.

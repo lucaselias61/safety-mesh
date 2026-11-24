@@ -1,8 +1,7 @@
 // Live test of the camera pipeline cam_node runs, for every connected camera.
 // Uses cam_node's own config loading, Pipeline and frame timing.
-// - CAM_NODE_CONFIG_DIR: config directory, default /opt/cam_node/config.
-// - Each camera uses <serial>.json from it. Without one, the streams of
-//   serial_number.example.json, so an unconfigured camera is still checked.
+// - Streams from the env vars cam_node run reads (WIDTH, HEIGHT, FPS,
+//   COLOR_*, DEPTH_*), the same for every camera. See .env.example.
 // Cameras are tested one after another. Steps print PASS or FAIL with the
 // serial. A failed step that later steps depend on ends that camera's test.
 // Exit code 1 if any step failed or no camera is connected.
@@ -20,7 +19,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <fstream>
 #include <functional>
 #include <map>
 #include <optional>
@@ -75,11 +73,6 @@ bool step(const std::string &name, const std::function<void()> &body) {
 int finish() {
   std::printf("\n%d passed, %d failed\n", passed, failed);
   return failed == 0 ? 0 : 1;
-}
-
-std::string env_or(const char *name, const std::string &fallback) {
-  const char *value = std::getenv(name);
-  return value && *value ? value : fallback;
 }
 
 /// Device or sensor info, or "unknown" if not reported.
@@ -238,23 +231,9 @@ bool configures(const CameraConfig &config, const char *name) {
       [name](const StreamConfig &stream) { return stream.name == name; });
 }
 
-/// Config for the camera: its own file, else the example's streams.
-/// @param source Set to the file used.
-CameraConfig camera_config(const std::string &dir, const std::string &serial,
-                           std::string &source) {
-  source = dir + "/" + serial + ".json";
-  if (!std::ifstream(source)) {
-    source = dir + "/serial_number.example.json";
-    require(static_cast<bool>(std::ifstream(source)),
-            "no " + serial + ".json or serial_number.example.json in " + dir);
-  }
-  auto config = load_camera_config(source);
-  config.serial = serial;
-  return config;
-}
-
 /// Runs every step for one camera.
-void test_camera(const Camera &camera, const std::string &config_dir) {
+void test_camera(const Camera &camera,
+                 const std::vector<StreamConfig> &streams) {
   const std::string tag = "[" + camera.get_serial() + "] ";
   const auto &device = camera.get_device();
   std::printf("\n%s%s, firmware %s, USB %s\n", tag.c_str(),
@@ -262,18 +241,7 @@ void test_camera(const Camera &camera, const std::string &config_dir) {
               info(device, RS2_CAMERA_INFO_FIRMWARE_VERSION).c_str(),
               info(device, RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR).c_str());
 
-  CameraConfig config{};
-  std::string source;
-  if (!step(tag + "config loads", [&] {
-        config = camera_config(config_dir, camera.get_serial(), source);
-        require(!config.streams.empty(), "no streams enabled in " + source);
-      }))
-    return;
-  if (!config.enabled) {
-    std::printf("SKIP %sdisabled in %s\n", tag.c_str(), source.c_str());
-    return;
-  }
-  std::printf("  %s\n", source.c_str());
+  const CameraConfig config{camera.get_serial(), true, streams};
 
   if (!step(tag + "camera ready", [&] {
         require(camera.is_ready(), "disconnected or in recovery mode");
@@ -383,8 +351,12 @@ void test_camera(const Camera &camera, const std::string &config_dir) {
 } // namespace
 
 int main() {
-  const std::string config_dir =
-      env_or("CAM_NODE_CONFIG_DIR", "/opt/cam_node/config");
+  std::vector<StreamConfig> streams;
+  if (!step("streams from env", [&] {
+        streams = streams_from_env();
+        require(!streams.empty(), "COLOR_ENABLED and DEPTH_ENABLED are false");
+      }))
+    return finish();
 
   std::vector<Camera> cameras;
   if (!step("cameras connected", [&] {
@@ -392,10 +364,9 @@ int main() {
         require(!cameras.empty(), "no RealSense camera connected");
       }))
     return finish();
-  std::printf("  %zu camera(s), configs from %s\n", cameras.size(),
-              config_dir.c_str());
+  std::printf("  %zu camera(s)\n", cameras.size());
 
   for (const auto &camera : cameras)
-    test_camera(camera, config_dir);
+    test_camera(camera, streams);
   return finish();
 }

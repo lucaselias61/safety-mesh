@@ -6,14 +6,12 @@
 #include <string>
 #include <vector>
 
+// Filled from env vars by camera_config_from_env.
 struct CameraConfig {
   std::string serial;
   bool enabled;
   std::vector<StreamConfig> streams;
 };
-
-// Throws std::runtime_error if the file cannot be read or is invalid.
-CameraConfig load_camera_config(const std::string &path);
 
 // Always sorts by ID; "fps", "width", "height" or "resolution" sort within each
 // ID. The key "all" sorts by ID only. Keys are case-insensitive. Throws
@@ -38,5 +36,17 @@ struct EngineConfig {
   Precision precision = Precision::fp32; // Optional. Default fp32.
 };
 
-// Throws std::runtime_error if the file cannot be read or is invalid.
-EngineConfig load_engine_config(const std::string &path);
+// Camera and engine settings from env vars. Compose passes them from .env.
+// - Every function throws std::runtime_error naming the variable that is
+//   missing or invalid. An empty value counts as missing.
+// - See .env.example for the variables and their values.
+
+/// Color and depth streams. WIDTH, HEIGHT and FPS apply to both.
+std::vector<StreamConfig> streams_from_env();
+
+/// Camera settings. serial is CAMERA_SERIAL, empty to use the only camera.
+/// streams is empty when CAMERA_ENABLED is false.
+CameraConfig camera_config_from_env();
+
+/// Engine settings. ENGINE_BACKEND is optional, default_backend if unset.
+EngineConfig engine_config_from_env(const std::string &default_backend);

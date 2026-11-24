@@ -1,7 +1,7 @@
 # All containers of one host: both cameras, rerun and manager.
 #   cp .env.example .env
 #   docker compose up -d --build
-# - Camera and engine values come from .env, not config/<serial>.json.
+# - Camera and engine values come from .env. cam_node reads them as env vars.
 # - INFERENCE in .env picks the cpu or gpu image.
 # - Stop the module composes first, the container names are the same.
 name: safety-mesh

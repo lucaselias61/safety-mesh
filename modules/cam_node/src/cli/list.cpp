@@ -6,7 +6,7 @@
 
 namespace {
 
-// Cameras go to stdout as "serial<TAB>name". docker/entrypoint.py parses them.
+// Cameras go to stdout as "serial<TAB>name".
 // Devices that could not be opened go to stderr.
 void list() {
   const auto discovery = discover_cameras();

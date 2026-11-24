@@ -162,41 +162,36 @@ RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTENSORRT=OFF \
 CMD ["ctest", "--test-dir", "build", "-LE", "live", "--output-on-failure"]
 
 
-# Runtime libraries of the build dependencies. python3 runs the entrypoint.
+# Runtime libraries of the build dependencies.
 FROM ubuntu:24.04 AS runtime-base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ca-certificates python3 \
+        ca-certificates \
         libopencv-core406t64 libopencv-imgproc406t64 libopencv-dnn406t64 \
         libopencv-calib3d406t64 \
         libfmt9 libusb-1.0-0 libudev1 libssl3t64 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/cam_node
-ENTRYPOINT ["python3", "-u", "/opt/cam_node/entrypoint.py"]
+# Settings come from env vars, see .env.example.
+ENTRYPOINT ["/opt/cam_node/bin/cam_node"]
+CMD ["run"]
 
 
 # Final CPU image. INFERENCE=cpu in compose.inference.yaml.
 FROM runtime-base AS cpu
 
-# Read by docker/entrypoint.py. Overrides engine.backend in the config.
-ENV ENGINE_BACKEND=opencv_dnn
-
 # RealSense libraries, cam_node and the udev rules.
 COPY --from=build-cpu /usr/local/lib/ /usr/local/lib/
 COPY --from=build-cpu /opt/cam_node/ /opt/cam_node/
 RUN ldconfig
-COPY docker/entrypoint.py /opt/cam_node/entrypoint.py
 
 
 # Final GPU image. INFERENCE=gpu in compose.inference.yaml.
 FROM runtime-base AS gpu
-
-# Read by docker/entrypoint.py. Overrides engine.backend in the config.
-ENV ENGINE_BACKEND=tensorrt
 
 ARG CUDA_VERSION
 ARG TENSORRT_VERSION
@@ -220,4 +215,3 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 COPY --from=build-gpu /usr/local/lib/ /usr/local/lib/
 COPY --from=build-gpu /opt/cam_node/ /opt/cam_node/
 RUN ldconfig
-COPY docker/entrypoint.py /opt/cam_node/entrypoint.py

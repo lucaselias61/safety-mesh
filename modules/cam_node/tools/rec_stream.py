@@ -2,15 +2,15 @@
 """Records RealSense color and depth to .rrd (Rerun), .db3 or .bag.
 
     pip install pyrealsense2==2.58.* rerun-sdk==0.43.1
-    python3 tools/rec_stream.py --out rec/ [--config config/<serial>.json] [--duration 30]
+    python3 tools/rec_stream.py --out rec/ [--env .env] [--duration 30]
     rerun rec/<serial>_<UTC start>.rrd
 
 - --out without a suffix is a directory.
+- Streams and serial from cam_node's .env, like cam_node run. Defaults without one.
 - .db3/.bag need no rerun-sdk. PyPI wheels write only .db3.
 """
 
 import argparse
-import json
 import signal
 import sys
 import time
@@ -31,10 +31,12 @@ RERUN_SUFFIX = ".rrd"
 SDK_SUFFIXES = (".db3", ".bag")
 DEFAULT_SUFFIX = RERUN_SUFFIX
 
-# Same as config/serial_number.example.json.
-DEFAULT_STREAMS = {
-    "color": {"enabled": True, "format": "RGB8", "width": 640, "height": 480, "fps": 15},
-    "depth": {"enabled": True, "format": "Z16", "width": 640, "height": 480, "fps": 15},
+DEFAULT_ENV = Path(__file__).resolve().parent.parent / ".env"
+# Same as .env.example.
+DEFAULT_SETTINGS = {
+    "COLOR_ENABLED": "true", "COLOR_FORMAT": "RGB8",
+    "DEPTH_ENABLED": "true", "DEPTH_FORMAT": "Z16",
+    "WIDTH": "640", "HEIGHT": "480", "FPS": "15",
 }
 STREAM_TYPES = {"color": rs.stream.color, "depth": rs.stream.depth}
 
@@ -59,17 +61,40 @@ def parse_args():
     parser.add_argument("--out", required=True, type=Path,
                         help="output directory, or a file path ending in .rrd, .db3 or .bag")
     parser.add_argument("--serial", help="camera serial")
-    parser.add_argument("--config", type=Path, help="cam_node camera config (config/<serial>.json)")
+    parser.add_argument("--env", type=Path, default=DEFAULT_ENV,
+                        help="cam_node .env with the stream settings (default modules/cam_node/.env)")
     parser.add_argument("--duration", type=float, default=0,
                         help="seconds to record, 0 = until Ctrl+C (default)")
     return parser.parse_args()
 
 
+def read_env(path):
+    # KEY=VALUE lines. Comments, blanks and quotes are skipped.
+    values = {}
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip("'\"")
+    return values
+
+
 def load_camera_config(path):
-    if path is None:
-        return {"serial": "", "streams": DEFAULT_STREAMS}
-    with path.open() as source:
-        return json.load(source)["camera"]
+    # Same settings as cam_node run. Empty values keep the defaults.
+    found = read_env(path) if path.exists() else {}
+    env = {**DEFAULT_SETTINGS, **{key: value for key, value in found.items() if value}}
+    streams = {}
+    for name in STREAM_TYPES:
+        prefix = name.upper()
+        streams[name] = {
+            "enabled": env[f"{prefix}_ENABLED"].lower() in ("true", "1", "yes", "on"),
+            "format": env[f"{prefix}_FORMAT"],
+            "width": int(env["WIDTH"]),
+            "height": int(env["HEIGHT"]),
+            "fps": int(env["FPS"]),
+        }
+    return {"serial": env.get("CAMERA_SERIAL", ""), "streams": streams}
 
 
 def connected_serials():
@@ -112,7 +137,7 @@ def build_config(serial, streams, path):
         config.enable_stream(stream_type, stream["width"], stream["height"], stream_format, stream["fps"])
         enabled.append(f"{name} {stream['width']}x{stream['height']} {stream['format']} @ {stream['fps']} fps")
     if not enabled:
-        raise ValueError("No color or depth stream enabled in the config.")
+        raise ValueError("No color or depth stream enabled. Set COLOR_ENABLED or DEPTH_ENABLED.")
     if path.suffix in SDK_SUFFIXES:
         config.enable_record_to_file(str(path))
     return config, enabled
@@ -203,7 +228,7 @@ def rerun_writer(path, serial, profile):
 
 def main():
     args = parse_args()
-    camera = load_camera_config(args.config)
+    camera = load_camera_config(args.env)
     serial = select_serial(args.serial, camera.get("serial", ""))
     path = output_path(args.out, serial)
     if path.suffix == RERUN_SUFFIX and rr is None:

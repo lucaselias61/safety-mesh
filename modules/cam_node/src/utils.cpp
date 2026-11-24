@@ -1,25 +1,17 @@
 #include "utils.hpp"
 #include "stream.hpp"
 
-#include <nlohmann/json.hpp>
+#include <librealsense2/rs.hpp>
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
 #include <stdexcept>
 #include <utility>
 
 namespace {
-
-int positive_int(const nlohmann::json &object, const char *key) {
-  const auto &value = object.at(key);
-  if (!value.is_number_integer() || value < 1 ||
-      value > std::numeric_limits<int>::max()) {
-    throw std::runtime_error(std::string(key) + " must be a positive integer");
-  }
-  return value.get<int>();
-}
 
 std::string to_lowercase(std::string text) {
   std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) {
@@ -28,72 +20,67 @@ std::string to_lowercase(std::string text) {
   return text;
 }
 
-nlohmann::json load_json(const std::string &path) {
-  std::ifstream file(path);
-  if (!file) {
-    throw std::runtime_error("Cannot open file");
-  }
-  return nlohmann::json::parse(file);
+/// @return The value of the env var, or "" if unset.
+std::string env(const std::string &name) {
+  const char *value = std::getenv(name.c_str());
+  return value ? value : "";
 }
 
-bool file_exists(const std::string &path) {
-  std::ifstream file(path);
-  return static_cast<bool>(file);
+std::string required(const std::string &name) {
+  auto value = env(name);
+  if (value.empty())
+    throw std::runtime_error("Set " + name + ", see .env.example");
+  return value;
+}
+
+[[noreturn]] void invalid(const std::string &name, const std::string &value,
+                          const std::string &expected) {
+  throw std::runtime_error(name + " must be " + expected + ", got '" + value +
+                           "'");
+}
+
+bool required_bool(const std::string &name) {
+  auto value = required(name);
+  std::transform(value.begin(), value.end(), value.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  if (value == "true" || value == "1" || value == "yes" || value == "on")
+    return true;
+  if (value == "false" || value == "0" || value == "no" || value == "off")
+    return false;
+  invalid(name, value, "true or false");
+}
+
+int positive_int(const std::string &name) {
+  const auto value = required(name);
+  std::size_t used = 0;
+  long number = 0;
+  try {
+    number = std::stol(value, &used);
+  } catch (const std::exception &) {
+    used = 0;
+  }
+  if (used != value.size() || number < 1 ||
+      number > std::numeric_limits<int>::max())
+    invalid(name, value, "a positive integer");
+  return static_cast<int>(number);
+}
+
+/// A number greater than 0 and at most 1.
+double share(const std::string &name) {
+  const auto value = required(name);
+  std::size_t used = 0;
+  double number = 0.0;
+  try {
+    number = std::stod(value, &used);
+  } catch (const std::exception &) {
+    used = 0;
+  }
+  if (used != value.size() || number <= 0.0 || number > 1.0)
+    invalid(name, value, "greater than 0 and at most 1");
+  return number;
 }
 
 } // namespace
-
-CameraConfig load_camera_config(const std::string &path) {
-  try {
-    const auto json = load_json(path);
-    const auto &camera_json = json.at("camera");
-    CameraConfig config{camera_json.at("serial").get<std::string>(),
-                        camera_json.at("enabled").get<bool>(),
-                        {}};
-    if (config.serial.empty()) {
-      throw std::runtime_error("serial must not be empty");
-    }
-    const auto &streams = camera_json.at("streams");
-    if (!streams.is_object()) {
-      throw std::runtime_error("streams must be an object");
-    }
-    for (const auto &entry : streams.items()) {
-      try {
-        const auto &value = entry.value();
-        if (!value.at("enabled").get<bool>()) {
-          continue;
-        }
-        std::string name;
-        for (int type = 1; type < RS2_STREAM_COUNT; ++type) {
-          const std::string sdk_name =
-              rs2_stream_to_string(static_cast<rs2_stream>(type));
-          if (to_lowercase(entry.key()) == to_lowercase(sdk_name)) {
-            name = sdk_name;
-            break;
-          }
-        }
-        if (name.empty()) {
-          throw std::runtime_error("Unknown stream name");
-        }
-        StreamConfig stream{
-            name, value.contains("width") ? positive_int(value, "width") : 0,
-            value.contains("height") ? positive_int(value, "height") : 0,
-            positive_int(value, "fps"), value.at("format").get<std::string>()};
-        if (stream.format.empty()) {
-          throw std::runtime_error("format must not be empty");
-        }
-        config.streams.push_back(std::move(stream));
-      } catch (const std::exception &error) {
-        throw std::runtime_error("stream '" + entry.key() +
-                                 "': " + error.what());
-      }
-    }
-    return config;
-  } catch (const std::exception &error) {
-    throw std::runtime_error("Invalid camera config '" + path +
-                             "': " + error.what());
-  }
-}
 
 std::vector<StreamProfile>
 sort_stream_profiles_by_key(const std::vector<StreamProfile> &profiles,
@@ -144,40 +131,43 @@ filter_stream_profiles(const std::vector<StreamProfile> &profiles,
   return result;
 }
 
-EngineConfig load_engine_config(const std::string &path) {
-  try {
-    const auto json = load_json(path);
-    const auto &engine_json = json.at("engine");
-    EngineConfig config{
-        engine_json.at("backend").get<std::string>(),
-        engine_json.at("model_path").get<std::string>(),
-        engine_json.at("confidence_threshold").get<double>(),
-        engine_json.at("nms_threshold").get<double>(),
-        positive_int(engine_json, "input_size"),
-        engine_json.contains("precision")
-            ? parse_precision(engine_json.at("precision").get<std::string>())
-            : Precision::fp32,
-    };
-    if (config.model_path.empty()) {
-      throw std::runtime_error("model_path must not be empty");
-    }
-    if (!file_exists(config.model_path)) {
-      throw std::runtime_error("model_path does not exist: " +
-                               config.model_path);
-    }
-    if (config.backend.empty()) {
-      throw std::runtime_error("backend must not be empty");
-    }
-    if (config.confidence_threshold <= 0.0 ||
-        config.confidence_threshold > 1.0) {
-      throw std::runtime_error("confidence_threshold must be between 0 and 1");
-    }
-    if (config.nms_threshold <= 0.0 || config.nms_threshold > 1.0) {
-      throw std::runtime_error("nms_threshold must be between 0 and 1");
-    }
-    return config;
-  } catch (const std::exception &error) {
-    throw std::runtime_error("Invalid engine config '" + path +
-                             "': " + error.what());
+std::vector<StreamConfig> streams_from_env() {
+  const int width = positive_int("WIDTH");
+  const int height = positive_int("HEIGHT");
+  const int fps = positive_int("FPS");
+  std::vector<StreamConfig> streams;
+  for (const auto &[prefix, type] :
+       {std::pair{"COLOR", RS2_STREAM_COLOR}, {"DEPTH", RS2_STREAM_DEPTH}}) {
+    const std::string name = prefix;
+    if (!required_bool(name + "_ENABLED"))
+      continue;
+    // SDK stream names: "Color", "Depth".
+    streams.push_back({rs2_stream_to_string(type), width, height, fps,
+                       required(name + "_FORMAT")});
   }
+  return streams;
+}
+
+CameraConfig camera_config_from_env() {
+  CameraConfig config{
+      env("CAMERA_SERIAL"), required_bool("CAMERA_ENABLED"), {}};
+  if (config.enabled)
+    config.streams = streams_from_env();
+  return config;
+}
+
+EngineConfig engine_config_from_env(const std::string &default_backend) {
+  const auto backend = env("ENGINE_BACKEND");
+  const auto precision = env("PRECISION");
+  EngineConfig config{
+      backend.empty() ? default_backend : backend,
+      required("MODEL_PATH"),
+      share("CONFIDENCE_THRESHOLD"),
+      share("NMS_THRESHOLD"),
+      positive_int("INPUT_SIZE"),
+      precision.empty() ? Precision::fp32 : parse_precision(precision),
+  };
+  if (!std::ifstream(config.model_path))
+    throw std::runtime_error("MODEL_PATH does not exist: " + config.model_path);
+  return config;
 }

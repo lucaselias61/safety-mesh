@@ -5,6 +5,7 @@
 
 #include <CLI/CLI.hpp>
 
+#include <cstdio>
 #include <exception>
 #include <iostream>
 #include <iterator>
@@ -15,6 +16,8 @@
 #include <vector>
 
 int main(int argc, char *argv[]) try {
+  // Line buffered, so docker logs shows each line at once.
+  std::setvbuf(stdout, nullptr, _IOLBF, 0);
   std::signal(SIGINT, handle_shutdown);  // Ctrl+C
   std::signal(SIGTERM, handle_shutdown); // Docker stop
 
