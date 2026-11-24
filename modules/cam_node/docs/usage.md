@@ -106,26 +106,28 @@ docker compose run --rm cam-node calibrate \
 ## Record depth and color
 
 `tools/rec_stream.py` records the camera's depth and color streams to a
-RealSense `.bag` file. It runs on the host in a Python venv, not in the image.
+RealSense recording file. It runs on the host in a Python venv, not in the image.
 
 ```sh
 python3 -m venv .venv && . .venv/bin/activate
 pip install "pyrealsense2==2.58.*"   # match REALSENSE_VERSION in the Dockerfile
 python3 tools/rec_stream.py --out recordings/
 python3 tools/rec_stream.py --out recordings/ --config config/233322245.json --duration 30
-python3 tools/rec_stream.py --out take1.bag --serial 233322245
+python3 tools/rec_stream.py --out take1.db3 --serial 233322245
 ```
 
-- `--out` ending in `.bag` is the file path. Anything else is a directory and
-  the file is named `<serial>_<UTC start>.bag`, e.g.
-  `233322245_20261124T154210Z.bag`. An existing file is not overwritten.
+- `--out` ending in `.db3` or `.bag` is the file path. Anything else is a
+  directory and the file is named `<serial>_<UTC start>.db3`, e.g.
+  `233322245_20261124T154210Z.db3`. An existing file is not overwritten.
+- `.db3` is rosbag2. The PyPI wheels are built with rosbag2 and record only
+  to `.db3`. `.bag` (rosbag1) is for SDK builds without rosbag2.
 - `--config` takes the stream settings from the camera config used by `run`.
   Without it, depth Z16 and color RGB8 at 640x480 and 15 fps are recorded.
 - The camera is `--serial`, else the serial in `--config`, else the only
   connected camera.
 - `--duration` (default 0) stops after that many seconds. 0 records until
   Ctrl+C. SIGTERM also stops it.
-- The bag keeps raw Z16 depth, color, timestamps, intrinsics and depth scale.
+- The file keeps raw Z16 depth, color, timestamps, intrinsics and depth scale.
   Open it in `realsense-viewer`.
 - Not compressed. The defaults write about 23 MB/s.
 

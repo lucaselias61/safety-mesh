@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Records the depth and color streams of a RealSense camera to a .bag file.
+"""Records the depth and color streams of a RealSense camera to a .db3 file.
 
     # match REALSENSE_VERSION
     pip install pyrealsense2==2.58.*   
     python3 tools/rec_stream.py --out recordings/
     # optional config file
     python3 tools/rec_stream.py --out recordings/ --config config/233322245.json --duration 30
-    python3 tools/rec_stream.py --out take1.bag --serial 233322245
+    python3 tools/rec_stream.py --out take1.db3 --serial 233322245
 
-- --out ending in .bag is the file path.
+- --out ending in .db3 or .bag is the file path. Anything else is a directory,
+  the file is named <serial>_<UTC start>.db3.
+- .db3 is rosbag2, written by the PyPI wheels (built with rosbag2).
+  .bag is rosbag1, only for SDK builds without rosbag2.
 - Without --serial the only connected camera is used.
 - Stops after --duration seconds, or on Ctrl+C / SIGTERM.
-- The bag keeps raw Z16 depth, color, timestamps, intrinsics and depth scale.
+- The file keeps raw Z16 depth, color, timestamps, intrinsics and depth scale.
   Open it in realsense-viewer or replay it with rs2::config::enable_device_from_file.
 - Uncompressed. 640x480 Z16 + RGB8 at 15 fps is about 23 MB/s.
 """
@@ -25,6 +28,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pyrealsense2 as rs
+
+# File suffixes the SDK records to. The SDK build accepts only one of them.
+RECORD_SUFFIXES = (".db3", ".bag")
+DEFAULT_SUFFIX = ".db3"
 
 # Same as config/serial_number.example.json.
 DEFAULT_STREAMS = {
@@ -44,7 +51,7 @@ def request_stop(_signum, _frame):
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True, type=Path,
-                        help="output directory, or a file path ending in .bag")
+                        help="output directory, or a file path ending in .db3 or .bag")
     parser.add_argument("--serial", help="camera serial")
     parser.add_argument("--config", type=Path, help="cam_node camera config (config/<serial>.json)")
     parser.add_argument("--duration", type=float, default=0,
@@ -76,12 +83,12 @@ def select_serial(requested, config_serial):
 
 
 def output_path(out, serial):
-    # .bag suffix means a file path. Anything else is a directory.
-    if out.suffix == ".bag":
+    # A record suffix means a file path. Anything else is a directory.
+    if out.suffix in RECORD_SUFFIXES:
         path = out
     else:
         start = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        path = out / f"{serial}_{start}.bag"
+        path = out / f"{serial}_{start}{DEFAULT_SUFFIX}"
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         raise ValueError(f"{path} exists. Not overwriting it.")
@@ -106,7 +113,7 @@ def build_config(serial, streams, path):
 
 
 def record(pipeline, duration):
-    # The SDK writes every frame to the bag. This loop only keeps the pipeline running.
+    # The SDK writes every frame to the file. This loop only keeps the pipeline running.
     start = time.monotonic()
     frames = 0
     while not stop_requested:
@@ -136,7 +143,7 @@ def main():
     try:
         frames, elapsed = record(pipeline, args.duration)
     finally:
-        # Without stop() the bag is not closed and cannot be read.
+        # Without stop() the file is not closed and cannot be read.
         pipeline.stop()
 
     size_mb = path.stat().st_size / 1e6
