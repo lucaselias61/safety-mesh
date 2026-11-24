@@ -41,7 +41,7 @@ struct EngineConfig {
 //   missing or invalid. An empty value counts as missing.
 // - See .env.example for the variables and their values.
 
-/// Color and depth streams. WIDTH, HEIGHT and FPS apply to both.
+/// Color and depth streams, always both. WIDTH, HEIGHT and FPS apply to both.
 std::vector<StreamConfig> streams_from_env();
 
 /// Camera settings. serial is CAMERA_SERIAL, empty to use the only camera.

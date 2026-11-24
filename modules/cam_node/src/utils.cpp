@@ -135,17 +135,11 @@ std::vector<StreamConfig> streams_from_env() {
   const int width = positive_int("WIDTH");
   const int height = positive_int("HEIGHT");
   const int fps = positive_int("FPS");
-  std::vector<StreamConfig> streams;
-  for (const auto &[prefix, type] :
-       {std::pair{"COLOR", RS2_STREAM_COLOR}, {"DEPTH", RS2_STREAM_DEPTH}}) {
-    const std::string name = prefix;
-    if (!required_bool(name + "_ENABLED"))
-      continue;
-    // SDK stream names: "Color", "Depth".
-    streams.push_back({rs2_stream_to_string(type), width, height, fps,
-                       required(name + "_FORMAT")});
-  }
-  return streams;
+  // Always both. 3D poses need depth and color. SDK names: "Color", "Depth".
+  return {{rs2_stream_to_string(RS2_STREAM_COLOR), width, height, fps,
+           required("COLOR_FORMAT")},
+          {rs2_stream_to_string(RS2_STREAM_DEPTH), width, height, fps,
+           required("DEPTH_FORMAT")}};
 }
 
 CameraConfig camera_config_from_env() {

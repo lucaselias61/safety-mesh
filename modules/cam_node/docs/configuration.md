@@ -13,8 +13,7 @@ as unset. A missing or invalid one stops `run` with its name.
 | --- | --- |
 | `CAMERA_SERIAL` | Optional. Camera serial. Empty: the only connected camera. |
 | `CAMERA_ENABLED` | `true` or `false`. `false` exits without opening the camera. |
-| `COLOR_ENABLED`, `DEPTH_ENABLED` | `true` or `false`. At least one must be `true`. |
-| `COLOR_FORMAT`, `DEPTH_FORMAT` | SDK format name, such as `RGB8` or `Z16`. |
+| `COLOR_FORMAT`, `DEPTH_FORMAT` | SDK format name, such as `RGB8` or `Z16`. Color and depth always both stream. |
 | `WIDTH`, `HEIGHT`, `FPS` | Positive integers. Color and depth always share them. |
 
 Detection needs color in `RGB8` or `BGR8`. Use profiles reported by the

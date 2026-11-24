@@ -45,10 +45,6 @@ void run() {
     std::cout << "Camera disabled with CAMERA_ENABLED, exiting\n";
     return;
   }
-  if (camera_config.streams.empty()) {
-    throw std::runtime_error(
-        "No streams enabled. Set COLOR_ENABLED or DEPTH_ENABLED.");
-  }
   const auto engine_config = engine_config_from_env(default_backend);
   const auto camera = select_camera(camera_config.serial);
   std::cout << "Starting camera " << camera.get_serial() << '\n';

@@ -34,8 +34,7 @@ DEFAULT_SUFFIX = RERUN_SUFFIX
 DEFAULT_ENV = Path(__file__).resolve().parent.parent / ".env"
 # Same as .env.example.
 DEFAULT_SETTINGS = {
-    "COLOR_ENABLED": "true", "COLOR_FORMAT": "RGB8",
-    "DEPTH_ENABLED": "true", "DEPTH_FORMAT": "Z16",
+    "COLOR_FORMAT": "RGB8", "DEPTH_FORMAT": "Z16",
     "WIDTH": "640", "HEIGHT": "480", "FPS": "15",
 }
 STREAM_TYPES = {"color": rs.stream.color, "depth": rs.stream.depth}
@@ -88,7 +87,6 @@ def load_camera_config(path):
     for name in STREAM_TYPES:
         prefix = name.upper()
         streams[name] = {
-            "enabled": env[f"{prefix}_ENABLED"].lower() in ("true", "1", "yes", "on"),
             "format": env[f"{prefix}_FORMAT"],
             "width": int(env["WIDTH"]),
             "height": int(env["HEIGHT"]),
@@ -130,14 +128,10 @@ def build_config(serial, streams, path):
     config.enable_device(serial)
     enabled = []
     for name, stream_type in STREAM_TYPES.items():
-        stream = streams.get(name, {})
-        if not stream.get("enabled", False):
-            continue
+        stream = streams[name]
         stream_format = getattr(rs.format, stream["format"].lower())
         config.enable_stream(stream_type, stream["width"], stream["height"], stream_format, stream["fps"])
         enabled.append(f"{name} {stream['width']}x{stream['height']} {stream['format']} @ {stream['fps']} fps")
-    if not enabled:
-        raise ValueError("No color or depth stream enabled. Set COLOR_ENABLED or DEPTH_ENABLED.")
     if path.suffix in SDK_SUFFIXES:
         config.enable_record_to_file(str(path))
     return config, enabled

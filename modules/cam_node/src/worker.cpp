@@ -8,20 +8,18 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
 namespace {
 
-/// @return 3D poses of the detections. Empty without depth or calibration.
+/// @return 3D poses of the detections. Empty if the frameset has no depth.
 /// @throws std::invalid_argument if the depth frame is not Z16.
 std::vector<geometry::Detection3D>
 poses_in_3d(const Frames &frames, const std::vector<Detection2D> &detections,
-            const std::optional<geometry::Calibration> &calibration) {
+            const geometry::Calibration &calibration) {
   std::vector<geometry::Detection3D> poses;
-  if (!calibration)
-    return poses;
-  const geometry::Calibration &streams = *calibration;
   const auto depth = frames.get_depth_frame();
   if (!depth)
     return poses;
@@ -29,7 +27,7 @@ poses_in_3d(const Frames &frames, const std::vector<Detection2D> &detections,
   poses.reserve(detections.size());
   for (const auto &detection : detections)
     poses.push_back(
-        geometry::detection_in_3d(detection, depth, streams, timestamp));
+        geometry::detection_in_3d(detection, depth, calibration, timestamp));
   return poses;
 }
 
@@ -38,8 +36,15 @@ poses_in_3d(const Frames &frames, const std::vector<Detection2D> &detections,
 void Worker::run() {
   pipeline_.start();
   running_ = true;
-  if (pipeline_.calibration())
-    logger_.calibration(*pipeline_.calibration());
+  // Color and depth always stream, so the pipeline has their calibration.
+  if (!pipeline_.calibration()) {
+    stop();
+    throw std::runtime_error(
+        "No color and depth calibration. Both must stream.");
+  }
+  // A copy: stop() clears the pipeline's.
+  const geometry::Calibration calibration = *pipeline_.calibration();
+  logger_.calibration(calibration);
   int retry_count = 0;
   // logger_.frame() can't time itself, so each frame reports the previous one.
   auto log_time = std::chrono::steady_clock::duration::zero();
@@ -60,8 +65,7 @@ void Worker::run() {
       const auto color = frames.get_color_frame();
       std::vector<Detection2D> detections = engine_->detect(color);
       const auto detected = std::chrono::steady_clock::now();
-      const auto poses =
-          poses_in_3d(frames, detections, pipeline_.calibration());
+      const auto poses = poses_in_3d(frames, detections, calibration);
       const auto deprojected = std::chrono::steady_clock::now();
       const LoopTimings timings{frames_ready - wait_start,
                                 detected - frames_ready, deprojected - detected,

@@ -352,10 +352,7 @@ void test_camera(const Camera &camera,
 
 int main() {
   std::vector<StreamConfig> streams;
-  if (!step("streams from env", [&] {
-        streams = streams_from_env();
-        require(!streams.empty(), "COLOR_ENABLED and DEPTH_ENABLED are false");
-      }))
+  if (!step("streams from env", [&] { streams = streams_from_env(); }))
     return finish();
 
   std::vector<Camera> cameras;
