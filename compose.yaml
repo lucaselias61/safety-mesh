@@ -1,0 +1,56 @@
+# All containers of one host: both cameras, rerun and manager.
+#   cp .env.example .env
+#   docker compose up -d --build
+# - Camera and engine values come from .env, not config/<serial>.json.
+# - INFERENCE in .env picks the cpu or gpu image.
+# - Stop the module composes first, the container names are the same.
+name: safety-mesh
+
+x-cam-node: &cam-node
+  # Shared settings in modules/cam_node/compose.inference.yaml.
+  # Image, build and GPU parts there too, cpu or gpu by INFERENCE.
+  extends:
+    file: modules/cam_node/compose.inference.yaml
+    service: ${INFERENCE}
+  env_file: .env
+  depends_on:
+    - rerun
+
+services:
+  cam-311322304407:
+    <<: *cam-node
+    container_name: cam-311322304407
+    environment:
+      CAMERA_SERIAL: "311322304407"
+      CAMERA_ENABLED: "true"
+
+  cam-233522074709:
+    <<: *cam-node
+    container_name: cam-233522074709
+    environment:
+      CAMERA_SERIAL: "233522074709"
+      CAMERA_ENABLED: "true"
+
+  rerun:
+    container_name: rerun
+    image: safety-mesh-rerun:dev
+    build: modules/rerun
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    command:
+      - --serve-web
+      - --bind=0.0.0.0
+      - --web-viewer-port=${RERUN_WEB_VIEWER_PORT}
+      - --port=${RERUN_PORT}
+      - --server-memory-limit=${RERUN_MEMORY_LIMIT}
+    ports:
+      - "${RERUN_WEB_VIEWER_PORT}:${RERUN_WEB_VIEWER_PORT}"
+      - "${RERUN_PORT}:${RERUN_PORT}"
+
+  # Placeholder until the manager has an image.
+  manager:
+    container_name: manager
+    image: busybox:1.36
+    command: ["sleep", "infinity"]
+    restart: unless-stopped

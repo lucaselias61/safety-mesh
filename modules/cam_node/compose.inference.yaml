@@ -1,15 +1,13 @@
-name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
-
+# cam-node image per inference backend: cpu or gpu, picked with INFERENCE.
+# - Extended by compose.yaml and the root compose.yaml.
+# - Not started on its own. No camera serial and no config here.
 services:
-  cam-node:
-    container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
-    # OpenCV DNN on the CPU. Selected with INFERENCE=cpu in .env.
-    # - Builds for the host's own architecture, including arm64.
-    # - compose.gpu.yaml extends this service, so shared settings live here.
+  # OpenCV DNN on the CPU. Builds for the host's own architecture, including arm64.
+  cpu:
     image: safety-mesh-cam-node:dev-cpu
     build:
       context: .
-      # Final Dockerfile stage. compose.gpu.yaml sets gpu.
+      # Final Dockerfile stage.
       target: cpu
       # Shared Rerun library, outside this directory.
       additional_contexts:
@@ -26,12 +24,6 @@ services:
       options:
         max-size: 10m
         max-file: "5"
-    environment:
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CAMERA_SERIAL: ${CAMERA_SERIAL:-}
-      # Rerun viewer (modules/rerun); empty RERUN_URL = off.
-      RERUN_URL: ${RERUN_URL:-}
-      RERUN_IMAGE_FPS: ${RERUN_IMAGE_FPS:-5}
     # Makes host.docker.internal work on Linux (viewer on this host).
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -52,13 +44,6 @@ services:
         target: /models
         bind:
           create_host_path: false
-      - type: bind
-        source: ${CAM_NODE_CONFIG_PATH:-config/${CAMERA_SERIAL}.json}
-        # Fixed path read by docker/entrypoint.py.
-        target: /opt/cam_node/config.json
-        read_only: true
-        bind:
-          create_host_path: false
       # ChArUco board shared by all cameras, for the calibrate command.
       - type: bind
         source: ./config/charuco.json
@@ -66,3 +51,20 @@ services:
         read_only: true
         bind:
           create_host_path: false
+
+  # TensorRT on an NVIDIA GPU.
+  # - Needs the NVIDIA Container Toolkit on the host.
+  # - x86-64 only: the CUDA and TensorRT packages are amd64.
+  gpu:
+    extends: cpu
+    image: safety-mesh-cam-node:dev
+    platform: linux/amd64
+    build:
+      target: gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${GPU_DEVICE:-0}"]
+              capabilities: [gpu]

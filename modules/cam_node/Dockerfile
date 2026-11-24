@@ -1,5 +1,5 @@
-# Plain Ubuntu, no NVIDIA base image. compose.cpu.yaml and compose.gpu.yaml pick
-# the final stage with build.target. BuildKit builds only the stages it needs.
+# Plain Ubuntu, no NVIDIA base image. compose.inference.yaml picks the final stage
+# with build.target. BuildKit builds only the stages it needs.
 # - build-base: compilers and RealSense from source. Shared by both backends.
 # - build-cpu, build-gpu: cam_node with or without TensorRT.
 # - test-src, test, test-runner: unit and live tests. Not part of any image.
@@ -65,7 +65,7 @@ FROM build-base AS build-cpu
 COPY CMakeLists.txt ./
 COPY include/ ./include/
 COPY src/ ./src/
-# Context from compose.cpu.yaml; same relative path as in the repo.
+# Context from compose.inference.yaml; same relative path as in the repo.
 COPY --from=rerun . /src/rerun/
 ARG BUILD_JOBS=2
 # ON links the Rerun SDK (used when RERUN_URL is set). OFF leaves it out.
@@ -109,7 +109,7 @@ ENV PATH="/usr/local/cuda-${CUDA_VERSION}/bin:${PATH}"
 COPY CMakeLists.txt ./
 COPY include/ ./include/
 COPY src/ ./src/
-# Context from compose.cpu.yaml; same relative path as in the repo.
+# Context from compose.inference.yaml; same relative path as in the repo.
 COPY --from=rerun . /src/rerun/
 ARG BUILD_JOBS=2
 # ON links the Rerun SDK (used when RERUN_URL is set). OFF leaves it out.
@@ -179,8 +179,11 @@ WORKDIR /opt/cam_node
 ENTRYPOINT ["python3", "-u", "/opt/cam_node/entrypoint.py"]
 
 
-# Final CPU image. Selected by compose.cpu.yaml.
+# Final CPU image. INFERENCE=cpu in compose.inference.yaml.
 FROM runtime-base AS cpu
+
+# Read by docker/entrypoint.py. Overrides engine.backend in the config.
+ENV ENGINE_BACKEND=opencv_dnn
 
 # RealSense libraries, cam_node and the udev rules.
 COPY --from=build-cpu /usr/local/lib/ /usr/local/lib/
@@ -189,8 +192,11 @@ RUN ldconfig
 COPY docker/entrypoint.py /opt/cam_node/entrypoint.py
 
 
-# Final GPU image. Selected by compose.gpu.yaml.
+# Final GPU image. INFERENCE=gpu in compose.inference.yaml.
 FROM runtime-base AS gpu
+
+# Read by docker/entrypoint.py. Overrides engine.backend in the config.
+ENV ENGINE_BACKEND=tensorrt
 
 ARG CUDA_VERSION
 ARG TENSORRT_VERSION

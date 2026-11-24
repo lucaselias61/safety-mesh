@@ -1,0 +1,24 @@
+# One camera. INFERENCE picks cpu or gpu from compose.inference.yaml.
+name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
+
+services:
+  cam-node:
+    # Image, build and GPU parts in compose.inference.yaml, cpu or gpu by INFERENCE.
+    extends:
+      file: compose.inference.yaml
+      service: ${INFERENCE:-cpu}
+    container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CAMERA_SERIAL: ${CAMERA_SERIAL:-}
+      # Rerun viewer (modules/rerun); empty RERUN_URL = off.
+      RERUN_URL: ${RERUN_URL:-}
+      RERUN_IMAGE_FPS: ${RERUN_IMAGE_FPS:-5}
+    volumes:
+      - type: bind
+        source: ${CAM_NODE_CONFIG_PATH:-config/${CAMERA_SERIAL}.json}
+        # Fixed path read by docker/entrypoint.py.
+        target: /opt/cam_node/config.json
+        read_only: true
+        bind:
+          create_host_path: false

@@ -1,6 +1,6 @@
 # One-shot camera calibration (cam_node calibrate --out) for CAMERA_SERIAL:
 #   docker compose -f compose.calibrate.yaml run --rm calibrate [options]
-# - CAMERA_SERIAL comes from the shell or .env, like compose.cpu.yaml.
+# - CAMERA_SERIAL comes from the shell or .env, like compose.yaml.
 # - Reads config/charuco.json. Needs no camera config.
 # - Writes ${CALIBRATION_DIR}/<CAMERA_SERIAL>.json, replacing an older file.
 # - Stop the camera's cam-node container first. A camera opens only once.
@@ -11,7 +11,7 @@ name: cam-calibrate-${CAMERA_SERIAL}
 
 services:
   calibrate:
-    # Same image as compose.cpu.yaml. Calibration needs no GPU.
+    # Same image as compose.yaml with INFERENCE=cpu. Calibration needs no GPU.
     image: safety-mesh-cam-node:dev-cpu
     build:
       context: .
@@ -32,7 +32,7 @@ services:
       - /opt/cam_node/charuco.json
       - --out
       - /opt/cam_node/calibration/${CAMERA_SERIAL}.json
-    # Same USB access as compose.cpu.yaml.
+    # Same USB access as compose.inference.yaml.
     device_cgroup_rules:
       - 'c 189:* rwm'
     volumes:

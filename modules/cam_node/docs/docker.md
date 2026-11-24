@@ -43,24 +43,20 @@ CUDA 13.2.
 
 The Compose setup is split in two files:
 
-- `compose.cpu.yaml`: OpenCV DNN on the CPU. Holds the application, USB access, model
-  and configuration settings. Builds for the host's own architecture.
-- `compose.gpu.yaml`: TensorRT on an NVIDIA GPU. Extends the `cam-node` service of
-  `compose.cpu.yaml` and adds the TensorRT build, the GPU reservation and the
-  `linux/amd64` platform.
+- `compose.inference.yaml`: one service per backend, also used by the root `compose.yaml`. Its `cpu`
+  service builds OpenCV DNN for the host's own architecture. Its `gpu` service adds the
+  TensorRT build, the GPU reservation and the `linux/amd64` platform.
+- `compose.yaml`: one camera. Extends the `${INFERENCE}` service of `compose.inference.yaml`
+  (default `cpu`) and adds the serial, environment and configuration file.
 
-`.env` picks one through `INFERENCE`. Its `COMPOSE_FILE` line loads
-`compose.${INFERENCE}.yaml`, so plain `docker compose` commands use the right file.
-Create `.env` once:
+`INFERENCE` in `.env` picks cpu or gpu. Create `.env` once:
 
 ```sh
 cp .env.example .env
 ```
 
-Set `INFERENCE=gpu` or `INFERENCE=cpu` there, in lowercase. There is no
-`compose.yaml`, so without `.env` plain `docker compose` finds no file. Use
-`docker compose -f compose.gpu.yaml` or `-f compose.cpu.yaml` then. A `-f` option or an
-exported `COMPOSE_FILE` replaces the `.env` selection.
+Set `INFERENCE=gpu` or `INFERENCE=cpu` there, in lowercase. Without `.env` it is
+`cpu`. A shell variable overrides it, e.g. `INFERENCE=gpu docker compose up`.
 
 In each new terminal, set your camera serial and create its configuration:
 
@@ -130,8 +126,8 @@ CAMERA_SERIAL=123456789 docker compose up --build -d
 ```
 
 Relative paths resolve from the compose files' directory. All commands below
-assume `CAMERA_SERIAL` is exported as shown above. If you previously exported
-`COMPOSE_FILE`, run `unset COMPOSE_FILE` first so the `.env` selection applies.
+assume `CAMERA_SERIAL` is exported as shown above. An older `.env` must drop its
+`COMPOSE_FILE` line, the files it names are gone.
 
 Edit camera stream settings to match the connected camera's supported profiles.
 To inspect them, use the existing CLI through Compose, for example
