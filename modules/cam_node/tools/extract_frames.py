@@ -23,8 +23,8 @@ def main():
     parser.add_argument("--serial", help="default: the only connected camera")
     parser.add_argument("--fps", type=float, default=1.0, help="frames saved per second (default 1)")
     parser.add_argument("--duration", type=float, default=0, help="seconds, 0 = until Ctrl+C")
-    parser.add_argument("--width", type=int, default=640)
-    parser.add_argument("--height", type=int, default=480)
+    parser.add_argument("--width", type=int, default=1280)
+    parser.add_argument("--height", type=int, default=720)
     args = parser.parse_args()
 
     config = rs.config()
