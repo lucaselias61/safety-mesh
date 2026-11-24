@@ -31,22 +31,13 @@ services:
       CAMERA_SERIAL: "233522074709"
       CAMERA_ENABLED: "true"
 
+  # Settings in modules/rerun/compose.yaml.
   rerun:
-    container_name: rerun
-    image: safety-mesh-rerun:dev
-    build: modules/rerun
-    init: true
-    restart: unless-stopped
-    env_file: .env
-    command:
-      - --serve-web
-      - --bind=0.0.0.0
-      - --web-viewer-port=${RERUN_WEB_VIEWER_PORT}
-      - --port=${RERUN_PORT}
-      - --server-memory-limit=${RERUN_MEMORY_LIMIT}
-    ports:
-      - "${RERUN_WEB_VIEWER_PORT}:${RERUN_WEB_VIEWER_PORT}"
-      - "${RERUN_PORT}:${RERUN_PORT}"
+    extends:
+      file: modules/rerun/compose.yaml
+      service: rerun
+    # This project's network, so no docker network create is needed.
+    networks: !override [default]
 
   # Placeholder until the manager has an image.
   manager:
