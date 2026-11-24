@@ -7,7 +7,6 @@ services:
     # - Builds for the host's own architecture, including arm64.
     # - compose.gpu.yaml extends this service, so shared settings live here.
     image: safety-mesh-cam-node:dev-cpu
-    pull_policy: build
     build:
       context: .
       # Final Dockerfile stage. compose.gpu.yaml sets gpu.

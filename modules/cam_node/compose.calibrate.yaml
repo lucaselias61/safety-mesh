@@ -5,6 +5,7 @@
 # - Writes ${CALIBRATION_DIR}/<CAMERA_SERIAL>.json, replacing an older file.
 # - Stop the camera's cam-node container first. A camera opens only once.
 # - Options go to calibrate, e.g. --frames 60 --timeout 60.
+# - Uses the existing image. Add --build after run to rebuild it after code changes.
 # All cameras: scripts/calibrate-all.sh.
 name: cam-calibrate-${CAMERA_SERIAL}
 
@@ -12,7 +13,6 @@ services:
   calibrate:
     # Same image as compose.cpu.yaml. Calibration needs no GPU.
     image: safety-mesh-cam-node:dev-cpu
-    pull_policy: build
     build:
       context: .
       target: cpu
