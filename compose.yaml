@@ -15,16 +15,16 @@ x-cam-node: &cam-node
   env_file: .env
 
 services:
-  cam-311322304407:
+  cam-node-311322304407:
     <<: *cam-node
-    container_name: cam-311322304407
+    container_name: cam-node-311322304407
     environment:
       CAMERA_SERIAL: "311322304407"
       CAMERA_ENABLED: "true"
 
-  cam-233522074709:
+  cam-node-233522074709:
     <<: *cam-node
-    container_name: cam-233522074709
+    container_name: cam-node-233522074709
     environment:
       CAMERA_SERIAL: "233522074709"
       CAMERA_ENABLED: "true"

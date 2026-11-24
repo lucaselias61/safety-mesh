@@ -68,7 +68,7 @@ All camera and engine settings are in `.env`, see [configuration](configuration.
 Compose passes the file to the container, where `cam_node run` reads them as env
 vars. The backend follows the image: `opencv_dnn` with `INFERENCE=cpu`, `tensorrt`
 with `INFERENCE=gpu`. Compose uses the serial to name both the project and container
-`cam-123456789`. Connect the selected RealSense camera to USB 3, then:
+`cam-node-123456789`. Connect the selected RealSense camera to USB 3, then:
 
 ```sh
 docker compose up --build -d

@@ -1,5 +1,5 @@
 # One camera. INFERENCE picks cpu or gpu from compose.inference.yaml.
-name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
+name: cam-node-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the project}
 
 services:
   cam-node:
@@ -7,7 +7,7 @@ services:
     extends:
       file: compose.inference.yaml
       service: ${INFERENCE:-cpu}
-    container_name: cam-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
+    container_name: cam-node-${CAMERA_SERIAL:?Set CAMERA_SERIAL to name the container}
     # Camera, engine and viewer settings. cam_node reads them as env vars.
     env_file: .env
     # Here too, so an exported CAMERA_SERIAL wins over .env.
