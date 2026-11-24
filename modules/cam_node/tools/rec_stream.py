@@ -19,6 +19,13 @@ from pathlib import Path
 
 import pyrealsense2 as rs
 
+# Only .rrd needs rerun-sdk.
+try:
+    import numpy as np
+    import rerun as rr
+except ImportError:
+    rr = None
+
 RERUN_SUFFIX = ".rrd"
 # SDK formats. A build writes only one.
 SDK_SUFFIXES = (".db3", ".bag")
@@ -30,6 +37,14 @@ DEFAULT_STREAMS = {
     "depth": {"enabled": True, "format": "Z16", "width": 640, "height": 480, "fps": 15},
 }
 STREAM_TYPES = {"color": rs.stream.color, "depth": rs.stream.depth}
+
+# Same as APP_ID in rerun/tools/blueprint.py, so its layout applies.
+RERUN_APP_ID = "safety_mesh"
+# Same as depth_color_range_m in include/viewer_sink.hpp.
+DEPTH_COLOR_RANGE_M = 6.0
+# Timestamps in ms since the epoch.
+EPOCH_DOMAINS = (rs.timestamp_domain.global_time, rs.timestamp_domain.system_time)
+COLOR_MODELS = {rs.format.rgb8: "RGB", rs.format.bgr8: "BGR", rs.format.rgba8: "RGBA", rs.format.bgra8: "BGRA"}
 
 stop_requested = False
 
@@ -118,13 +133,72 @@ def record(pipeline, duration, on_frameset):
     return frames, time.monotonic() - start
 
 
-def rerun_writer(path, profile):
-    # Lazy import. .db3/.bag work without rerun-sdk.
-    import rerun_log
+def video_profile(profile, stream_type):
+    for stream in profile.get_streams():
+        if stream.stream_type() == stream_type:
+            return stream.as_video_stream_profile()
+    return None
 
-    rec = rerun_log.open_file(path)
-    root = rerun_log.log_profile(rec, profile)
-    return rec, lambda index, frameset: rerun_log.log_frameset(rec, root, index, frameset)
+
+def pinhole(intrinsics):
+    return rr.Pinhole(
+        focal_length=[intrinsics.fx, intrinsics.fy],
+        principal_point=[intrinsics.ppx, intrinsics.ppy],
+        width=intrinsics.width,
+        height=intrinsics.height,
+        camera_xyz=rr.ViewCoordinates.RDF,
+    )
+
+
+def transform(extrinsics):
+    # rs2 rotation is column-major.
+    r = extrinsics.rotation
+    rows = [[r[col * 3 + row] for col in range(3)] for row in range(3)]
+    return rr.Transform3D(translation=extrinsics.translation, mat3x3=rows)
+
+
+def log_calibration(rec, root, profile):
+    # Same as ViewerSink::calibration. Color is the root frame.
+    color = video_profile(profile, rs.stream.color)
+    depth = video_profile(profile, rs.stream.depth)
+    if color:
+        rec.log(f"{root}/color", pinhole(color.get_intrinsics()), static=True)
+    if depth:
+        archetypes = [pinhole(depth.get_intrinsics())]
+        if color:
+            archetypes.insert(0, transform(depth.get_extrinsics_to(color)))
+        rec.log(f"{root}/depth", *archetypes, static=True)
+
+
+def log_frameset(rec, root, index, frameset):
+    color = frameset.get_color_frame()
+    depth = frameset.get_depth_frame()
+    reference = color or depth
+    if not reference:
+        return
+    rec.set_time("frame", sequence=index)
+    # Hardware clock is not epoch based. Only the frame timeline then.
+    if reference.get_frame_timestamp_domain() in EPOCH_DOMAINS:
+        rec.set_time("capture_time", timestamp=reference.get_timestamp() / 1000)
+    model = color and COLOR_MODELS.get(color.get_profile().format())
+    if model:
+        rec.log(f"{root}/color", rr.Image(np.asanyarray(color.get_data()), color_model=model))
+    if depth and depth.get_profile().format() == rs.format.z16:
+        units_per_meter = 1.0 / depth.get_units()
+        rec.log(f"{root}/depth", rr.DepthImage(
+            np.asanyarray(depth.get_data()),
+            meter=units_per_meter,
+            depth_range=(0.0, DEPTH_COLOR_RANGE_M * units_per_meter),
+        ))
+
+
+def rerun_writer(path, serial, profile):
+    # Logged like cam_node (src/viewer_sink.cpp). Own recording id, so no mix with live data.
+    rec = rr.RecordingStream(RERUN_APP_ID, recording_id=f"rec_stream/{path.name}")
+    rec.save(str(path))
+    root = f"cams/{serial}"
+    log_calibration(rec, root, profile)
+    return rec, lambda index, frameset: log_frameset(rec, root, index, frameset)
 
 
 def main():
@@ -132,6 +206,8 @@ def main():
     camera = load_camera_config(args.config)
     serial = select_serial(args.serial, camera.get("serial", ""))
     path = output_path(args.out, serial)
+    if path.suffix == RERUN_SUFFIX and rr is None:
+        raise ValueError("pip install rerun-sdk for .rrd, or use --out with .db3.")
     config, enabled = build_config(serial, camera["streams"], path)
 
     signal.signal(signal.SIGINT, request_stop)
@@ -142,7 +218,7 @@ def main():
     rec, on_frameset = None, None
     try:
         if path.suffix == RERUN_SUFFIX:
-            rec, on_frameset = rerun_writer(path, profile)
+            rec, on_frameset = rerun_writer(path, serial, profile)
         print(f"Recording camera {serial} to {path}", flush=True)
         for line in enabled:
             print(f"  {line}", flush=True)
