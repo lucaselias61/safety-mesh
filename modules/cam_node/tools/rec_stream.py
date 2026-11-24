@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
-"""Records the depth and color streams of a RealSense camera to a .db3 file.
+"""Records RealSense color and depth to .rrd (Rerun), .db3 or .bag.
 
-    # match REALSENSE_VERSION
-    pip install pyrealsense2==2.58.*   
-    python3 tools/rec_stream.py --out recordings/
-    # optional config file
-    python3 tools/rec_stream.py --out recordings/ --config config/233322245.json --duration 30
-    python3 tools/rec_stream.py --out take1.db3 --serial 233322245
+    pip install pyrealsense2==2.58.* rerun-sdk==0.43.1
+    python3 tools/rec_stream.py --out rec/ [--config config/<serial>.json] [--duration 30]
+    rerun rec/<serial>_<UTC start>.rrd
 
-- --out ending in .db3 or .bag is the file path. Anything else is a directory,
-  the file is named <serial>_<UTC start>.db3.
-- .db3 is rosbag2, written by the PyPI wheels (built with rosbag2).
-  .bag is rosbag1, only for SDK builds without rosbag2.
-- Without --serial the only connected camera is used.
-- Stops after --duration seconds, or on Ctrl+C / SIGTERM.
-- The file keeps raw Z16 depth, color, timestamps, intrinsics and depth scale.
-  Open it in realsense-viewer or replay it with rs2::config::enable_device_from_file.
-- Uncompressed. 640x480 Z16 + RGB8 at 15 fps is about 23 MB/s.
+- --out without a suffix is a directory.
+- .db3/.bag need no rerun-sdk. PyPI wheels write only .db3.
 """
 
 import argparse
@@ -29,9 +19,10 @@ from pathlib import Path
 
 import pyrealsense2 as rs
 
-# File suffixes the SDK records to. The SDK build accepts only one of them.
-RECORD_SUFFIXES = (".db3", ".bag")
-DEFAULT_SUFFIX = ".db3"
+RERUN_SUFFIX = ".rrd"
+# SDK formats. A build writes only one.
+SDK_SUFFIXES = (".db3", ".bag")
+DEFAULT_SUFFIX = RERUN_SUFFIX
 
 # Same as config/serial_number.example.json.
 DEFAULT_STREAMS = {
@@ -51,7 +42,7 @@ def request_stop(_signum, _frame):
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True, type=Path,
-                        help="output directory, or a file path ending in .db3 or .bag")
+                        help="output directory, or a file path ending in .rrd, .db3 or .bag")
     parser.add_argument("--serial", help="camera serial")
     parser.add_argument("--config", type=Path, help="cam_node camera config (config/<serial>.json)")
     parser.add_argument("--duration", type=float, default=0,
@@ -83,8 +74,7 @@ def select_serial(requested, config_serial):
 
 
 def output_path(out, serial):
-    # A record suffix means a file path. Anything else is a directory.
-    if out.suffix in RECORD_SUFFIXES:
+    if out.suffix in (RERUN_SUFFIX, *SDK_SUFFIXES):
         path = out
     else:
         start = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -108,21 +98,33 @@ def build_config(serial, streams, path):
         enabled.append(f"{name} {stream['width']}x{stream['height']} {stream['format']} @ {stream['fps']} fps")
     if not enabled:
         raise ValueError("No color or depth stream enabled in the config.")
-    config.enable_record_to_file(str(path))
+    if path.suffix in SDK_SUFFIXES:
+        config.enable_record_to_file(str(path))
     return config, enabled
 
 
-def record(pipeline, duration):
-    # The SDK writes every frame to the file. This loop only keeps the pipeline running.
+def record(pipeline, duration, on_frameset):
+    # None for .db3/.bag. The SDK writes those.
     start = time.monotonic()
     frames = 0
     while not stop_requested:
         if duration and time.monotonic() - start >= duration:
             break
-        success, _ = pipeline.try_wait_for_frames(1000)
+        success, frameset = pipeline.try_wait_for_frames(1000)
         if success:
+            if on_frameset:
+                on_frameset(frames, frameset)
             frames += 1
     return frames, time.monotonic() - start
+
+
+def rerun_writer(path, profile):
+    # Lazy import. .db3/.bag work without rerun-sdk.
+    import rerun_log
+
+    rec = rerun_log.open_file(path)
+    root = rerun_log.log_profile(rec, profile)
+    return rec, lambda index, frameset: rerun_log.log_frameset(rec, root, index, frameset)
 
 
 def main():
@@ -136,15 +138,20 @@ def main():
     signal.signal(signal.SIGTERM, request_stop)
 
     pipeline = rs.pipeline()
-    pipeline.start(config)
-    print(f"Recording camera {serial} to {path}", flush=True)
-    for line in enabled:
-        print(f"  {line}", flush=True)
+    profile = pipeline.start(config)
+    rec, on_frameset = None, None
     try:
-        frames, elapsed = record(pipeline, args.duration)
+        if path.suffix == RERUN_SUFFIX:
+            rec, on_frameset = rerun_writer(path, profile)
+        print(f"Recording camera {serial} to {path}", flush=True)
+        for line in enabled:
+            print(f"  {line}", flush=True)
+        frames, elapsed = record(pipeline, args.duration, on_frameset)
     finally:
-        # Without stop() the file is not closed and cannot be read.
+        # stop() closes .db3/.bag.
         pipeline.stop()
+        if rec:
+            rec.flush()
 
     size_mb = path.stat().st_size / 1e6
     print(f"Saved {frames} framesets in {elapsed:.1f} s, {size_mb:.1f} MB: {path}", flush=True)
