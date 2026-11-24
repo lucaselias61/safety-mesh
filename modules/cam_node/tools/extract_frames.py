@@ -47,7 +47,7 @@ def main():
                 continue
             next_save += 1 / args.fps
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-            cv2.imwrite(str(args.out / f"{serial}_{stamp}.png"), np.asanyarray(frame.get_data()))
+            cv2.imwrite(str(args.out / f"{args.width}x{args.height}_{serial}_{stamp}.png"), np.asanyarray(frame.get_data()))
             saved += 1
     except KeyboardInterrupt:
         pass

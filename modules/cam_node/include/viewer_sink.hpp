@@ -58,13 +58,13 @@ rerun::Points2D keypoints(const std::vector<Detection2D> &detections);
 rerun::LineStrips2D skeletons(const std::vector<Detection2D> &detections);
 
 /// Radius of a 3D keypoint, in meters.
-inline constexpr float keypoint_3d_radius_m = 0.2f;
+inline constexpr float keypoint_3d_radius_m = 2.0f;
 
 /// 3D keypoints of all poses that have a point, in the color camera frame.
 rerun::Points3D keypoints_3d(const std::vector<geometry::Detection3D> &poses);
 
 /// Radius of a 3D limb, in meters.
-inline constexpr float limb_3d_radius_m = 0.05f;
+inline constexpr float limb_3d_radius_m = 0.5f;
 
 /// COCO limbs of all poses, where both keypoints have a point, in the color
 /// camera frame.
