@@ -13,8 +13,6 @@ x-cam-node: &cam-node
     file: modules/cam_node/compose.inference.yaml
     service: ${INFERENCE}
   env_file: .env
-  depends_on:
-    - rerun
 
 services:
   cam-311322304407:
